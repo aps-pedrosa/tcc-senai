@@ -228,15 +228,9 @@ O Voidlog contribui para:
 
 ## Equipe
 
-* Nome 1
-* Nome 2
-* Nome 3
-
----
-
-## Licença
-
-Este projeto é acadêmico, desenvolvido para fins educacionais e de inovação.
+* Arthur Pedrosa dos Santos
+* Isaque Almeida Pamplona
+* Leonardo Belém Nascimento
 
 ---
 
