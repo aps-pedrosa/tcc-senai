@@ -1,5 +1,4 @@
 <img width="1920" height="500" alt="banner_void" src="https://github.com/user-attachments/assets/b22fa42c-5652-4e83-83ee-4bda1d091210" />
----
 
 ## Sobre o projeto
 
