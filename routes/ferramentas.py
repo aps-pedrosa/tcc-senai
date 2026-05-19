@@ -1,10 +1,12 @@
 """
 routes/ferramentas.py
 ─────────────────────────────────────────────────────────────────
-GET  /api/ferramentas                 → lista todas
-GET  /api/ferramentas/<peca_code>     → detalhe de uma
-POST /api/ferramentas                 → cadastra nova (via peca_code+setor+unidade)
-GET  /api/ferramentas/uid/<uid>       → decodifica UID e retorna detalhes
+GET    /api/ferramentas                 → lista todas
+GET    /api/ferramentas/<peca_code>     → detalhe de uma
+POST   /api/ferramentas                 → cadastra nova
+PUT    /api/ferramentas/<peca_code>     → edita ferramenta
+DELETE /api/ferramentas/<peca_code>     → remove ferramenta
+GET    /api/ferramentas/uid/<uid>       → decodifica UID
 """
 
 from flask import Blueprint, request, jsonify
@@ -16,8 +18,8 @@ ferramentas_bp = Blueprint("ferramentas", __name__)
 
 @ferramentas_bp.route("/ferramentas", methods=["GET"])
 def listar_ferramentas():
-    setor    = request.args.get("setor")     # filtro opcional por código de setor
-    unidade  = request.args.get("unidade")   # filtro opcional por código de unidade
+    setor      = request.args.get("setor")
+    unidade    = request.args.get("unidade")
     disponivel = request.args.get("disponivel")
 
     query = """
@@ -28,16 +30,12 @@ def listar_ferramentas():
         WHERE 1=1
     """
     params = []
-
     if setor:
-        query += " AND f.setor_codigo = ?"
-        params.append(int(setor))
+        query += " AND f.setor_codigo = ?"; params.append(int(setor))
     if unidade:
-        query += " AND f.unidade_codigo = ?"
-        params.append(int(unidade))
+        query += " AND f.unidade_codigo = ?"; params.append(int(unidade))
     if disponivel is not None:
-        query += " AND f.disponivel = ?"
-        params.append(int(disponivel))
+        query += " AND f.disponivel = ?"; params.append(int(disponivel))
 
     rows = get_db().execute(query, params).fetchall()
     return jsonify([dict(r) for r in rows])
@@ -65,12 +63,11 @@ def cadastrar_ferramenta():
     {
         "nome":            "Furadeira de Bancada",
         "categoria":       "Furação",
-        "peca_code":       100,        ← B1+B2 (0–65535)
-        "setor_codigo":    4,          ← B3
-        "unidade_codigo":  2,          ← B4
+        "peca_code":       100,
+        "setor_codigo":    4,
+        "unidade_codigo":  2,
         "quantidade":      3
     }
-    A API gera automaticamente o uid_raw a partir dos bytes.
     """
     data = request.get_json(silent=True) or {}
     required = ["nome", "categoria", "peca_code", "setor_codigo", "unidade_codigo"]
@@ -113,9 +110,53 @@ def cadastrar_ferramenta():
     }), 201
 
 
+@ferramentas_bp.route("/ferramentas/<int:peca_code>", methods=["PUT"])
+def editar_ferramenta(peca_code):
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    row = db.execute("SELECT * FROM ferramentas WHERE peca_code = ?", (peca_code,)).fetchone()
+    if not row:
+        return jsonify({"erro": "Ferramenta não encontrada"}), 404
+
+    campos, valores = [], []
+    for campo in ["nome", "categoria", "quantidade"]:
+        if campo in data:
+            campos.append(f"{campo} = ?"); valores.append(data[campo])
+    if "disponivel" in data:
+        campos.append("disponivel = ?"); valores.append(1 if data["disponivel"] else 0)
+
+    if not campos:
+        return jsonify({"erro": "Nada para atualizar"}), 400
+
+    valores.append(peca_code)
+    db.execute(f"UPDATE ferramentas SET {', '.join(campos)} WHERE peca_code = ?", valores)
+    db.commit()
+    return jsonify({"ok": True, "mensagem": "Ferramenta atualizada"})
+
+
+@ferramentas_bp.route("/ferramentas/<int:peca_code>", methods=["DELETE"])
+def deletar_ferramenta(peca_code):
+    db = get_db()
+    row = db.execute("SELECT * FROM ferramentas WHERE peca_code = ?", (peca_code,)).fetchone()
+    if not row:
+        return jsonify({"erro": "Ferramenta não encontrada"}), 404
+
+    # Verifica se há movimentações vinculadas
+    mov = db.execute(
+        "SELECT COUNT(*) as n FROM movimentacoes WHERE ferramenta_peca = ?", (peca_code,)
+    ).fetchone()
+    if mov["n"] > 0:
+        return jsonify({
+            "erro": f"Ferramenta possui {mov['n']} movimentação(ões) registrada(s). Remova-as primeiro ou desative a ferramenta."
+        }), 409
+
+    db.execute("DELETE FROM ferramentas WHERE peca_code = ?", (peca_code,))
+    db.commit()
+    return jsonify({"ok": True, "mensagem": "Ferramenta removida"})
+
+
 @ferramentas_bp.route("/ferramentas/uid/<string:uid>", methods=["GET"])
 def decodificar_uid(uid):
-    """Utilitário: recebe um UID bruto e retorna o breakdown dos bytes."""
     try:
         parsed = parse_uid(uid)
     except UIDParseError as e:

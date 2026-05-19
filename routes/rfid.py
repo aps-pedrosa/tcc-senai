@@ -158,7 +158,6 @@ def _registrar_movimentacao(db, ferramenta, uid):
     ).fetchone()
 
     if not sessao:
-        print(sessao)
         return _erro("Nenhum operador identificado. Passe o cracha primeiro."), 403
 
     # Define tipo da movimentação

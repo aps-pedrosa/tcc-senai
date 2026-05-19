@@ -1,9 +1,10 @@
 """
 routes/operadores.py
 ─────────────────────────────────────────────────────────────────
-GET  /api/operadores          → lista todos
-POST /api/operadores          → cadastra novo operador (crachá RFID)
-GET  /api/operadores/ativos   → operadores com sessão ativa agora
+GET    /api/operadores          → lista todos
+POST   /api/operadores          → cadastra novo operador (crachá RFID)
+DELETE /api/operadores/<id>     → remove operador
+GET    /api/operadores/ativos   → operadores com sessão ativa agora
 """
 
 from flask import Blueprint, request, jsonify
@@ -19,7 +20,8 @@ def listar_operadores():
         """SELECT o.*, s.nome AS setor_nome, u.nome AS unidade_nome
            FROM operadores o
            JOIN setores  s ON s.codigo = o.setor_codigo
-           JOIN unidades u ON u.codigo = o.unidade_codigo"""
+           JOIN unidades u ON u.codigo = o.unidade_codigo
+           ORDER BY o.nome"""
     ).fetchall()
     return jsonify([dict(r) for r in rows])
 
@@ -29,9 +31,9 @@ def cadastrar_operador():
     """
     Payload:
     {
-        "uid_raw":         "A34F0302",  ← UID do crachá físico
-        "nome":            "João Silva",
-        "matricula":       "TS-0042"
+        "uid_raw":   "A34F0302",
+        "nome":      "João Silva",
+        "matricula": "TS-0042"
     }
     O setor e a unidade são extraídos automaticamente dos bytes B3 e B4 do UID.
     """
@@ -74,6 +76,30 @@ def cadastrar_operador():
             "B4 (unidade)":      f"{uid['b4']} → {uid['unidade_nome']}",
         }
     }), 201
+
+
+@operadores_bp.route("/operadores/<int:op_id>", methods=["DELETE"])
+def deletar_operador(op_id):
+    db = get_db()
+    row = db.execute("SELECT * FROM operadores WHERE id = ?", (op_id,)).fetchone()
+    if not row:
+        return jsonify({"erro": "Operador não encontrado"}), 404
+
+    # Encerra sessões ativas primeiro
+    db.execute("UPDATE sessoes SET ativa = 0 WHERE operador_id = ?", (op_id,))
+
+    # Verifica movimentações
+    mov = db.execute(
+        "SELECT COUNT(*) as n FROM movimentacoes WHERE operador_id = ?", (op_id,)
+    ).fetchone()
+    if mov["n"] > 0:
+        return jsonify({
+            "erro": f"Operador possui {mov['n']} movimentação(ões). Não é possível remover."
+        }), 409
+
+    db.execute("DELETE FROM operadores WHERE id = ?", (op_id,))
+    db.commit()
+    return jsonify({"ok": True, "mensagem": "Operador removido"})
 
 
 @operadores_bp.route("/operadores/ativos", methods=["GET"])
