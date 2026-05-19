@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoidLog — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:      #0b0e13; --surface: #131820; --border: #1f2935;
+    --accent:  #00e5ff; --accent2: #ff6b35; --accent3: #7fff6e;
+    --text:    #e2eaf4; --muted:   #5a6a80; --danger:  #ff3d57; --warn: #ffb800;
+    --fh: 'Bebas Neue',sans-serif; --fm: 'IBM Plex Mono',monospace; --fb: 'IBM Plex Sans',sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;z-index:0;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(0,229,255,.03) 39px,rgba(0,229,255,.03) 40px),
+    repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(0,229,255,.03) 39px,rgba(0,229,255,.03) 40px);pointer-events:none}
+
+  header{position:sticky;top:0;z-index:100;background:rgba(11,14,19,.92);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:60px}
+  .logo{font-family:var(--fh);font-size:28px;letter-spacing:3px;color:var(--accent);text-shadow:0 0 20px rgba(0,229,255,.5)}
+  .logo span{color:var(--text)}
+  .header-meta{font-family:var(--fm);font-size:11px;color:var(--muted);text-align:right;line-height:1.6}
+  .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent3);margin-right:6px;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+
+  nav.tabs{display:flex;gap:0;padding:0 32px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .tab-btn{padding:14px 22px;background:none;border:none;cursor:pointer;font-family:var(--fm);font-size:12px;font-weight:600;
+    color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .2s}
+  .tab-btn:hover{color:var(--text)}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+  .page{display:none;padding:28px 32px;position:relative;z-index:1}
+  .page.active{display:block;animation:fadein .3s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .filter-bar{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
+  .filter-bar label{font-family:var(--fm);font-size:11px;color:var(--muted)}
+  .filter-bar select,.filter-bar input{background:var(--surface);border:1px solid var(--border);color:var(--text);
+    font-family:var(--fm);font-size:12px;padding:7px 12px;border-radius:4px;outline:none;transition:border-color .2s}
+  .filter-bar select:focus,.filter-bar input:focus{border-color:var(--accent)}
+  .btn{padding:8px 18px;border-radius:4px;border:none;cursor:pointer;font-family:var(--fm);font-size:12px;font-weight:600;letter-spacing:1px;transition:all .2s}
+  .btn-primary{background:var(--accent);color:#000}
+  .btn-primary:hover{background:#33eeff;box-shadow:0 0 16px rgba(0,229,255,.4)}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;
+    position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+  .stat-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--ca,var(--accent))}
+  .stat-label{font-family:var(--fm);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+  .stat-value{font-family:var(--fh);font-size:48px;line-height:1;color:var(--ca,var(--accent));text-shadow:0 0 20px rgba(0,229,255,.3)}
+  .stat-sub{font-family:var(--fm);font-size:11px;color:var(--muted);margin-top:6px}
+
+  .charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px}
+  .chart-title{font-family:var(--fm);font-size:11px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;
+    margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+  .badge{background:rgba(0,229,255,.1);color:var(--accent);padding:2px 8px;border-radius:20px;font-size:10px}
+  canvas{max-height:220px}
+
+  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+  .table-title{font-family:var(--fm);font-size:11px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+  table{width:100%;border-collapse:collapse}
+  th{font-family:var(--fm);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;
+    padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+  td{font-family:var(--fm);font-size:12px;padding:12px 16px;border-bottom:1px solid rgba(31,41,53,.6);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(0,229,255,.04)}
+
+  .bt{display:inline-block;padding:2px 10px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+  .bt-retirada{background:rgba(255,107,53,.15);color:var(--accent2)}
+  .bt-devolucao{background:rgba(127,255,110,.15);color:var(--accent3)}
+  .bt-em-uso{background:rgba(255,61,87,.15);color:var(--danger)}
+  .bt-livre{background:rgba(127,255,110,.15);color:var(--accent3)}
+  .bt-ativo{background:rgba(0,229,255,.15);color:var(--accent)}
+
+  .uid-chip{font-family:var(--fm);font-size:10px;color:var(--accent);background:rgba(0,229,255,.08);padding:2px 8px;border-radius:3px;letter-spacing:1px}
+  .byte-tip{font-size:10px;color:var(--muted);display:block;margin-top:2px}
+
+  .alertas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .alerta-card{background:var(--surface);border:1px solid rgba(255,61,87,.3);border-radius:8px;padding:16px;border-left:3px solid var(--danger);animation:ap 2s infinite}
+  @keyframes ap{0%,100%{border-left-color:var(--danger)}50%{border-left-color:rgba(255,61,87,.3)}}
+  .alerta-nome{font-weight:600;font-size:14px;margin-bottom:6px}
+  .alerta-meta{font-family:var(--fm);font-size:11px;color:var(--muted);line-height:1.8}
+
+  .rfid-terminal{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:28px;border-top:3px solid var(--accent)}
+  .terminal-title{font-family:var(--fh);font-size:22px;letter-spacing:2px;color:var(--accent);margin-bottom:20px}
+  .input-group{margin-bottom:16px}
+  .input-group label{display:block;font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+  .input-group input,.input-group select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;
+    color:var(--text);font-family:var(--fm);font-size:13px;padding:10px 14px;outline:none;transition:border-color .2s}
+  .input-group input:focus,.input-group select:focus{border-color:var(--accent)}
+  .uid-preview{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-top:16px;
+    font-family:var(--fm);font-size:12px;line-height:1.8;display:none}
+  .uid-preview.show{display:block}
+  .uid-big{font-family:var(--fh);font-size:28px;letter-spacing:4px;color:var(--accent);display:block;margin-bottom:8px}
+  .byte-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .byte-block{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);border-radius:4px;padding:4px 10px;font-size:11px;color:var(--accent)}
+  .byte-block span{color:var(--muted)}
+  .log-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-top:16px;
+    font-family:var(--fm);font-size:12px;line-height:1.6;color:var(--accent3);max-height:200px;overflow-y:auto;white-space:pre-wrap;display:none}
+  .log-box.show{display:block}
+  .log-box.error{color:var(--danger)}
+
+  .op-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px}
+  .op-card{background:var(--surface);border:1px solid rgba(0,229,255,.2);border-radius:8px;padding:16px;display:flex;align-items:center;gap:14px}
+  .op-avatar{width:40px;height:40px;border-radius:50%;background:rgba(0,229,255,.1);border:2px solid var(--accent);
+    display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:18px;color:var(--accent);flex-shrink:0}
+  .op-name{font-weight:600}
+  .op-meta{font-family:var(--fm);font-size:10px;color:var(--muted)}
+
+  .loading{color:var(--muted);font-family:var(--fm);font-size:12px;padding:20px}
+  .no-data{color:var(--muted);font-family:var(--fm);font-size:12px;padding:20px;text-align:center}
+
+  @media(max-width:768px){.charts-grid,.charts-row{grid-template-columns:1fr}header{padding:0 16px}.page{padding:16px}nav.tabs{padding:0 16px;overflow-x:auto}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Void<span>Log</span></div>
+  <div class="header-meta">
+    <div><span class="live-dot"></span><span id="live-status">CONECTANDO...</span></div>
+    <div id="clock">--:--:--</div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" onclick="setTab('dashboard',this)">Dashboard</button>
+  <button class="tab-btn" onclick="setTab('movimentacoes',this)">Movimentações</button>
+  <button class="tab-btn" onclick="setTab('ferramentas',this)">Ferramentas</button>
+  <button class="tab-btn" onclick="setTab('operadores',this)">Operadores</button>
+  <button class="tab-btn" onclick="setTab('alertas',this)">Alertas <span id="alert-badge" style="color:var(--danger)"></span></button>
+  <button class="tab-btn" onclick="setTab('terminal',this)">Terminal RFID</button>
+</nav>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="filter-bar">
+    <label>SETOR</label>
+    <select id="d-setor" onchange="loadDashboard()"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option></select>
+    <label>UNIDADE</label>
+    <select id="d-unidade" onchange="loadDashboard()"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
+    <button class="btn btn-ghost" onclick="loadDashboard()">↻ Atualizar</button>
+  </div>
+  <div class="stats-grid" id="stats-grid"><div class="loading">Carregando...</div></div>
+  <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">Movimentações — Últimos 30 dias <span class="badge">SÉRIE</span></div><canvas id="cDias"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Por Unidade (B4) <span class="badge">BYTE 4</span></div><canvas id="cUnidade"></canvas></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">Por Setor (B3) <span class="badge">BYTE 3</span></div><canvas id="cSetor"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Top Ferramentas mais usadas</div><canvas id="cTop"></canvas></div>
+  </div>
+</div>
+
+<!-- MOVIMENTAÇÕES -->
+<div id="page-movimentacoes" class="page">
+  <div class="filter-bar">
+    <label>SETOR</label>
+    <select id="m-setor"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option></select>
+    <label>UNIDADE</label>
+    <select id="m-unidade"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
+    <label>TIPO</label>
+    <select id="m-tipo"><option value="">Todos</option><option value="retirada">Retirada</option><option value="devolucao">Devolução</option></select>
+    <label>DE</label><input type="date" id="m-ini">
+    <label>ATÉ</label><input type="date" id="m-fim">
+    <button class="btn btn-primary" onclick="loadMovs()">Buscar</button>
+  </div>
+  <div class="table-card">
+    <div class="table-header"><span class="table-title">Histórico</span><span id="mov-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Horário</th><th>Tipo</th><th>Ferramenta</th><th>UID / Bytes</th><th>Operador</th><th>Setor (B3)</th><th>Unidade (B4)</th></tr></thead>
+    <tbody id="mov-body"><tr><td colspan="7" class="loading">Carregando...</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- FERRAMENTAS -->
+<div id="page-ferramentas" class="page">
+  <div class="filter-bar">
+    <label>SETOR</label>
+    <select id="f-setor" onchange="loadFer()"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option></select>
+    <label>UNIDADE</label>
+    <select id="f-unidade" onchange="loadFer()"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
+    <label>STATUS</label>
+    <select id="f-disp" onchange="loadFer()"><option value="">Todos</option><option value="1">Disponível</option><option value="0">Em uso</option></select>
+  </div>
+  <div class="table-card">
+    <div class="table-header"><span class="table-title">Ferramentas cadastradas</span><span id="fer-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Ferramenta</th><th>Categoria</th><th>UID</th><th>Peça (B1+B2)</th><th>Setor (B3)</th><th>Unidade (B4)</th><th>Status</th></tr></thead>
+    <tbody id="fer-body"><tr><td colspan="7" class="loading">Carregando...</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- OPERADORES -->
+<div id="page-operadores" class="page">
+  <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Sessões ativas agora</div>
+  <div class="op-grid" id="op-ativos"><div class="loading">Carregando...</div></div>
+  <div class="table-card">
+    <div class="table-header"><span class="table-title">Todos os operadores</span></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>UID Crachá</th><th>Setor (B3)</th><th>Unidade (B4)</th></tr></thead>
+    <tbody id="op-body"><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- ALERTAS -->
+<div id="page-alertas" class="page">
+  <div style="margin-bottom:20px">
+    <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Ferramentas em uso / estoque crítico</div>
+    <div id="alerta-total" style="font-family:var(--fh);font-size:48px;color:var(--danger)">--</div>
+  </div>
+  <div class="alertas-grid" id="alertas-grid"><div class="loading">Carregando...</div></div>
+</div>
+
+<!-- TERMINAL RFID -->
+<div id="page-terminal" class="page">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+    <div class="rfid-terminal">
+      <div class="terminal-title">Simular Leitura RFID</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Simule o que o ESP32 faria ao aproximar uma tag. A API decodifica os 4 bytes automaticamente.</p>
+      <div class="input-group">
+        <label>UID da Tag (8 chars hex)</label>
+        <input type="text" id="sim-uid" maxlength="8" placeholder="Ex: 00640405" oninput="previewUID(this.value)" style="text-transform:uppercase;letter-spacing:3px">
+      </div>
+      <div class="uid-preview" id="uid-preview">
+        <span class="uid-big" id="prev-uid"></span>
+        <div class="byte-row" id="prev-bytes"></div>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:10px">
+        <button class="btn btn-primary" onclick="simularRFID()">▶ Enviar para API</button>
+        <button class="btn btn-ghost" onclick="uidAleatorio()">⚄ Aleatório</button>
+      </div>
+      <div class="log-box" id="rfid-log"></div>
+    </div>
+
+    <div class="rfid-terminal" style="border-top-color:var(--accent2)">
+      <div class="terminal-title" style="color:var(--accent2)">Montar UID por Partes</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Informe os campos para gerar o UID que seria gravado na tag RFID.</p>
+      <div class="input-group">
+        <label>B1+B2 — Código da Peça (0–65535)</label>
+        <input type="number" id="gp" min="0" max="65535" placeholder="Ex: 100" oninput="gerarUID()">
+      </div>
+      <div class="input-group">
+        <label>B3 — Setor</label>
+        <select id="gs" onchange="gerarUID()"><option value="">Selecione...</option><option value="1">01 — Soldagem</option><option value="2">02 — Corte</option><option value="3">03 — Usinagem</option><option value="4">04 — Furação</option><option value="5">05 — Montagem</option><option value="6">06 — Manutenção</option><option value="7">07 — Almoxarifado</option><option value="8">08 — Qualidade</option></select>
+      </div>
+      <div class="input-group">
+        <label>B4 — Unidade</label>
+        <select id="gu" onchange="gerarUID()"><option value="">Selecione...</option><option value="1">01 — Centro</option><option value="2">02 — BH</option><option value="3">03 — Contagem</option><option value="4">04 — Betim</option><option value="5">05 — Ibirité</option></select>
+      </div>
+      <div class="uid-preview show">
+        <span style="font-family:var(--fm);font-size:11px;color:var(--muted)">UID gerado:</span>
+        <span class="uid-big" id="gen-uid" style="color:var(--accent2)">--------</span>
+        <div class="byte-row" id="gen-bytes"></div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn btn-primary" style="background:var(--accent2)" onclick="copiarUID()">⎘ Copiar UID</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SETORES  = {1:'Soldagem',2:'Corte',3:'Usinagem',4:'Furação',5:'Montagem',6:'Manutenção',7:'Almoxarifado',8:'Qualidade'};
+const UNIDADES = {1:'Centro',2:'BH',3:'Contagem',4:'Betim',5:'Ibirité'};
+let charts = {};
+
+// ── Clock & health ──────────────────────────────────────────────
+setInterval(()=>{ document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR'); }, 1000);
+async function checkHealth(){
+  try{ const d=await(await fetch('/api/ping')).json(); document.getElementById('live-status').textContent='ONLINE — '+d.sistema; }
+  catch{ document.getElementById('live-status').textContent='OFFLINE'; }
+}
+checkHealth(); setInterval(checkHealth,10000);
+
+// ── Tabs ─────────────────────────────────────────────────────────
+function setTab(name, btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('page-'+name).classList.add('active');
+  ({dashboard:loadDashboard,movimentacoes:loadMovs,ferramentas:loadFer,operadores:loadOps,alertas:loadAlertas})[name]?.();
+}
+
+// ── API ──────────────────────────────────────────────────────────
+const api = path => fetch(path).then(r=>r.json());
+
+// ── Chart helper ─────────────────────────────────────────────────
+function mkChart(id,type,data,extra={}){
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id).getContext('2d'),{type,data,options:{
+    responsive:true,
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#131820',borderColor:'#1f2935',borderWidth:1,
+      titleColor:'#5a6a80',bodyColor:'#e2eaf4',titleFont:{family:"'IBM Plex Mono'",size:10},bodyFont:{family:"'IBM Plex Mono'",size:11}}},
+    scales:type==='doughnut'?{}:{
+      x:{grid:{color:'rgba(31,41,53,.6)'},ticks:{color:'#5a6a80',font:{family:"'IBM Plex Mono'",size:10}}},
+      y:{grid:{color:'rgba(31,41,53,.6)'},ticks:{color:'#5a6a80',font:{family:"'IBM Plex Mono'",size:10}}},
+    },...extra
+  }});
+}
+
+function fmt(str){ return str? new Date(str).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'--'; }
+
+// ══════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════════
+async function loadDashboard(){
+  let qs='?x=1';
+  const s=document.getElementById('d-setor').value, u=document.getElementById('d-unidade').value;
+  if(s) qs+='&setor='+s; if(u) qs+='&unidade='+u;
+  const d = await api('/api/dashboard/dados'+qs);
+  const emUso = (d.em_uso||[]).length;
+
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card" style="--ca:var(--accent)"><div class="stat-label">Total movimentações</div><div class="stat-value">${d.totais.total_movimentacoes||0}</div></div>
+    <div class="stat-card" style="--ca:var(--accent2)"><div class="stat-label">Retiradas</div><div class="stat-value">${d.totais.total_retiradas||0}</div></div>
+    <div class="stat-card" style="--ca:var(--accent3)"><div class="stat-label">Devoluções</div><div class="stat-value">${d.totais.total_devolucoes||0}</div></div>
+    <div class="stat-card" style="--ca:var(--danger)"><div class="stat-label">Em uso agora</div><div class="stat-value">${emUso}</div><div class="stat-sub">não devolvidas</div></div>
+  `;
+
+  mkChart('cDias','line',{labels:d.por_dia.map(r=>r.dia),datasets:[{label:'Movs',data:d.por_dia.map(r=>r.total),
+    borderColor:'#00e5ff',backgroundColor:'rgba(0,229,255,.08)',fill:true,tension:.4,pointBackgroundColor:'#00e5ff',pointRadius:3}]});
+
+  mkChart('cUnidade','doughnut',{labels:d.por_unidade.map(r=>r.unidade),datasets:[{data:d.por_unidade.map(r=>r.movimentacoes),
+    backgroundColor:['#00e5ff','#ff6b35','#7fff6e','#ffb800','#ff3d57'],borderWidth:0}]},
+    {plugins:{legend:{display:true,position:'bottom',labels:{color:'#5a6a80',font:{family:"'IBM Plex Mono'",size:10},boxWidth:12}}}});
+
+  mkChart('cSetor','bar',{labels:d.por_setor.map(r=>r.setor),datasets:[{label:'Movs',data:d.por_setor.map(r=>r.movimentacoes),
+    backgroundColor:'rgba(0,229,255,.15)',borderColor:'#00e5ff',borderWidth:1,borderRadius:4}]});
+
+  mkChart('cTop','bar',{labels:d.top_ferramentas.map(r=>r.nome.substring(0,18)),datasets:[{label:'Usos',
+    data:d.top_ferramentas.map(r=>r.usos),backgroundColor:'rgba(255,107,53,.2)',borderColor:'#ff6b35',borderWidth:1,borderRadius:4}]},{indexAxis:'y'});
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MOVIMENTAÇÕES
+// ══════════════════════════════════════════════════════════════════
+async function loadMovs(){
+  let qs='?limit=200';
+  const s=document.getElementById('m-setor').value, u=document.getElementById('m-unidade').value,
+        t=document.getElementById('m-tipo').value, i=document.getElementById('m-ini').value, f=document.getElementById('m-fim').value;
+  if(s) qs+='&setor='+s; if(u) qs+='&unidade='+u; if(t) qs+='&tipo='+t; if(i) qs+='&data_ini='+i; if(f) qs+='&data_fim='+f;
+
+  document.getElementById('mov-body').innerHTML='<tr><td colspan="7" class="loading">Carregando...</td></tr>';
+  const rows = await api('/api/movimentacoes'+qs);
+  document.getElementById('mov-count').textContent = rows.length+' registros';
+
+  if(!rows.length){ document.getElementById('mov-body').innerHTML='<tr><td colspan="7" class="no-data">Nenhum registro</td></tr>'; return; }
+
+  document.getElementById('mov-body').innerHTML = rows.map(r=>`
+    <tr>
+      <td>${fmt(r.horario)}</td>
+      <td><span class="bt bt-${r.tipo}">${r.tipo}</span></td>
+      <td>${r.ferramenta}<br><span class="byte-tip">${r.categoria}</span></td>
+      <td><span class="uid-chip">${r.uid_raw}</span>
+          <span class="byte-tip">B1+B2:${r.peca_code} · B3:0x${r.byte_B3_hex} · B4:0x${r.byte_B4_hex}</span></td>
+      <td>${r.operador}<br><span class="byte-tip">${r.matricula}</span></td>
+      <td>${r.setor}</td>
+      <td>${r.unidade}</td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// FERRAMENTAS
+// ══════════════════════════════════════════════════════════════════
+async function loadFer(){
+  let qs='?x=1';
+  const s=document.getElementById('f-setor').value, u=document.getElementById('f-unidade').value, d=document.getElementById('f-disp').value;
+  if(s) qs+='&setor='+s; if(u) qs+='&unidade='+u; if(d!=='') qs+='&disponivel='+d;
+  document.getElementById('fer-body').innerHTML='<tr><td colspan="7" class="loading">Carregando...</td></tr>';
+  const rows = await api('/api/ferramentas'+qs);
+  document.getElementById('fer-count').textContent=rows.length+' ferramentas';
+  if(!rows.length){ document.getElementById('fer-body').innerHTML='<tr><td colspan="7" class="no-data">Nenhuma ferramenta</td></tr>'; return; }
+  const b12=pc=>{const h=pc.toString(16).toUpperCase().padStart(4,'0'); return '0x'+h.slice(0,2)+' '+h.slice(2);};
+  document.getElementById('fer-body').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.nome}</strong></td>
+      <td>${r.categoria}</td>
+      <td><span class="uid-chip">${r.uid_raw}</span></td>
+      <td><span style="color:var(--accent);font-family:var(--fm);font-size:11px">${b12(r.peca_code)}</span><span class="byte-tip">dec: ${r.peca_code}</span></td>
+      <td>${r.setor_nome}</td>
+      <td>${r.unidade_nome}</td>
+      <td><span class="bt ${r.disponivel?'bt-livre':'bt-em-uso'}">${r.disponivel?'LIVRE':'EM USO'}</span></td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// OPERADORES
+// ══════════════════════════════════════════════════════════════════
+async function loadOps(){
+  const [ativos,todos]=await Promise.all([api('/api/operadores/ativos'),api('/api/operadores')]);
+  document.getElementById('op-ativos').innerHTML = !ativos.length
+    ? '<div style="font-family:var(--fm);font-size:12px;color:var(--muted)">Nenhum operador logado.</div>'
+    : ativos.map(o=>`<div class="op-card"><div class="op-avatar">${o.nome[0]}</div><div><div class="op-name">${o.nome}</div><div class="op-meta">${o.setor} · ${o.unidade}<br>${fmt(o.inicio)}</div></div><span class="bt bt-ativo" style="margin-left:auto">ATIVO</span></div>`).join('');
+  document.getElementById('op-body').innerHTML=todos.map(o=>`
+    <tr><td><strong>${o.nome}</strong></td><td><span class="uid-chip">${o.matricula}</span></td>
+    <td><span class="uid-chip">${o.uid_raw}</span></td><td>${o.setor_nome}</td><td>${o.unidade_nome}</td></tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ALERTAS
+// ══════════════════════════════════════════════════════════════════
+async function loadAlertas(){
+  const data=await api('/api/alertas');
+  document.getElementById('alerta-total').textContent=data.total_alertas;
+  document.getElementById('alert-badge').textContent=data.total_alertas>0?'('+data.total_alertas+')':'';
+  document.getElementById('alertas-grid').innerHTML=!data.ferramentas.length
+    ? '<div style="font-family:var(--fm);font-size:12px;color:var(--accent3)">✓ Nenhuma ferramenta em estado crítico.</div>'
+    : data.ferramentas.map(f=>`
+      <div class="alerta-card">
+        <div class="alerta-nome">${f.nome}</div>
+        <div class="alerta-meta">
+          Categoria: ${f.categoria}<br>
+          Setor: ${f.setor} <span style="color:var(--accent)">B3=0x${f.byte_B3}</span><br>
+          Unidade: ${f.unidade} <span style="color:var(--accent)">B4=0x${f.byte_B4}</span><br>
+          UID: <span class="uid-chip">${f.uid_raw}</span><br>
+          <span style="color:var(--danger);font-weight:600">EM USO — não devolvida</span>
+        </div>
+      </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TERMINAL RFID
+// ══════════════════════════════════════════════════════════════════
+function previewUID(uid){
+  uid=uid.toUpperCase();
+  const prev=document.getElementById('uid-preview');
+  if(uid.length!==8){prev.classList.remove('show');return;}
+  const b1=uid.slice(0,2),b2=uid.slice(2,4),b3=uid.slice(4,6),b4=uid.slice(6,8);
+  const peca=(parseInt(b1,16)<<8)|parseInt(b2,16), s3=parseInt(b3,16), s4=parseInt(b4,16);
+  document.getElementById('prev-uid').textContent=uid;
+  document.getElementById('prev-bytes').innerHTML=`
+    <div class="byte-block"><span>B1+B2 → peça:</span> ${peca}</div>
+    <div class="byte-block"><span>B3 → setor:</span> ${SETORES[s3]||'0x'+b3}</div>
+    <div class="byte-block"><span>B4 → unidade:</span> ${UNIDADES[s4]||'0x'+b4}</div>`;
+  prev.classList.add('show');
+}
+
+async function simularRFID(){
+  const uid=document.getElementById('sim-uid').value.toUpperCase();
+  if(uid.length!==8){alert('UID deve ter 8 caracteres hex');return;}
+  const log=document.getElementById('rfid-log');
+  log.className='log-box show'; log.textContent='► POST /api/rfid  uid='+uid+'\n';
+  try{
+    const res=await fetch('/api/rfid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid})});
+    const data=await res.json();
+    log.textContent+='◀ HTTP '+res.status+'\n\n'+JSON.stringify(data,null,2);
+    log.className='log-box show'+(data.status==='erro'?' error':'');
+  }catch(e){ log.className='log-box show error'; log.textContent+='✗ Erro: '+e.message; }
+}
+
+function uidAleatorio(){
+  const c='0123456789ABCDEF';
+  document.getElementById('sim-uid').value=[...Array(8)].map(()=>c[Math.floor(Math.random()*16)]).join('');
+  previewUID(document.getElementById('sim-uid').value);
+}
+
+function gerarUID(){
+  const peca=parseInt(document.getElementById('gp').value)||0;
+  const setor=parseInt(document.getElementById('gs').value)||0;
+  const unid=parseInt(document.getElementById('gu').value)||0;
+  const b1=((peca>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
+  const b2=(peca&0xFF).toString(16).toUpperCase().padStart(2,'0');
+  const b3=setor.toString(16).toUpperCase().padStart(2,'0');
+  const b4=unid.toString(16).toUpperCase().padStart(2,'0');
+  const uid=b1+b2+b3+b4;
+  document.getElementById('gen-uid').textContent=uid;
+  document.getElementById('gen-bytes').innerHTML=
+    `<div class="byte-block"><span>B1:</span> 0x${b1}</div><div class="byte-block"><span>B2:</span> 0x${b2}</div>`+
+    `<div class="byte-block"><span>B3:</span> 0x${b3}</div><div class="byte-block"><span>B4:</span> 0x${b4}</div>`;
+}
+
+function copiarUID(){
+  const uid=document.getElementById('gen-uid').textContent;
+  if(uid==='--------') return;
+  navigator.clipboard.writeText(uid); alert('UID '+uid+' copiado!');
+}
+
+// ── Carga inicial ────────────────────────────────────────────────
+loadDashboard(); loadAlertas();
+</script>
+</body>
+</html>
