@@ -1,15 +1,23 @@
 """
-routes/rfid.py
+routes/rfid.py — VoidLog v2
 ─────────────────────────────────────────────────────────────────
-Rota POST /api/rfid  — recebe leituras do ESP32.
+POST /api/rfid — recebe leituras do ESP32.
+
+NOVO PAYLOAD (v2):
+{
+    "uid":            "0064AABB",   ← UID bruto lido pelo RC522
+    "setor_codigo":   4,            ← selecionado no encoder do terminal
+    "unidade_codigo": 2,            ← selecionado no encoder do terminal
+    "terminal_id":    "ESP-A1B2C3"  ← opcional, ID do ESP32
+}
 
 Fluxo:
-  1. Recebe o UID de 4 bytes do ESP32
-  2. Faz o parse dos bytes (peca_code / setor / unidade)
-  3. Identifica se é CRACHÁ de operador ou TAG de ferramenta
-  4. Se for crachá  → abre/encerra sessão do operador
-  5. Se for ferramenta → registra retirada ou devolução
-  6. Retorna JSON com mensagem para exibir no LCD do ESP32
+  1. Parse do UID → extrai peca_code (B1+B2), ignora demais bytes
+  2. Setor e unidade vêm do payload (não da tag)
+  3. Identifica se é CRACHÁ ou TAG de peca pelo banco
+  4. Crachá  → abre/encerra sessão do operador naquele terminal
+  5. Peça → registra retirada ou devolução com localização atual
+  6. Atualiza localização atual e último operador da peca
 """
 
 from flask import Blueprint, request, jsonify
@@ -19,28 +27,27 @@ from uid_parser import parse_uid, UIDParseError
 rfid_bp = Blueprint("rfid", __name__)
 
 
-# ── Rota principal ─────────────────────────────────────────────────
-
 @rfid_bp.route("/rfid", methods=["POST"])
 def leitura_rfid():
-    """
-    Payload esperado do ESP32:
-    {
-        "uid": "A34F21BC"
-    }
-
-    Resposta para o ESP32 exibir no LCD:
-    {
-        "status": "ok" | "erro",
-        "tipo":   "operador" | "ferramenta" | null,
-        "msg":    "Texto curto para o LCD (max 32 chars)"
-    }
-    """
     body = request.get_json(silent=True)
     if not body or "uid" not in body:
         return _erro("JSON inválido. Chave 'uid' ausente.")
 
-    # ── 1. Parse dos bytes ─────────────────────────────────────────
+    # ── Valida setor e unidade do terminal ────────────────────────
+    setor_codigo   = body.get("setor_codigo")
+    unidade_codigo = body.get("unidade_codigo")
+    terminal_id    = body.get("terminal_id", "default")
+
+    if not setor_codigo or not unidade_codigo:
+        return _erro("Campos obrigatórios ausentes: setor_codigo, unidade_codigo")
+
+    try:
+        setor_codigo   = int(setor_codigo)
+        unidade_codigo = int(unidade_codigo)
+    except (ValueError, TypeError):
+        return _erro("setor_codigo e unidade_codigo devem ser inteiros")
+
+    # ── Parse do UID ──────────────────────────────────────────────
     try:
         uid = parse_uid(body["uid"])
     except UIDParseError as e:
@@ -48,161 +55,184 @@ def leitura_rfid():
 
     db = get_db()
 
-    # ── 2. É crachá de operador? ───────────────────────────────────
+    # ── Valida setor e unidade no banco ───────────────────────────
+    setor   = db.execute("SELECT * FROM setores   WHERE codigo=?", (setor_codigo,)).fetchone()
+    unidade = db.execute("SELECT * FROM unidades  WHERE codigo=?", (unidade_codigo,)).fetchone()
+    if not setor:
+        return _erro(f"Setor {setor_codigo} não encontrado no banco."), 404
+    if not unidade:
+        return _erro(f"Unidade {unidade_codigo} não encontrada no banco."), 404
+
+    ctx = {
+        "setor_codigo":   setor_codigo,
+        "setor_nome":     setor["nome"],
+        "unidade_codigo": unidade_codigo,
+        "unidade_nome":   unidade["nome"],
+        "terminal_id":    terminal_id,
+    }
+
+    # ── É crachá de operador? (busca por uid_raw exato) ───────────
     operador = db.execute(
         "SELECT * FROM operadores WHERE uid_raw = ?", (uid["uid_raw"],)
     ).fetchone()
 
-    if operador:
-        return _registrar_sessao(db, operador, uid)
+    # Fallback: busca apenas pelo peca_code (compatibilidade com UIDs curtos)
+    if not operador:
+        operador = db.execute(
+            "SELECT * FROM operadores WHERE peca_code = ?", (uid["peca_code"],)
+        ).fetchone()
 
-    # ── 3. É tag de ferramenta? ────────────────────────────────────
-    ferramenta = db.execute(
-        "SELECT * FROM ferramentas WHERE peca_code = ?", (uid["peca_code"],)
+    if operador:
+        return _registrar_sessao(db, operador, uid, ctx)
+
+    # ── É tag de peca? ──────────────────────────────────────
+    peca = db.execute(
+        "SELECT * FROM pecas WHERE peca_code = ?", (uid["peca_code"],)
     ).fetchone()
 
-    if ferramenta:
-        return _registrar_movimentacao(db, ferramenta, uid)
+    if peca:
+        return _registrar_movimentacao(db, peca, uid, ctx)
 
-    # ── 4. UID não cadastrado ──────────────────────────────────────
+    # ── UID não cadastrado ────────────────────────────────────────
     return _erro(
-        f"Tag não cadastrada. "
-        f"Peça={uid['peca_code']} "
-        f"Setor={uid['setor_nome']} "
-        f"Unidade={uid['unidade_nome']}"
+        f"Tag não cadastrada. peca_code={uid['peca_code']} (UID: {uid['uid_raw']})"
     ), 404
 
 
-# ── Funções auxiliares ─────────────────────────────────────────────
+# ── Sessão de operador ────────────────────────────────────────────
 
-def _registrar_sessao(db, operador, uid):
-    """Abre sessão se não houver, ou encerra a sessão ativa."""
+def _registrar_sessao(db, operador, uid, ctx):
+    """Abre ou encerra sessão do operador no terminal informado."""
+    # Sessão ativa deste operador neste terminal
     sessao_ativa = db.execute(
         """SELECT * FROM sessoes
-           WHERE operador_id = ? AND ativa = 1
+           WHERE operador_id=? AND terminal_id=? AND ativa=1
            ORDER BY inicio DESC LIMIT 1""",
-        (operador["id"],)
+        (operador["id"], ctx["terminal_id"])
     ).fetchone()
 
+    primeiro = operador["nome"].split()[0]
+
     if sessao_ativa:
-        # Encerra sessão (logout)
-        db.execute(
-            "UPDATE sessoes SET ativa = 0 WHERE id = ?",
-            (sessao_ativa["id"],)
-        )
+        db.execute("UPDATE sessoes SET ativa=0 WHERE id=?", (sessao_ativa["id"],))
         db.commit()
         return jsonify({
             "status": "ok",
             "tipo":   "operador",
-            "msg":    f"Tchau, {operador['nome'].split()[0]}!",
             "acao":   "logout",
-            "operador": {
-                "id":       operador["id"],
-                "nome":     operador["nome"],
-                "matricula": operador["matricula"],
-                "setor":    uid["setor_nome"],
-                "unidade":  uid["unidade_nome"],
-            }
-        })
-    else:
-        # Abre nova sessão (login)
-        db.execute(
-            """INSERT INTO sessoes (operador_id, setor_codigo, unidade_codigo)
-               VALUES (?, ?, ?)""",
-            (operador["id"], uid["setor_code"], uid["unidade_code"])
-        )
-        db.commit()
-        return jsonify({
-            "status": "ok",
-            "tipo":   "operador",
-            "msg":    f"Ola, {operador['nome'].split()[0]}!",
-            "acao":   "login",
+            "msg":    f"Tchau, {primeiro}!",
             "operador": {
                 "id":        operador["id"],
                 "nome":      operador["nome"],
                 "matricula": operador["matricula"],
-                "setor":     uid["setor_nome"],
-                "unidade":   uid["unidade_nome"],
-            }
+            },
+            "terminal": ctx,
+        })
+    else:
+        db.execute(
+            """INSERT INTO sessoes
+               (operador_id, terminal_id, setor_codigo, unidade_codigo)
+               VALUES (?,?,?,?)""",
+            (operador["id"], ctx["terminal_id"], ctx["setor_codigo"], ctx["unidade_codigo"])
+        )
+        db.commit()
+        return jsonify({
+            "status": "ok",
+            "tipo":   "operador",
+            "acao":   "login",
+            "msg":    f"Ola, {primeiro}!",
+            "operador": {
+                "id":        operador["id"],
+                "nome":      operador["nome"],
+                "matricula": operador["matricula"],
+            },
+            "terminal": ctx,
         })
 
 
-def _registrar_movimentacao(db, ferramenta, uid):
-    """Registra retirada ou devolução de uma ferramenta."""
+# ── Movimentação de peca ────────────────────────────────────
 
-    # Valida se setor/unidade do UID batem com o cadastro da ferramenta
-    if ferramenta["setor_codigo"] != uid["setor_code"]:
-        return _erro(
-            f"Setor incorreto! "
-            f"Ferramenta pertence ao setor código {ferramenta['setor_codigo']}, "
-            f"mas o UID indica {uid['setor_nome']}."
-        ), 409
+def _registrar_movimentacao(db, peca, uid, ctx):
+    """Registra retirada ou devolução usando o contexto do terminal."""
 
-    if ferramenta["unidade_codigo"] != uid["unidade_code"]:
-        return _erro(
-            f"Unidade incorreta! "
-            f"Ferramenta pertence à unidade código {ferramenta['unidade_codigo']}, "
-            f"mas o UID indica {uid['unidade_nome']}."
-        ), 409
-
-    # Busca operador com sessão ativa no mesmo setor/unidade
+    # Busca sessão ativa no mesmo terminal
     sessao = db.execute(
-        """SELECT s.*, o.nome as op_nome, o.id as op_id
+        """SELECT s.*, o.nome as op_nome, o.id as op_id, o.matricula as op_mat
            FROM sessoes s
            JOIN operadores o ON o.id = s.operador_id
-           WHERE s.setor_codigo   = ?
-             AND s.unidade_codigo = ?
-             AND s.ativa = 1
+           WHERE s.terminal_id=? AND s.ativa=1
            ORDER BY s.inicio DESC LIMIT 1""",
-        (uid["setor_code"], uid["unidade_code"])
+        (ctx["terminal_id"],)
     ).fetchone()
+
+    # Fallback: qualquer sessão ativa (terminal_id = 'default' ou único terminal)
+    if not sessao:
+        sessao = db.execute(
+            """SELECT s.*, o.nome as op_nome, o.id as op_id, o.matricula as op_mat
+               FROM sessoes s
+               JOIN operadores o ON o.id = s.operador_id
+               WHERE s.ativa=1
+               ORDER BY s.inicio DESC LIMIT 1"""
+        ).fetchone()
 
     if not sessao:
         return _erro("Nenhum operador identificado. Passe o cracha primeiro."), 403
 
-    # Define tipo da movimentação
-    tipo = "devolucao" if ferramenta["disponivel"] == 0 else "retirada"
+    tipo      = "devolucao" if peca["disponivel"] == 0 else "retirada"
     nova_disp = 1 if tipo == "devolucao" else 0
 
-    # Grava movimentação
+    # Grava movimentação com contexto do terminal
     db.execute(
         """INSERT INTO movimentacoes
-               (ferramenta_peca, operador_id, setor_codigo, unidade_codigo, tipo)
-           VALUES (?, ?, ?, ?, ?)""",
+           (peca_peca, operador_id, terminal_id, setor_codigo, unidade_codigo, tipo)
+           VALUES (?,?,?,?,?,?)""",
         (
-            ferramenta["peca_code"],
+            peca["peca_code"],
             sessao["op_id"],
-            uid["setor_code"],
-            uid["unidade_code"],
+            ctx["terminal_id"],
+            ctx["setor_codigo"],
+            ctx["unidade_codigo"],
             tipo,
         )
     )
 
-    # Atualiza disponibilidade
+    # Atualiza disponibilidade + localização atual + último operador
     db.execute(
-        "UPDATE ferramentas SET disponivel = ? WHERE peca_code = ?",
-        (nova_disp, ferramenta["peca_code"])
+        """UPDATE pecas SET
+               disponivel          = ?,
+               localizacao_setor   = ?,
+               localizacao_unidade = ?,
+               ultimo_operador_id  = ?,
+               ultima_mov          = CURRENT_TIMESTAMP
+           WHERE peca_code = ?""",
+        (
+            nova_disp,
+            ctx["setor_codigo"],
+            ctx["unidade_codigo"],
+            sessao["op_id"],
+            peca["peca_code"],
+        )
     )
     db.commit()
 
-    emoji = "Retirada" if tipo == "retirada" else "Devolvida"
+    label = "Retirada" if tipo == "retirada" else "Devolvida"
     return jsonify({
         "status": "ok",
-        "tipo":   "ferramenta",
+        "tipo":   "peca",
         "acao":   tipo,
-        "msg":    f"{emoji}: {ferramenta['nome'][:20]}",
+        "msg":    f"{label}: {peca['nome'][:20]}",
         "detalhes": {
-            "ferramenta":  ferramenta["nome"],
-            "categoria":   ferramenta["categoria"],
-            "peca_code":   ferramenta["peca_code"],
-            "operador":    sessao["op_nome"],
-            "setor":       uid["setor_nome"],
-            "unidade":     uid["unidade_nome"],
-            "uid_bytes": {
-                "B1+B2 (peca)":    f"{uid['b1']} {uid['b2']} → {uid['peca_code']}",
-                "B3 (setor)":      f"{uid['b3']} → {uid['setor_nome']}",
-                "B4 (unidade)":    f"{uid['b4']} → {uid['unidade_nome']}",
-            }
+            "peca":    peca["nome"],
+            "categoria":     peca["categoria"],
+            "peca_code":     peca["peca_code"],
+            "uid_raw":       uid["uid_raw"],
+            "operador":      sessao["op_nome"],
+            "matricula":     sessao["op_mat"],
+            "localizacao": {
+                "setor":   ctx["setor_nome"],
+                "unidade": ctx["unidade_nome"],
+                "terminal_id": ctx["terminal_id"],
+            },
         }
     })
 

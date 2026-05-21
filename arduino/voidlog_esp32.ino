@@ -1,12 +1,63 @@
 /*
- * VoidLog — Firmware ESP32
- * ─────────────────────────────────────────────────────────────────
- * Hardware:
- *   ESP32 DevKit V1 + RC522 (SPI) + LCD 16x2 I2C + Rotary Encoder KY-040
- *   + Buzzer + LED Verde + LED Vermelho + Botão Reset
+ * VoidLog v2 — Firmware ESP32
+ * ═══════════════════════════════════════════════════════════════════
  *
- * Bibliotecas (instalar via Library Manager):
- *   MFRC522, LiquidCrystal_I2C, ArduinoJson
+ * HARDWARE:
+ *   - ESP32 DevKit V1
+ *   - Módulo RFID RC522        → crachá do operador (SPI)
+ *   - Leitor código de barras  → identificação da peça (Serial2/UART)
+ *   - LCD 16x2 I2C             → feedback visual
+ *   - Teclado Membrana 4x3     → seleção de setor e unidade
+ *   - Buzzer passivo           → feedback sonoro
+ *   - LED Verde + Vermelho     → status da operação
+ *   - Botão RESET              → volta ao menu principal
+ *
+ * FLUXO OPERACIONAL:
+ *   1. Operador digita setor no teclado  (1–8, confirmado com #)
+ *   2. Operador digita unidade no teclado (1–5, confirmado com #)
+ *   3. Operador passa o crachá RFID → login registrado na API
+ *   4. Operador lê o código de barras da peça → mov. registrada
+ *   5. LCD exibe resultado; após 3s volta ao passo 4
+ *   6. Para trocar operador: botão * no teclado → logout + volta ao passo 3
+ *   7. Botão RESET físico → volta ao passo 1 (redefine setor/unidade)
+ *
+ * PAYLOAD ENVIADO À API (POST /api/rfid):
+ *   {
+ *     "uid":            "00640000",   ← peca_code em hex (barcode → 2 bytes)
+ *     "setor_codigo":   4,            ← digitado no teclado
+ *     "unidade_codigo": 2,            ← digitado no teclado
+ *     "terminal_id":    "ESP-AABBCC"  ← MAC address do ESP32
+ *   }
+ *   O crachá do operador envia o mesmo payload com seu uid_raw.
+ *
+ * MAPEAMENTO DO TECLADO 4x3:
+ *   ┌───┬───┬───┐
+ *   │ 1 │ 2 │ 3 │
+ *   ├───┼───┼───┤
+ *   │ 4 │ 5 │ 6 │
+ *   ├───┼───┼───┤
+ *   │ 7 │ 8 │ 9 │
+ *   ├───┼───┼───┤
+ *   │ * │ 0 │ # │
+ *   └───┴───┴───┘
+ *   # = confirmar / Enter
+ *   * = cancelar / limpar / logout de operador
+ *
+ * PINAGEM COMPLETA:
+ *   RC522  SDA→5  SCK→18  MOSI→23  MISO→19  RST→4  3.3V  GND
+ *   LCD I2C  SDA→21  SCL→22  VCC→5V  GND
+ *   Barcode  TX→GPIO16 (RX2 do ESP32)  GND  VCC→5V (ou 3.3V — ver datasheet)
+ *   Teclado  LINHAS→GPIO 13,12,14,27   COLUNAS→GPIO 26,25,33
+ *   Buzzer   GPIO 32
+ *   LED Verde  GPIO 17
+ *   LED Vermelho GPIO 2 (LED onboard)
+ *   Botão RESET  GPIO 34
+ *
+ * BIBLIOTECAS (instalar via Library Manager):
+ *   - MFRC522  (by GithubCommunity)
+ *   - LiquidCrystal_I2C  (by Frank de Brabander)
+ *   - ArduinoJson  (by Benoit Blanchon)
+ *   - Keypad  (by Mark Stanley, Alexander Brevig)
  */
 
 #include <WiFi.h>
@@ -16,277 +67,683 @@
 #include <MFRC522.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <Keypad.h>
 
-// ── WiFi ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// CONFIGURAÇÃO — EDITE AQUI
+// ═══════════════════════════════════════════════════════════════════
+
 const char* WIFI_SSID     = "SUA_REDE_WIFI";
 const char* WIFI_PASSWORD = "SUA_SENHA_WIFI";
-const char* API_HOST      = "http://192.168.1.100:5000";
+const char* API_HOST      = "http://192.168.1.100:5000";  // IP do servidor Flask
 
-// ── Pinos ─────────────────────────────────────────────────────────
+// Baud rate do leitor de barras (varia por modelo — comum: 9600 ou 115200)
+#define BARCODE_BAUD  9600
+
+// Tempo em ms que o resultado fica no LCD antes de voltar ao modo leitura
+#define T_RESULTADO   3000
+
+// Timeout para o crachá RFID ser lido após confirmação do setor/unidade
+#define T_AGUARDAR_CRACHA  30000   // 30 segundos
+
+// ═══════════════════════════════════════════════════════════════════
+// PINOS
+// ═══════════════════════════════════════════════════════════════════
+
+// RC522 (SPI)
 #define RC522_SS    5
 #define RC522_RST   4
-#define ENC_CLK    34
-#define ENC_DT     35
-#define ENC_SW     32
-#define BTN_RESET  33
-#define BUZZER     25
-#define LED_OK     26
-#define LED_ERR    27
 
-// ── Periféricos ───────────────────────────────────────────────────
+// LCD I2C (usa GPIO 21=SDA e 22=SCL — padrão ESP32)
+
+// Código de barras → Serial2 (RX2 = GPIO 16, TX2 = GPIO 17)
+// Apenas RX é necessário (ESP32 lê, leitor transmite)
+#define BARCODE_RX  16
+#define BARCODE_TX  17   // não usado, mas Serial2 exige declaração
+
+// Teclado 4x3
+//   Linhas  (saída):  L1→13  L2→12  L3→14  L4→27
+//   Colunas (entrada): C1→26  C2→25  C3→33
+#define KBD_ROWS 4
+#define KBD_COLS 3
+byte KBD_ROW_PINS[KBD_ROWS] = {13, 12, 14, 27};
+byte KBD_COL_PINS[KBD_COLS] = {26, 25, 33};
+
+// Periféricos
+#define BUZZER    32
+#define LED_OK    17   // verde
+#define LED_ERR   2    // vermelho (LED onboard)
+#define BTN_RESET 34   // botão físico de reset (INPUT_ONLY, sem pull-up interno)
+
+// ═══════════════════════════════════════════════════════════════════
+// TECLADO
+// ═══════════════════════════════════════════════════════════════════
+
+char KBD_MAP[KBD_ROWS][KBD_COLS] = {
+  {'1','2','3'},
+  {'4','5','6'},
+  {'7','8','9'},
+  {'*','0','#'}
+};
+Keypad teclado = Keypad(makeKeymap(KBD_MAP), KBD_ROW_PINS, KBD_COL_PINS, KBD_ROWS, KBD_COLS);
+
+// ═══════════════════════════════════════════════════════════════════
+// PERIFÉRICOS
+// ═══════════════════════════════════════════════════════════════════
+
 MFRC522           rfid(RC522_SS, RC522_RST);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-// ── Tabelas (espelham uid_parser.py) ─────────────────────────────
-const char* SETORES[]  = {"","Soldagem","Corte","Usinagem","Furacao",
-                           "Montagem","Manutencao","Almoxarifado","Qualidade"};
-const char* UNIDADES[] = {"","Und.Centro","Und.BH","Und.Contagem",
-                           "Und.Betim","Und.Ibirite"};
+// ═══════════════════════════════════════════════════════════════════
+// TABELAS (espelham database.py)
+// ═══════════════════════════════════════════════════════════════════
+
+const char* SETORES[]  = {
+  "", "Soldagem", "Corte", "Usinagem", "Furacao",
+  "Montagem", "Manutencao", "Almoxarifado", "Qualidade"
+};
+const char* UNIDADES[] = {
+  "", "Centro", "BH", "Contagem", "Betim", "Ibirite"
+};
 const int NUM_SETORES  = 8;
 const int NUM_UNIDADES = 5;
 
-// ── Máquina de estados ────────────────────────────────────────────
-enum Estado { SEL_SETOR, SEL_UNIDADE, AGUARDAR, PROCESSANDO, RESULTADO };
-Estado estado = SEL_SETOR;
+// ═══════════════════════════════════════════════════════════════════
+// MÁQUINA DE ESTADOS
+// ═══════════════════════════════════════════════════════════════════
 
-int setorSel   = 1;
-int unidadeSel = 1;
+enum Estado {
+  DIGITAR_SETOR,      // operador digita número do setor no teclado
+  DIGITAR_UNIDADE,    // operador digita número da unidade no teclado
+  AGUARDAR_CRACHA,    // aguarda crachá RFID do operador
+  AGUARDAR_BARCODE,   // operador logado — aguarda leitura do código de barras
+  PROCESSANDO,        // enviando para a API
+  RESULTADO           // exibindo resultado por T_RESULTADO ms
+};
 
-// ── Encoder ───────────────────────────────────────────────────────
-volatile int encPos = 0;
-int encPosUlt       = 0;
-int clkUlt;
-unsigned long tDebounce    = 0;
-unsigned long tDebounceBtn = 0;
-const unsigned long DEB = 50;
+Estado estado = DIGITAR_SETOR;
 
-// ── Resultado ─────────────────────────────────────────────────────
-unsigned long tResultado = 0;
-const unsigned long T_RESULTADO = 3000;
+// Contexto do terminal (definido pelo operador no teclado)
+int setorSel   = 0;
+int unidadeSel = 0;
 
-// ── Protótipos ────────────────────────────────────────────────────
+// Operador logado
+bool operadorLogado = false;
+String operadorNome = "";
+
+// Buffers de entrada do teclado
+String inputBuffer = "";
+
+// Controle de tempo
+unsigned long tResultado   = 0;
+unsigned long tAguardaCracha = 0;
+
+// ID do terminal (gerado no setup a partir do MAC)
+String terminalId = "ESP-??????";
+
+// ═══════════════════════════════════════════════════════════════════
+// PROTÓTIPOS
+// ═══════════════════════════════════════════════════════════════════
+
 void conectarWifi();
 void exibirLCD(String l1, String l2);
+void exibirLCDInput(String titulo, String input, String hint);
 void bip(bool ok);
-void ledStatus(bool ok);
-void IRAM_ATTR encISR();
-int  lerEnc(int mn, int mx, int atual);
-void chamarAPI(String uid);
+void ledStatus(bool ok, int ms = 1500);
+bool chamarAPI(String uid, String &msgL1, String &msgL2, bool &sucesso);
+String lerBarcode();
+String lerRFID();
+String pecaCodeParaUID(int peca);
+int   uidParaPecaCode(String uid);
+void  mostrarMenu();
+void  processarTeclado(char tecla);
 
-// ──────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// SETUP
+// ═══════════════════════════════════════════════════════════════════
+
 void setup() {
   Serial.begin(115200);
 
+  // Periféricos
   pinMode(BUZZER,   OUTPUT); digitalWrite(BUZZER,  LOW);
   pinMode(LED_OK,   OUTPUT); digitalWrite(LED_OK,  LOW);
   pinMode(LED_ERR,  OUTPUT); digitalWrite(LED_ERR, LOW);
-  pinMode(ENC_SW,    INPUT_PULLUP);
-  pinMode(BTN_RESET, INPUT_PULLUP);
-  pinMode(ENC_CLK,   INPUT);
-  pinMode(ENC_DT,    INPUT);
-  clkUlt = digitalRead(ENC_CLK);
+  pinMode(BTN_RESET, INPUT);   // GPIO 34 é input-only, sem pull-up
 
-  attachInterrupt(digitalPinToInterrupt(ENC_CLK), encISR, CHANGE);
-
+  // LCD
   Wire.begin(21, 22);
   lcd.init(); lcd.backlight();
-  exibirLCD("VoidLog v1.0", "Iniciando...");
+  exibirLCD("VoidLog v2", "Iniciando...");
 
+  // RFID
   SPI.begin();
   rfid.PCD_Init();
+  Serial.println("[RFID] RC522 inicializado");
 
+  // Código de barras (Serial2)
+  Serial2.begin(BARCODE_BAUD, SERIAL_8N1, BARCODE_RX, BARCODE_TX);
+  Serial.println("[BARCODE] Serial2 pronto @ " + String(BARCODE_BAUD));
+
+  // WiFi
   conectarWifi();
 
-  estado = SEL_SETOR;
-  exibirLCD(">> Setor:", SETORES[setorSel]);
+  // Terminal ID a partir do MAC
+  uint8_t mac[6]; WiFi.macAddress(mac);
+  char macStr[13];
+  sprintf(macStr, "%02X%02X%02X", mac[3], mac[4], mac[5]);
+  terminalId = "ESP-" + String(macStr);
+  Serial.println("[TERMINAL] ID: " + terminalId);
+
+  // Inicia máquina de estados
+  estado = DIGITAR_SETOR;
+  exibirLCDInput("Setor (1-8):", "", "# confirma");
 }
 
-// ──────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// LOOP PRINCIPAL
+// ═══════════════════════════════════════════════════════════════════
+
 void loop() {
 
-  // Reset físico: volta sempre para seleção de setor
-  if (digitalRead(BTN_RESET) == LOW && millis() - tDebounceBtn > DEB) {
-    tDebounceBtn = millis();
-    estado = SEL_SETOR;
-    encPos = setorSel - 1;
-    exibirLCD(">> Setor:", SETORES[setorSel]);
-    return;
+  // ── Botão RESET físico ─────────────────────────────────────────
+  if (digitalRead(BTN_RESET) == LOW) {
+    delay(50);
+    if (digitalRead(BTN_RESET) == LOW) {
+      Serial.println("[RESET] Voltando ao inicio...");
+      operadorLogado = false; operadorNome = "";
+      setorSel = 0; unidadeSel = 0;
+      inputBuffer = "";
+      estado = DIGITAR_SETOR;
+      exibirLCDInput("Setor (1-8):", "", "# confirma");
+      bip(true); delay(200); bip(true);
+      while (digitalRead(BTN_RESET) == LOW) delay(10);
+      return;
+    }
   }
 
-  // ── SEL_SETOR ───────────────────────────────────────────────────
-  if (estado == SEL_SETOR) {
-    int novo = lerEnc(0, NUM_SETORES - 1, setorSel - 1);
-    if (novo != setorSel - 1) {
-      setorSel = novo + 1;
-      exibirLCD(">> Setor:", SETORES[setorSel]);
+  // ── Máquina de estados ─────────────────────────────────────────
+
+  switch (estado) {
+
+    // ── DIGITAR_SETOR ─────────────────────────────────────────────
+    case DIGITAR_SETOR: {
+      char t = teclado.getKey();
+      if (t) processarTeclado(t);
+      break;
     }
-    if (digitalRead(ENC_SW) == LOW && millis() - tDebounce > DEB) {
-      tDebounce = millis();
-      while (digitalRead(ENC_SW) == LOW) delay(10);
-      estado = SEL_UNIDADE;
-      encPos = unidadeSel - 1;
-      exibirLCD(">> Unidade:", UNIDADES[unidadeSel]);
+
+    // ── DIGITAR_UNIDADE ───────────────────────────────────────────
+    case DIGITAR_UNIDADE: {
+      char t = teclado.getKey();
+      if (t) processarTeclado(t);
+      break;
+    }
+
+    // ── AGUARDAR_CRACHA ───────────────────────────────────────────
+    case AGUARDAR_CRACHA: {
+      // Timeout — volta ao início se nenhum crachá for lido
+      if (millis() - tAguardaCracha > T_AGUARDAR_CRACHA) {
+        Serial.println("[TIMEOUT] Aguardando crachá — reiniciando");
+        estado = DIGITAR_SETOR; inputBuffer = "";
+        exibirLCDInput("Setor (1-8):", "", "# confirma");
+        break;
+      }
+
+      // Tecla * cancela e volta à seleção de setor
+      char t = teclado.getKey();
+      if (t == '*') {
+        estado = DIGITAR_SETOR; inputBuffer = "";
+        exibirLCDInput("Setor (1-8):", "", "# confirma");
+        break;
+      }
+
+      // Tenta ler crachá RFID
+      String uid = lerRFID();
+      if (uid.length() == 0) break;
+
+      // Envia para a API
+      Serial.println("[CRACHA] UID: " + uid);
+      exibirLCD("Verificando...", uid.substring(0, 16));
+      estado = PROCESSANDO;
+
+      String l1, l2; bool sucesso;
+      bool ok = chamarAPI(uid, l1, l2, sucesso);
+
+      if (ok && sucesso) {
+        operadorLogado = true;
+        // Extrai primeiro nome da msg ("Ola, Joao!" → "Joao")
+        operadorNome = l2.length() > 5 ? l2.substring(5) : l2;
+        operadorNome.replace("!", "");
+        exibirLCD(l1, l2);
+        bip(true); ledStatus(true, 1000);
+        delay(T_RESULTADO);
+        String ctx = String(SETORES[setorSel]).substring(0,7)
+                   + "/" + String(UNIDADES[unidadeSel]).substring(0,6);
+        exibirLCD(ctx, "Leia o barcode");
+        estado = AGUARDAR_BARCODE;
+      } else {
+        exibirLCD(l1, l2);
+        bip(false); ledStatus(false, 1000);
+        delay(T_RESULTADO);
+        tAguardaCracha = millis();
+        estado = AGUARDAR_CRACHA;
+        String ctx = String(SETORES[setorSel]).substring(0,7)
+                   + "/" + String(UNIDADES[unidadeSel]).substring(0,6);
+        exibirLCD(ctx, "Passe o cracha");
+      }
+      break;
+    }
+
+    // ── AGUARDAR_BARCODE ─────────────────────────────────────────
+    case AGUARDAR_BARCODE: {
+      // Tecla * → logout do operador
+      char t = teclado.getKey();
+      if (t == '*') {
+        Serial.println("[LOGOUT] Operador encerrou sessao via teclado");
+        // Envia logout do crachá (futuro: guardar uid do crachá para logout)
+        operadorLogado = false; operadorNome = "";
+        estado = AGUARDAR_CRACHA;
+        tAguardaCracha = millis();
+        String ctx = String(SETORES[setorSel]).substring(0,7)
+                   + "/" + String(UNIDADES[unidadeSel]).substring(0,6);
+        exibirLCD(ctx, "Passe o cracha");
+        bip(false);
+        break;
+      }
+
+      // Verifica se chegou crachá RFID (troca de operador)
+      if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+        String uid = "";
+        for (byte i = 0; i < rfid.uid.size; i++) {
+          if (rfid.uid.uidByte[i] < 0x10) uid += "0";
+          uid += String(rfid.uid.uidByte[i], HEX);
+        }
+        uid.toUpperCase();
+        rfid.PICC_HaltA();
+        rfid.PCD_StopCrypto1();
+
+        // Verifica se é crachá (a API decide)
+        Serial.println("[RFID] Tag lida em modo barcode: " + uid);
+        estado = PROCESSANDO;
+        exibirLCD("Verificando...", uid.substring(0, 16));
+
+        String l1, l2; bool sucesso;
+        bool ok = chamarAPI(uid, l1, l2, sucesso);
+        exibirLCD(l1, l2);
+        bip(ok && sucesso); ledStatus(ok && sucesso, 1000);
+        delay(T_RESULTADO);
+
+        if (ok && sucesso) {
+          // Se foi login/logout de operador, atualiza nome
+          operadorNome = l2.length() > 5 ? l2.substring(5) : l2;
+          operadorNome.replace("!", "");
+        }
+
+        String ctx = String(SETORES[setorSel]).substring(0,7)
+                   + "/" + String(UNIDADES[unidadeSel]).substring(0,6);
+        exibirLCD(ctx, "Leia o barcode");
+        estado = AGUARDAR_BARCODE;
+        break;
+      }
+
+      // Lê código de barras
+      String barcode = lerBarcode();
+      if (barcode.length() == 0) break;
+
+      Serial.println("[BARCODE] Lido: " + barcode);
+
+      // Converte barcode → peca_code → uid hex de 2 bytes
+      // O barcode pode ser:
+      //   a) Numérico puro:  "100"   → peca_code=100  → "00640000"
+      //   b) Hex puro:       "0064"  → usa direto como B1B2
+      //   c) Qualquer outra string → hash simples para 2 bytes
+      String uid = barcodeParaUID(barcode);
+
+      Serial.println("[BARCODE] UID calculado: " + uid);
+      exibirLCD("Enviando...", barcode.substring(0, 16));
+      estado = PROCESSANDO;
+
+      String l1, l2; bool sucesso;
+      bool ok = chamarAPI(uid, l1, l2, sucesso);
+
+      exibirLCD(l1, l2);
+      bip(ok && sucesso);
+      ledStatus(ok && sucesso, 1500);
+      tResultado = millis();
+      estado = RESULTADO;
+      break;
+    }
+
+    // ── PROCESSANDO ───────────────────────────────────────────────
+    case PROCESSANDO:
+      // Estado transitório — tratado inline nos cases acima
+      break;
+
+    // ── RESULTADO ─────────────────────────────────────────────────
+    case RESULTADO:
+      if (millis() - tResultado > T_RESULTADO) {
+        String ctx = String(SETORES[setorSel]).substring(0,7)
+                   + "/" + String(UNIDADES[unidadeSel]).substring(0,6);
+        exibirLCD(ctx, "Leia o barcode");
+        estado = AGUARDAR_BARCODE;
+      }
+      break;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PROCESSAMENTO DO TECLADO
+// ═══════════════════════════════════════════════════════════════════
+
+void processarTeclado(char tecla) {
+  Serial.printf("[KBD] Tecla: %c  estado: %d  buffer: %s\n",
+                tecla, estado, inputBuffer.c_str());
+
+  if (estado == DIGITAR_SETOR) {
+    if (tecla == '#') {
+      // Confirma setor
+      int val = inputBuffer.toInt();
+      if (val < 1 || val > NUM_SETORES) {
+        bip(false);
+        exibirLCDInput("Setor invalido!", "1 a " + String(NUM_SETORES), "");
+        delay(1200);
+        inputBuffer = "";
+        exibirLCDInput("Setor (1-8):", "", "# confirma");
+        return;
+      }
+      setorSel = val;
+      inputBuffer = "";
       bip(true);
+      estado = DIGITAR_UNIDADE;
+      exibirLCDInput("Unidade (1-5):", "", "# confirma");
+      Serial.printf("[KBD] Setor selecionado: %d (%s)\n", setorSel, SETORES[setorSel]);
+    }
+    else if (tecla == '*') {
+      inputBuffer = "";
+      exibirLCDInput("Setor (1-8):", "", "# confirma");
+    }
+    else if (isDigit(tecla)) {
+      if (inputBuffer.length() < 2) {
+        inputBuffer += tecla;
+        exibirLCDInput("Setor (1-8):", inputBuffer, "# confirma");
+      }
     }
   }
 
-  // ── SEL_UNIDADE ─────────────────────────────────────────────────
-  else if (estado == SEL_UNIDADE) {
-    int novo = lerEnc(0, NUM_UNIDADES - 1, unidadeSel - 1);
-    if (novo != unidadeSel - 1) {
-      unidadeSel = novo + 1;
-      exibirLCD(">> Unidade:", UNIDADES[unidadeSel]);
+  else if (estado == DIGITAR_UNIDADE) {
+    if (tecla == '#') {
+      int val = inputBuffer.toInt();
+      if (val < 1 || val > NUM_UNIDADES) {
+        bip(false);
+        exibirLCDInput("Unidade inval.!", "1 a " + String(NUM_UNIDADES), "");
+        delay(1200);
+        inputBuffer = "";
+        exibirLCDInput("Unidade (1-5):", "", "# confirma");
+        return;
+      }
+      unidadeSel = val;
+      inputBuffer = "";
+      bip(true); delay(80); bip(true);  // 2 bips = confirmado
+      estado = AGUARDAR_CRACHA;
+      tAguardaCracha = millis();
+      String ctx = String(SETORES[setorSel]).substring(0,7)
+                 + "/" + String(UNIDADES[unidadeSel]).substring(0,6);
+      exibirLCD(ctx, "Passe o cracha");
+      Serial.printf("[KBD] Unidade selecionada: %d (%s)\n", unidadeSel, UNIDADES[unidadeSel]);
     }
-    if (digitalRead(ENC_SW) == LOW && millis() - tDebounce > DEB) {
-      tDebounce = millis();
-      while (digitalRead(ENC_SW) == LOW) delay(10);
-      estado = AGUARDAR;
-      String l1 = String(SETORES[setorSel]).substring(0,7) + "/" +
-                  String(UNIDADES[unidadeSel]).substring(4,10);
-      exibirLCD(l1, "Aprox. a tag...");
-      bip(true); delay(100); bip(true);
+    else if (tecla == '*') {
+      // Volta ao setor
+      inputBuffer = "";
+      estado = DIGITAR_SETOR;
+      exibirLCDInput("Setor (1-8):", "", "# confirma");
     }
-  }
-
-  // ── AGUARDAR RFID ───────────────────────────────────────────────
-  else if (estado == AGUARDAR) {
-    if (!rfid.PICC_IsNewCardPresent()) return;
-    if (!rfid.PICC_ReadCardSerial())   return;
-
-    // Lê apenas os 2 primeiros bytes da tag (B1+B2 = peca_code)
-    String peca = "";
-    for (byte i = 0; i < 2 && i < rfid.uid.size; i++) {
-      if (rfid.uid.uidByte[i] < 0x10) peca += "0";
-      peca += String(rfid.uid.uidByte[i], HEX);
-    }
-    peca.toUpperCase();
-
-    // B3 e B4 vêm da seleção física do encoder — não da tag
-    char b3[3], b4[3];
-    sprintf(b3, "%02X", setorSel);
-    sprintf(b4, "%02X", unidadeSel);
-    String uid = peca + String(b3) + String(b4);
-
-    Serial.println("[RFID] UID: " + uid +
-                   "  (peca=" + peca +
-                   " setor=0x" + String(b3) +
-                   " unidade=0x" + String(b4) + ")");
-
-    rfid.PICC_HaltA();
-    rfid.PCD_StopCrypto1();
-
-    estado = PROCESSANDO;
-    exibirLCD("Enviando...", uid);
-    chamarAPI(uid);
-  }
-
-  // ── RESULTADO ───────────────────────────────────────────────────
-  else if (estado == RESULTADO) {
-    if (millis() - tResultado > T_RESULTADO) {
-      String l1 = String(SETORES[setorSel]).substring(0,7) + "/" +
-                  String(UNIDADES[unidadeSel]).substring(4,10);
-      exibirLCD(l1, "Aprox. a tag...");
-      estado = AGUARDAR;
+    else if (isDigit(tecla)) {
+      if (inputBuffer.length() < 2) {
+        inputBuffer += tecla;
+        exibirLCDInput("Unidade (1-5):", inputBuffer, "# confirma");
+      }
     }
   }
 }
 
-// ──────────────────────────────────────────────────────────────────
-void chamarAPI(String uid) {
+// ═══════════════════════════════════════════════════════════════════
+// LEITURA DO CÓDIGO DE BARRAS (Serial2)
+// ═══════════════════════════════════════════════════════════════════
+
+String lerBarcode() {
+  if (!Serial2.available()) return "";
+
+  String barcode = "";
+  unsigned long t0 = millis();
+
+  // Lê até '\n', '\r' ou timeout de 200ms
+  while (millis() - t0 < 200) {
+    if (Serial2.available()) {
+      char c = (char)Serial2.read();
+      if (c == '\n' || c == '\r') {
+        if (barcode.length() > 0) break;
+      } else {
+        barcode += c;
+      }
+    }
+  }
+  // Limpa buffer residual
+  while (Serial2.available()) Serial2.read();
+
+  barcode.trim();
+  return barcode;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LEITURA DO RFID (crachá)
+// ═══════════════════════════════════════════════════════════════════
+
+String lerRFID() {
+  if (!rfid.PICC_IsNewCardPresent()) return "";
+  if (!rfid.PICC_ReadCardSerial())   return "";
+
+  String uid = "";
+  for (byte i = 0; i < rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] < 0x10) uid += "0";
+    uid += String(rfid.uid.uidByte[i], HEX);
+  }
+  uid.toUpperCase();
+
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+  return uid;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CONVERSÃO BARCODE → UID
+// ═══════════════════════════════════════════════════════════════════
+/*
+ * O UID enviado para a API contém apenas os 2 primeiros bytes (B1+B2)
+ * que identificam o peca_code. B3 e B4 são zerados (setor/unidade
+ * vêm do payload separadamente).
+ *
+ * Estratégias:
+ *   1. Barcode totalmente numérico → peca_code = número
+ *      Ex: "100" → peca_code=100 → uid="00640000"
+ *   2. Barcode hexadecimal (4 chars) → usa B1+B2 direto
+ *      Ex: "0064" → uid="00640000"
+ *   3. Barcode alfanumérico → CRC16 dos bytes → peca_code
+ *      Garante colisão mínima em barcodes de prateleira padrão.
+ */
+
+String barcodeParaUID(String barcode) {
+  barcode.trim();
+  int peca = 0;
+
+  // Estratégia 1: numérico puro
+  bool ehNumerico = true;
+  for (char c : barcode) { if (!isDigit(c)) { ehNumerico = false; break; } }
+  if (ehNumerico && barcode.length() > 0) {
+    long val = barcode.toInt();
+    peca = (int)(val & 0xFFFF);  // trunca para 16 bits
+  }
+  // Estratégia 2: hex de 4 chars (ex: "00A3")
+  else if (barcode.length() == 4) {
+    bool ehHex = true;
+    for (char c : barcode) {
+      if (!isHexadecimalDigit(c)) { ehHex = false; break; }
+    }
+    if (ehHex) {
+      peca = (int)strtol(barcode.c_str(), nullptr, 16);
+    } else {
+      peca = crc16(barcode);
+    }
+  }
+  // Estratégia 3: CRC16
+  else {
+    peca = crc16(barcode);
+  }
+
+  char buf[9];
+  sprintf(buf, "%02X%02X0000", (peca >> 8) & 0xFF, peca & 0xFF);
+  return String(buf);
+}
+
+// CRC-16/CCITT para mapeamento de strings a 16 bits
+uint16_t crc16(String s) {
+  uint16_t crc = 0xFFFF;
+  for (char c : s) {
+    crc ^= (uint16_t)c << 8;
+    for (int i = 0; i < 8; i++)
+      crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+  }
+  return crc;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CHAMADA À API
+// ═══════════════════════════════════════════════════════════════════
+
+bool chamarAPI(String uid, String &msgL1, String &msgL2, bool &sucesso) {
   if (WiFi.status() != WL_CONNECTED) conectarWifi();
+
+  // Monta payload v2
+  StaticJsonDocument<256> req;
+  req["uid"]            = uid;
+  req["setor_codigo"]   = setorSel;
+  req["unidade_codigo"] = unidadeSel;
+  req["terminal_id"]    = terminalId;
+
+  String payload;
+  serializeJson(req, payload);
+  Serial.println("[API] POST /api/rfid → " + payload);
 
   HTTPClient http;
   http.begin(String(API_HOST) + "/api/rfid");
   http.addHeader("Content-Type", "application/json");
-  http.setTimeout(5000);
+  http.setTimeout(6000);
 
-  String payload = "{\"uid\":\"" + uid + "\"}";
-  int code = http.POST(payload);
+  int code   = http.POST(payload);
   String body = http.getString();
   http.end();
 
-  Serial.printf("[HTTP] %d | %s\n", code, body.c_str());
+  Serial.printf("[API] HTTP %d | %s\n", code, body.c_str());
+
+  if (code <= 0) {
+    msgL1 = "Sem conexao";
+    msgL2 = "HTTP " + String(code);
+    sucesso = false;
+    return false;
+  }
 
   StaticJsonDocument<512> doc;
   DeserializationError err = deserializeJson(doc, body);
-
-  bool ok = false;
-  String l1 = "Erro de rede";
-  String l2 = "";
-
-  if (code > 0 && !err) {
-    const char* status = doc["status"] | "erro";
-    const char* msg    = doc["msg"]    | "Sem resposta";
-    const char* tipo   = doc["tipo"]   | "";
-    const char* acao   = doc["acao"]   | "";
-    ok = (strcmp(status, "ok") == 0);
-
-    if (strcmp(tipo, "operador") == 0)
-      l1 = strcmp(acao, "login") == 0 ? ">> LOGIN OK" : "<< LOGOUT OK";
-    else if (strcmp(tipo, "ferramenta") == 0)
-      l1 = strcmp(acao, "retirada") == 0 ? "RETIRADA OK" : "DEVOLUCAO OK";
-    else
-      l1 = ok ? "OK" : "ERRO";
-
-    l2 = String(msg).substring(0, 16);
+  if (err) {
+    msgL1 = "JSON invalido";
+    msgL2 = err.c_str();
+    sucesso = false;
+    return true;
   }
 
-  exibirLCD(l1, l2);
-  bip(ok);
-  ledStatus(ok);
-  tResultado = millis();
-  estado = RESULTADO;
+  const char* status = doc["status"] | "erro";
+  const char* msg    = doc["msg"]    | "Sem resposta";
+  const char* tipo   = doc["tipo"]   | "";
+  const char* acao   = doc["acao"]   | "";
+
+  sucesso = (strcmp(status, "ok") == 0);
+
+  if (strcmp(tipo, "operador") == 0) {
+    msgL1 = (strcmp(acao, "login") == 0) ? ">> LOGIN OK" : "<< LOGOUT OK";
+  } else if (strcmp(tipo, "ferramenta") == 0) {
+    msgL1 = (strcmp(acao, "retirada") == 0) ? "RETIRADA OK" : "DEVOLUCAO OK";
+  } else {
+    msgL1 = sucesso ? "OK" : "ERRO";
+  }
+  msgL2 = String(msg).substring(0, 16);
+
+  return true;
 }
 
-// ──────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// WIFI
+// ═══════════════════════════════════════════════════════════════════
+
 void conectarWifi() {
-  exibirLCD("WiFi...", WIFI_SSID);
+  exibirLCD("Conectando WiFi", WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   int t = 0;
-  while (WiFi.status() != WL_CONNECTED && t++ < 20) { delay(500); Serial.print("."); }
+  while (WiFi.status() != WL_CONNECTED && t++ < 30) {
+    delay(500); Serial.print(".");
+  }
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\n[WiFi] IP: " + WiFi.localIP().toString());
+    Serial.println("\n[WiFi] Conectado! IP: " + WiFi.localIP().toString());
     exibirLCD("WiFi OK!", WiFi.localIP().toString());
   } else {
-    exibirLCD("WiFi FALHOU!", "Sem rede");
+    Serial.println("\n[WiFi] FALHOU!");
+    exibirLCD("WiFi FALHOU", "Sem rede");
   }
-  delay(1000);
+  delay(1200);
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// DISPLAY LCD
+// ═══════════════════════════════════════════════════════════════════
+
 void exibirLCD(String l1, String l2) {
-  l1 = ("                " + l1 + "                ").substring(8, 24);
-  l2 = ("                " + l2 + "                ").substring(8, 24);
+  // Centraliza nas 16 colunas
+  while (l1.length() < 16) l1 = " " + l1;
+  while (l2.length() < 16) l2 = " " + l2;
   lcd.clear();
   lcd.setCursor(0, 0); lcd.print(l1.substring(0, 16));
   lcd.setCursor(0, 1); lcd.print(l2.substring(0, 16));
 }
 
+void exibirLCDInput(String titulo, String input, String hint) {
+  // Linha 1: título
+  // Linha 2: input atual + cursor
+  String l1 = titulo; while (l1.length() < 16) l1 += " ";
+  String l2 = "> " + input;
+  if (hint.length() > 0 && input.length() == 0) l2 = hint;
+  while (l2.length() < 16) l2 += " ";
+  lcd.clear();
+  lcd.setCursor(0, 0); lcd.print(l1.substring(0, 16));
+  lcd.setCursor(0, 1); lcd.print(l2.substring(0, 16));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BUZZER E LEDs
+// ═══════════════════════════════════════════════════════════════════
+
 void bip(bool ok) {
-  if (ok) { digitalWrite(BUZZER, HIGH); delay(80); digitalWrite(BUZZER, LOW); }
-  else    { for (int i=0;i<3;i++){digitalWrite(BUZZER,HIGH);delay(100);digitalWrite(BUZZER,LOW);delay(100);} }
-}
-
-void ledStatus(bool ok) {
-  digitalWrite(LED_OK,  ok  ? HIGH : LOW);
-  digitalWrite(LED_ERR, !ok ? HIGH : LOW);
-  delay(1500);
-  digitalWrite(LED_OK, LOW); digitalWrite(LED_ERR, LOW);
-}
-
-void IRAM_ATTR encISR() {
-  int clk = digitalRead(ENC_CLK);
-  if (clk != clkUlt) {
-    encPos += (digitalRead(ENC_DT) != clk) ? 1 : -1;
-    clkUlt = clk;
+  if (ok) {
+    digitalWrite(BUZZER, HIGH); delay(80); digitalWrite(BUZZER, LOW);
+  } else {
+    for (int i = 0; i < 3; i++) {
+      digitalWrite(BUZZER, HIGH); delay(100);
+      digitalWrite(BUZZER, LOW);  delay(100);
+    }
   }
 }
 
-int lerEnc(int mn, int mx, int atual) {
-  int delta = encPos - encPosUlt;
-  if (!delta) return atual;
-  encPosUlt = encPos;
-  int novo = atual + (delta > 0 ? 1 : -1);
-  if (novo > mx) novo = mn;
-  if (novo < mn) novo = mx;
-  return novo;
+void ledStatus(bool ok, int ms) {
+  digitalWrite(LED_OK,  ok  ? HIGH : LOW);
+  digitalWrite(LED_ERR, !ok ? HIGH : LOW);
+  delay(ms);
+  digitalWrite(LED_OK, LOW); digitalWrite(LED_ERR, LOW);
 }

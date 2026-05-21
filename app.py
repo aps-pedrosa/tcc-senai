@@ -12,7 +12,7 @@ import os
 from flask import Flask, jsonify, render_template, send_from_directory
 from database import init_db
 from routes.rfid import rfid_bp
-from routes.ferramentas import ferramentas_bp
+from routes.pecas import pecas_bp
 from routes.movimentacoes import mov_bp
 from routes.operadores import operadores_bp
 from routes.auth import auth_bp
@@ -22,7 +22,7 @@ app.secret_key = os.environ.get("VOIDLOG_SECRET", "voidlog-dev-secret-change-in-
 
 # Registra todos os blueprints sob /api
 app.register_blueprint(rfid_bp,         url_prefix="/api")
-app.register_blueprint(ferramentas_bp,  url_prefix="/api")
+app.register_blueprint(pecas_bp,  url_prefix="/api")
 app.register_blueprint(mov_bp,          url_prefix="/api")
 app.register_blueprint(operadores_bp,   url_prefix="/api")
 app.register_blueprint(auth_bp,         url_prefix="/api")
@@ -57,12 +57,12 @@ def rotas():
         "RFID (ESP32)": {
             "POST /api/rfid": "Envia leitura de tag ou crachá"
         },
-        "Ferramentas": {
-            "GET  /api/ferramentas":              "Lista todas (filtros: setor, unidade, disponivel)",
-            "GET  /api/ferramentas/<peca_code>":  "Detalhe de uma ferramenta",
-            "POST /api/ferramentas":              "Cadastra nova ferramenta",
-            "DELETE /api/ferramentas/<peca_code>": "Remove ferramenta",
-            "GET  /api/ferramentas/uid/<uid>":    "Decodifica bytes de um UID",
+        "Peças": {
+            "GET  /api/pecas":              "Lista todas (filtros: setor, unidade, disponivel)",
+            "GET  /api/pecas/<peca_code>":  "Detalhe de uma peca",
+            "POST /api/pecas":              "Cadastra nova peca",
+            "DELETE /api/pecas/<peca_code>": "Remove peca",
+            "GET  /api/pecas/uid/<uid>":    "Decodifica bytes de um UID",
         },
         "Operadores": {
             "GET  /api/operadores":        "Lista todos os operadores",
@@ -77,7 +77,7 @@ def rotas():
             "GET /api/dashboard/dados": "Totais e séries para gráficos"
         },
         "Alertas": {
-            "GET /api/alertas": "Ferramentas em uso / estoque crítico"
+            "GET /api/alertas": "Peças em uso / estoque crítico"
         },
     })
 

@@ -7,224 +7,249 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg:      #0b0b12; --surface: #12121e; --border: #1e1e35;
-    --accent:  #a855f7; --accent2: #ff6b35; --accent3: #7fff6e;
-    --accent-dim: rgba(168,85,247,.15); --accent-glow: rgba(168,85,247,.35);
-    --text:    #e2e0f4; --muted:   #5a5878; --danger:  #ff3d57; --warn: #ffb800;
-    --fh: 'Bebas Neue',sans-serif; --fm: 'IBM Plex Mono',monospace; --fb: 'IBM Plex Sans',sans-serif;
-  }
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;overflow-x:hidden}
-  body::before{content:'';position:fixed;inset:0;z-index:0;
-    background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(168,85,247,.025) 39px,rgba(168,85,247,.025) 40px),
-    repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(168,85,247,.025) 39px,rgba(168,85,247,.025) 40px);pointer-events:none}
+:root{
+  --bg:#0b0b12;--surface:#12121e;--border:#1e1e35;
+  --accent:#a855f7;--accent2:#ff6b35;--accent3:#7fff6e;
+  --accent-dim:rgba(168,85,247,.15);--accent-glow:rgba(168,85,247,.35);
+  --text:#e2e0f4;--muted:#5a5878;--danger:#ff3d57;--warn:#ffb800;
+  --fh:'Bebas Neue',sans-serif;--fm:'IBM Plex Mono',monospace;--fb:'IBM Plex Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(168,85,247,.025) 39px,rgba(168,85,247,.025) 40px),
+  repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(168,85,247,.025) 39px,rgba(168,85,247,.025) 40px)}
 
-  /* ── LOGIN OVERLAY ─────────────────────────────────────── */
-  #login-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(ellipse at 50% 40%,rgba(168,85,247,.12) 0%,#0b0b12 70%)}
-  #login-overlay.hidden{display:none}
-  .login-box{width:100%;max-width:400px;padding:48px 40px;background:var(--surface);
-    border:1px solid var(--border);border-radius:12px;position:relative;overflow:hidden}
-  .login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
-    background:linear-gradient(90deg,#6d28d9,#a855f7,#c084fc)}
-  .login-logo{font-family:var(--fh);font-size:38px;letter-spacing:4px;color:var(--accent);
-    text-shadow:0 0 30px var(--accent-glow);margin-bottom:6px}
-  .login-sub{font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:36px}
-  .login-field{margin-bottom:18px}
-  .login-field label{display:block;font-family:var(--fm);font-size:10px;letter-spacing:2px;
-    text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  .login-field input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;
-    color:var(--text);font-family:var(--fm);font-size:13px;padding:11px 14px;outline:none;transition:border-color .2s}
-  .login-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(168,85,247,.1)}
-  .login-btn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:6px;
-    color:#fff;font-family:var(--fm);font-size:13px;font-weight:600;letter-spacing:2px;cursor:pointer;
-    transition:all .2s;margin-top:8px}
-  .login-btn:hover{background:#9333ea;box-shadow:0 0 20px var(--accent-glow)}
-  .login-err{font-family:var(--fm);font-size:12px;color:var(--danger);margin-top:12px;display:none}
+/* LOGIN */
+#login-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 40%,rgba(168,85,247,.12) 0%,#0b0b12 70%)}
+#login-overlay.hidden{display:none}
+.login-box{width:100%;max-width:400px;padding:48px 40px;background:var(--surface);
+  border:1px solid var(--border);border-radius:12px;position:relative;overflow:hidden}
+.login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#6d28d9,#a855f7,#c084fc)}
+.login-logo{font-family:var(--fh);font-size:38px;letter-spacing:4px;color:var(--accent);
+  text-shadow:0 0 30px var(--accent-glow);margin-bottom:6px}
+.login-sub{font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:36px}
+.lf label{display:block;font-family:var(--fm);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.lf{margin-bottom:18px}
+.lf input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);font-family:var(--fm);font-size:13px;padding:11px 14px;outline:none;transition:border-color .2s}
+.lf input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(168,85,247,.1)}
+.login-btn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:6px;color:#fff;
+  font-family:var(--fm);font-size:13px;font-weight:600;letter-spacing:2px;cursor:pointer;transition:all .2s;margin-top:8px}
+.login-btn:hover{background:#9333ea;box-shadow:0 0 20px var(--accent-glow)}
+.login-err{font-family:var(--fm);font-size:12px;color:var(--danger);margin-top:12px;display:none}
 
-  /* ── HEADER ─────────────────────────────────────────────── */
-  header{position:sticky;top:0;z-index:100;background:rgba(11,11,18,.92);backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:60px}
-  .logo{font-family:var(--fh);font-size:28px;letter-spacing:3px;color:var(--accent);text-shadow:0 0 20px var(--accent-glow)}
-  .logo span{color:var(--text)}
-  .header-right{display:flex;align-items:center;gap:20px}
-  .header-meta{font-family:var(--fm);font-size:11px;color:var(--muted);text-align:right;line-height:1.6}
-  .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent3);margin-right:6px;animation:pulse 1.5s infinite}
-  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
-  .user-chip{display:flex;align-items:center;gap:8px;background:var(--accent-dim);border:1px solid rgba(168,85,247,.3);
-    border-radius:20px;padding:4px 12px 4px 6px;cursor:pointer;transition:all .2s}
-  .user-chip:hover{border-color:var(--accent)}
-  .user-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;
-    justify-content:center;font-family:var(--fh);font-size:14px;color:#fff;flex-shrink:0}
-  .user-name{font-family:var(--fm);font-size:11px;color:var(--text)}
-  .user-perfil{font-size:10px;color:var(--muted)}
-  .logout-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);
-    font-family:var(--fm);font-size:11px;padding:5px 10px;cursor:pointer;transition:all .2s}
-  .logout-btn:hover{border-color:var(--danger);color:var(--danger)}
+/* HEADER */
+header{position:sticky;top:0;z-index:100;background:rgba(11,11,18,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:60px}
+.logo{font-family:var(--fh);font-size:28px;letter-spacing:3px;color:var(--accent);text-shadow:0 0 20px var(--accent-glow)}
+.logo span{color:var(--text)}
+.header-right{display:flex;align-items:center;gap:20px}
+.header-meta{font-family:var(--fm);font-size:11px;color:var(--muted);text-align:right;line-height:1.6}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent3);
+  margin-right:6px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--accent-dim);
+  border:1px solid rgba(168,85,247,.3);border-radius:20px;padding:4px 12px 4px 6px}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;
+  justify-content:center;font-family:var(--fh);font-size:14px;color:#fff;flex-shrink:0}
+.user-name{font-family:var(--fm);font-size:11px;color:var(--text)}
+.user-perfil{font-size:10px;color:var(--muted)}
+.logout-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);
+  font-family:var(--fm);font-size:11px;padding:5px 10px;cursor:pointer;transition:all .2s}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger)}
 
-  /* ── TABS ────────────────────────────────────────────────── */
-  nav.tabs{display:flex;gap:0;padding:0 32px;border-bottom:1px solid var(--border);background:var(--surface)}
-  .tab-btn{padding:14px 22px;background:none;border:none;cursor:pointer;font-family:var(--fm);font-size:12px;font-weight:600;
-    color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .2s}
-  .tab-btn:hover{color:var(--text)}
-  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
-  .tab-btn.admin-tab{color:rgba(168,85,247,.6)}
-  .tab-btn.admin-tab.active{color:var(--accent)}
+/* TABS */
+nav.tabs{display:flex;padding:0 32px;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto}
+.tab-btn{padding:14px 20px;background:none;border:none;cursor:pointer;font-family:var(--fm);font-size:12px;
+  font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;
+  border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn.admin-tab{color:rgba(168,85,247,.6)}
+.tab-btn.admin-tab.active{color:var(--accent)}
 
-  /* ── PAGES ───────────────────────────────────────────────── */
-  .page{display:none;padding:28px 32px;position:relative;z-index:1}
-  .page.active{display:block;animation:fadein .3s ease}
-  @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* PAGES */
+.page{display:none;padding:28px 32px;position:relative;z-index:1}
+.page.active{display:block;animation:fadein .3s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-  /* ── FILTERS / BUTTONS ───────────────────────────────────── */
-  .filter-bar{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
-  .filter-bar label{font-family:var(--fm);font-size:11px;color:var(--muted)}
-  .filter-bar select,.filter-bar input{background:var(--surface);border:1px solid var(--border);color:var(--text);
-    font-family:var(--fm);font-size:12px;padding:7px 12px;border-radius:4px;outline:none;transition:border-color .2s}
-  .filter-bar select:focus,.filter-bar input:focus{border-color:var(--accent)}
-  .btn{padding:8px 18px;border-radius:4px;border:none;cursor:pointer;font-family:var(--fm);font-size:12px;font-weight:600;letter-spacing:1px;transition:all .2s}
-  .btn-primary{background:var(--accent);color:#fff}
-  .btn-primary:hover{background:#9333ea;box-shadow:0 0 16px var(--accent-glow)}
-  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
-  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-  .btn-danger{background:rgba(255,61,87,.15);color:var(--danger);border:1px solid rgba(255,61,87,.3)}
-  .btn-danger:hover{background:rgba(255,61,87,.25)}
-  .btn-sm{padding:5px 12px;font-size:11px}
+/* FILTERS / BUTTONS */
+.filter-bar{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
+.filter-bar label{font-family:var(--fm);font-size:11px;color:var(--muted)}
+.filter-bar select,.filter-bar input{background:var(--surface);border:1px solid var(--border);color:var(--text);
+  font-family:var(--fm);font-size:12px;padding:7px 12px;border-radius:4px;outline:none;transition:border-color .2s}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--accent)}
+.btn{padding:8px 18px;border-radius:4px;border:none;cursor:pointer;font-family:var(--fm);font-size:12px;
+  font-weight:600;letter-spacing:1px;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#9333ea;box-shadow:0 0 16px var(--accent-glow)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(255,61,87,.15);color:var(--danger);border:1px solid rgba(255,61,87,.3)}
+.btn-danger:hover{background:rgba(255,61,87,.25)}
+.btn-sm{padding:5px 12px;font-size:11px}
 
-  /* ── STATS ───────────────────────────────────────────────── */
-  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
-  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;
-    position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
-  .stat-card:hover{border-color:var(--accent);transform:translateY(-2px)}
-  .stat-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--ca,var(--accent))}
-  .stat-label{font-family:var(--fm);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
-  .stat-value{font-family:var(--fh);font-size:48px;line-height:1;color:var(--ca,var(--accent));text-shadow:0 0 20px var(--accent-glow)}
-  .stat-sub{font-family:var(--fm);font-size:11px;color:var(--muted);margin-top:6px}
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;
+  position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+.stat-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--ca,var(--accent))}
+.stat-label{font-family:var(--fm);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-family:var(--fh);font-size:48px;line-height:1;color:var(--ca,var(--accent))}
+.stat-sub{font-family:var(--fm);font-size:11px;color:var(--muted);margin-top:6px}
 
-  /* ── CHARTS ──────────────────────────────────────────────── */
-  .charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
-  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px}
-  .chart-title{font-family:var(--fm);font-size:11px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase;
-    margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
-  .badge{background:var(--accent-dim);color:var(--accent);padding:2px 8px;border-radius:20px;font-size:10px}
-  canvas{max-height:220px}
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px}
+.chart-title{font-family:var(--fm);font-size:11px;font-weight:600;color:var(--muted);letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.badge{background:var(--accent-dim);color:var(--accent);padding:2px 8px;border-radius:20px;font-size:10px}
+canvas{max-height:220px}
 
-  /* ── TABLES ──────────────────────────────────────────────── */
-  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-  .table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-  .table-title{font-family:var(--fm);font-size:11px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
-  table{width:100%;border-collapse:collapse}
-  th{font-family:var(--fm);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;
-    padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
-  td{font-family:var(--fm);font-size:12px;padding:12px 16px;border-bottom:1px solid rgba(30,30,53,.6);vertical-align:middle}
-  tr:last-child td{border-bottom:none}
-  tr:hover td{background:rgba(168,85,247,.04)}
+/* TABLES */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;
+  justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.table-title{font-family:var(--fm);font-size:11px;font-weight:600;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+table{width:100%;border-collapse:collapse}
+th{font-family:var(--fm);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;
+  padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+td{font-family:var(--fm);font-size:12px;padding:12px 16px;border-bottom:1px solid rgba(30,30,53,.6);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(168,85,247,.04)}
 
-  /* ── BADGES ──────────────────────────────────────────────── */
-  .bt{display:inline-block;padding:2px 10px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
-  .bt-retirada{background:rgba(255,107,53,.15);color:var(--accent2)}
-  .bt-devolucao{background:rgba(127,255,110,.15);color:var(--accent3)}
-  .bt-em-uso{background:rgba(255,61,87,.15);color:var(--danger)}
-  .bt-livre{background:rgba(127,255,110,.15);color:var(--accent3)}
-  .bt-ativo{background:var(--accent-dim);color:var(--accent)}
-  .bt-admin{background:rgba(168,85,247,.2);color:#c084fc}
-  .bt-operador{background:rgba(255,184,0,.1);color:var(--warn)}
-  .bt-visualizador{background:rgba(90,90,120,.2);color:var(--muted)}
+/* BADGES */
+.bt{display:inline-block;padding:2px 10px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.bt-retirada{background:rgba(255,107,53,.15);color:var(--accent2)}
+.bt-devolucao{background:rgba(127,255,110,.15);color:var(--accent3)}
+.bt-em-uso{background:rgba(255,61,87,.15);color:var(--danger)}
+.bt-livre{background:rgba(127,255,110,.15);color:var(--accent3)}
+.bt-ativo{background:var(--accent-dim);color:var(--accent)}
+.bt-admin{background:rgba(168,85,247,.2);color:#c084fc}
+.bt-operador{background:rgba(255,184,0,.1);color:var(--warn)}
+.bt-visualizador{background:rgba(90,90,120,.2);color:var(--muted)}
+.bt-sem-loc{background:rgba(90,90,120,.15);color:var(--muted)}
 
-  /* ── UID / MISC ───────────────────────────────────────────── */
-  .uid-chip{font-family:var(--fm);font-size:10px;color:var(--accent);background:var(--accent-dim);padding:2px 8px;border-radius:3px;letter-spacing:1px}
-  .byte-tip{font-size:10px;color:var(--muted);display:block;margin-top:2px}
-  .loading{color:var(--muted);font-family:var(--fm);font-size:12px;padding:20px}
-  .no-data{color:var(--muted);font-family:var(--fm);font-size:12px;padding:20px;text-align:center}
+/* UID / MISC */
+.uid-chip{font-family:var(--fm);font-size:10px;color:var(--accent);background:var(--accent-dim);
+  padding:2px 8px;border-radius:3px;letter-spacing:1px}
+.byte-tip{font-size:10px;color:var(--muted);display:block;margin-top:2px}
+.loading{color:var(--muted);font-family:var(--fm);font-size:12px;padding:20px}
+.no-data{color:var(--muted);font-family:var(--fm);font-size:12px;padding:20px;text-align:center}
 
-  /* ── ALERTAS ─────────────────────────────────────────────── */
-  .alertas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-  .alerta-card{background:var(--surface);border:1px solid rgba(255,61,87,.3);border-radius:8px;padding:16px;border-left:3px solid var(--danger);animation:ap 2s infinite}
-  @keyframes ap{0%,100%{border-left-color:var(--danger)}50%{border-left-color:rgba(255,61,87,.3)}}
-  .alerta-nome{font-weight:600;font-size:14px;margin-bottom:6px}
-  .alerta-meta{font-family:var(--fm);font-size:11px;color:var(--muted);line-height:1.8}
+/* LOCALIZAÇÃO */
+.loc-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(168,85,247,.1);
+  border:1px solid rgba(168,85,247,.2);border-radius:4px;padding:3px 8px;font-family:var(--fm);font-size:11px}
+.loc-badge.sem-loc{background:rgba(90,90,120,.1);border-color:rgba(90,90,120,.2);color:var(--muted)}
+.loc-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.loc-dot.livre{background:var(--accent3)}
+.loc-dot.uso{background:var(--danger);animation:pulse 1.5s infinite}
 
-  /* ── TERMINAL RFID ───────────────────────────────────────── */
-  .rfid-terminal{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:28px;border-top:3px solid var(--accent)}
-  .terminal-title{font-family:var(--fh);font-size:22px;letter-spacing:2px;color:var(--accent);margin-bottom:20px}
-  .input-group{margin-bottom:16px}
-  .input-group label{display:block;font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
-  .input-group input,.input-group select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;
-    color:var(--text);font-family:var(--fm);font-size:13px;padding:10px 14px;outline:none;transition:border-color .2s}
-  .input-group input:focus,.input-group select:focus{border-color:var(--accent)}
-  .uid-preview{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-top:16px;
-    font-family:var(--fm);font-size:12px;line-height:1.8;display:none}
-  .uid-preview.show{display:block}
-  .uid-big{font-family:var(--fh);font-size:28px;letter-spacing:4px;color:var(--accent);display:block;margin-bottom:8px}
-  .byte-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-  .byte-block{background:var(--accent-dim);border:1px solid rgba(168,85,247,.2);border-radius:4px;padding:4px 10px;font-size:11px;color:var(--accent)}
-  .byte-block span{color:var(--muted)}
-  .log-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-top:16px;
-    font-family:var(--fm);font-size:12px;line-height:1.6;color:var(--accent3);max-height:200px;overflow-y:auto;white-space:pre-wrap;display:none}
-  .log-box.show{display:block}
-  .log-box.error{color:var(--danger)}
+/* ALERTAS */
+.alertas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.alerta-card{background:var(--surface);border:1px solid rgba(255,61,87,.3);border-radius:8px;
+  padding:16px;border-left:3px solid var(--danger);animation:ap 2s infinite}
+@keyframes ap{0%,100%{border-left-color:var(--danger)}50%{border-left-color:rgba(255,61,87,.3)}}
+.alerta-nome{font-weight:600;font-size:14px;margin-bottom:8px}
+.alerta-meta{font-family:var(--fm);font-size:11px;color:var(--muted);line-height:1.9}
+.alerta-op{color:var(--accent);font-weight:600}
 
-  /* ── OPERADORES ──────────────────────────────────────────── */
-  .op-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px}
-  .op-card{background:var(--surface);border:1px solid rgba(168,85,247,.2);border-radius:8px;padding:16px;display:flex;align-items:center;gap:14px}
-  .op-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);
-    display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:18px;color:var(--accent);flex-shrink:0}
-  .op-name{font-weight:600}
-  .op-meta{font-family:var(--fm);font-size:10px;color:var(--muted)}
+/* TERMINAL */
+.rfid-terminal{background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:28px;border-top:3px solid var(--accent)}
+.terminal-title{font-family:var(--fh);font-size:22px;letter-spacing:2px;color:var(--accent);margin-bottom:20px}
+.input-group{margin-bottom:16px}
+.input-group label{display:block;font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:6px}
+.input-group input,.input-group select{width:100%;background:var(--bg);border:1px solid var(--border);
+  border-radius:4px;color:var(--text);font-family:var(--fm);font-size:13px;padding:10px 14px;
+  outline:none;transition:border-color .2s}
+.input-group input:focus,.input-group select:focus{border-color:var(--accent)}
+.uid-preview{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;
+  margin-top:16px;font-family:var(--fm);font-size:12px;line-height:1.8;display:none}
+.uid-preview.show{display:block}
+.uid-big{font-family:var(--fh);font-size:28px;letter-spacing:4px;color:var(--accent);display:block;margin-bottom:8px}
+.byte-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.byte-block{background:var(--accent-dim);border:1px solid rgba(168,85,247,.2);border-radius:4px;
+  padding:4px 10px;font-size:11px;color:var(--accent)}
+.byte-block span{color:var(--muted)}
+.log-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;
+  margin-top:16px;font-family:var(--fm);font-size:12px;line-height:1.6;color:var(--accent3);
+  max-height:260px;overflow-y:auto;white-space:pre-wrap;display:none}
+.log-box.show{display:block}
+.log-box.error{color:var(--danger)}
 
-  /* ── MODAL ───────────────────────────────────────────────── */
-  .modal-overlay{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;
-    background:rgba(11,11,18,.85);backdrop-filter:blur(4px)}
-  .modal-overlay.open{display:flex;animation:fadein .2s ease}
-  .modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;
-    width:100%;max-width:520px;position:relative;max-height:90vh;overflow-y:auto}
-  .modal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
-    background:linear-gradient(90deg,#6d28d9,#a855f7,#c084fc);border-radius:12px 12px 0 0}
-  .modal-title{font-family:var(--fh);font-size:24px;letter-spacing:2px;color:var(--accent);margin-bottom:24px}
-  .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);
-    font-size:20px;cursor:pointer;line-height:1;transition:color .2s}
-  .modal-close:hover{color:var(--text)}
-  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
-  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .notice{font-family:var(--fm);font-size:11px;color:var(--muted);background:rgba(168,85,247,.08);
-    border:1px solid rgba(168,85,247,.2);border-radius:6px;padding:10px 14px;margin-bottom:16px;line-height:1.6}
+/* OP CARDS */
+.op-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:24px}
+.op-card{background:var(--surface);border:1px solid rgba(168,85,247,.2);border-radius:8px;
+  padding:16px;display:flex;align-items:center;gap:14px}
+.op-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:18px;
+  color:var(--accent);flex-shrink:0}
+.op-name{font-weight:600}
+.op-meta{font-family:var(--fm);font-size:10px;color:var(--muted)}
 
-  /* ── ADMIN PANEL ─────────────────────────────────────────── */
-  .admin-section{margin-bottom:32px}
-  .section-title{font-family:var(--fm);font-size:11px;font-weight:600;color:var(--muted);letter-spacing:2px;
-    text-transform:uppercase;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-  .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
-  .info-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px}
-  .info-label{font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px}
-  .info-value{font-family:var(--fh);font-size:22px;color:var(--accent)}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;
+  background:rgba(11,11,18,.85);backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex;animation:fadein .2s ease}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;
+  width:100%;max-width:520px;position:relative;max-height:90vh;overflow-y:auto}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#6d28d9,#a855f7,#c084fc);border-radius:12px 12px 0 0}
+.modal-title{font-family:var(--fh);font-size:24px;letter-spacing:2px;color:var(--accent);margin-bottom:24px}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);
+  font-size:20px;cursor:pointer;line-height:1;transition:color .2s}
+.modal-close:hover{color:var(--text)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;
+  padding-top:20px;border-top:1px solid var(--border)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.notice{font-family:var(--fm);font-size:11px;color:var(--muted);background:rgba(168,85,247,.08);
+  border:1px solid rgba(168,85,247,.2);border-radius:6px;padding:10px 14px;margin-bottom:16px;line-height:1.6}
+.notice.warn{background:rgba(255,184,0,.08);border-color:rgba(255,184,0,.2);color:var(--warn)}
 
-  @media(max-width:768px){.charts-grid,.charts-row,.form-row{grid-template-columns:1fr}header{padding:0 16px}.page{padding:16px}nav.tabs{padding:0 16px;overflow-x:auto}.header-right{gap:10px}}
+/* ADMIN */
+.admin-section{margin-bottom:32px}
+.section-title{font-family:var(--fm);font-size:11px;font-weight:600;color:var(--muted);letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.info-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px}
+.info-label{font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px}
+.info-value{font-family:var(--fh);font-size:22px;color:var(--accent)}
+
+@media(max-width:768px){
+  .charts-grid,.charts-row,.form-row{grid-template-columns:1fr}
+  header{padding:0 16px}.page{padding:16px}nav.tabs{padding:0 16px}
+  .header-right{gap:10px}
+}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════ LOGIN ══════════════════════════════ -->
+<!-- LOGIN -->
 <div id="login-overlay">
   <div class="login-box">
     <div class="login-logo">Void<span style="color:var(--text)">Log</span></div>
-    <div class="login-sub">Sistema de Controle de Ferramentas</div>
-    <div class="login-field">
-      <label>Email</label>
-      <input type="email" id="l-email" placeholder="admin@voidlog.local" autocomplete="username">
-    </div>
-    <div class="login-field">
-      <label>Senha</label>
+    <div class="login-sub">Sistema de Controle de Peças</div>
+    <div class="lf"><label>Email</label>
+      <input type="email" id="l-email" placeholder="admin@voidlog.local" autocomplete="username"></div>
+    <div class="lf"><label>Senha</label>
       <input type="password" id="l-senha" placeholder="••••••••" autocomplete="current-password"
-        onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
+        onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="login-btn" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="l-err"></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════ HEADER ══════════════════════════════ -->
+<!-- HEADER -->
 <header>
   <div class="logo">Void<span>Log</span></div>
   <div class="header-right">
@@ -234,85 +259,106 @@
     </div>
     <div class="user-chip" id="user-chip" style="display:none">
       <div class="user-avatar" id="user-av">?</div>
-      <div>
-        <div class="user-name" id="user-name">--</div>
-        <div class="user-perfil" id="user-perfil">--</div>
-      </div>
+      <div><div class="user-name" id="user-name">--</div><div class="user-perfil" id="user-perfil">--</div></div>
     </div>
     <button class="logout-btn" id="logout-btn" style="display:none" onclick="doLogout()">SAIR</button>
   </div>
 </header>
 
-<!-- ══════════════════════════════ TABS ══════════════════════════════ -->
-<nav class="tabs" id="main-tabs">
-  <button class="tab-btn active" onclick="setTab('dashboard',this)">Dashboard</button>
-  <button class="tab-btn" onclick="setTab('movimentacoes',this)">Movimentações</button>
-  <button class="tab-btn" onclick="setTab('ferramentas',this)">Ferramentas</button>
-  <button class="tab-btn" onclick="setTab('operadores',this)">Operadores</button>
-  <button class="tab-btn" onclick="setTab('alertas',this)">Alertas <span id="alert-badge" style="color:var(--danger)"></span></button>
-  <button class="tab-btn" onclick="setTab('terminal',this)">Terminal RFID</button>
+<!-- TABS -->
+<nav class="tabs">
+  <button class="tab-btn active"    onclick="setTab('dashboard',this)">Dashboard</button>
+  <button class="tab-btn"           onclick="setTab('localizacao',this)">Localização</button>
+  <button class="tab-btn"           onclick="setTab('movimentacoes',this)">Movimentações</button>
+  <button class="tab-btn"           onclick="setTab('pecas',this)">Peças</button>
+  <button class="tab-btn"           onclick="setTab('operadores',this)">Operadores</button>
+  <button class="tab-btn"           onclick="setTab('alertas',this)">Alertas <span id="alert-badge" style="color:var(--danger)"></span></button>
+  <button class="tab-btn"           onclick="setTab('terminal',this)">Terminal RFID</button>
   <button class="tab-btn admin-tab" id="admin-tab" style="display:none" onclick="setTab('admin',this)">⚙ Admin</button>
 </nav>
 
-<!-- ══════════════════════════════ DASHBOARD ══════════════════════════════ -->
+<!-- ══ DASHBOARD ══ -->
 <div id="page-dashboard" class="page active">
   <div class="filter-bar">
-    <label>SETOR</label>
-    <select id="d-setor" onchange="loadDashboard()"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select>
-    <label>UNIDADE</label>
-    <select id="d-unidade" onchange="loadDashboard()"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
+    <label>SETOR</label><select id="d-setor" onchange="loadDashboard()"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select>
+    <label>UNIDADE</label><select id="d-unidade" onchange="loadDashboard()"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
     <button class="btn btn-ghost" onclick="loadDashboard()">↻ Atualizar</button>
   </div>
   <div class="stats-grid" id="stats-grid"><div class="loading">Carregando...</div></div>
   <div class="charts-grid">
-    <div class="chart-card"><div class="chart-title">Movimentações — Últimos 30 dias <span class="badge">SÉRIE</span></div><canvas id="cDias"></canvas></div>
-    <div class="chart-card"><div class="chart-title">Por Unidade (B4) <span class="badge">BYTE 4</span></div><canvas id="cUnidade"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Movimentações — Últimos 30 dias<span class="badge">SÉRIE</span></div><canvas id="cDias"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Por Unidade<span class="badge">DISTRIBUIÇÃO</span></div><canvas id="cUnidade"></canvas></div>
   </div>
   <div class="charts-row">
-    <div class="chart-card"><div class="chart-title">Por Setor (B3) <span class="badge">BYTE 3</span></div><canvas id="cSetor"></canvas></div>
-    <div class="chart-card"><div class="chart-title">Top Ferramentas mais usadas</div><canvas id="cTop"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Por Setor</div><canvas id="cSetor"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Top Peças mais usadas</div><canvas id="cTop"></canvas></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════ MOVIMENTAÇÕES ══════════════════════════════ -->
+<!-- ══ LOCALIZAÇÃO ══ -->
+<div id="page-localizacao" class="page">
+  <div class="filter-bar">
+    <label>STATUS</label>
+    <select id="loc-disp" onchange="loadLocalizacao()"><option value="">Todos</option><option value="0">Em uso</option><option value="1">Disponível</option></select>
+    <label>SETOR ATUAL</label>
+    <select id="loc-setor" onchange="loadLocalizacao()"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select>
+    <label>UNIDADE ATUAL</label>
+    <select id="loc-unidade" onchange="loadLocalizacao()"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
+    <button class="btn btn-ghost" onclick="loadLocalizacao()">↻ Atualizar</button>
+  </div>
+  <div class="table-card">
+    <div class="table-header">
+      <span class="table-title">Localização Atual das Peças</span>
+      <span id="loc-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Peça</th><th>Categoria</th><th>UID / Peça</th>
+          <th>Localização Atual</th><th>Status</th>
+          <th>Último Responsável</th><th>Última Movimentação</th>
+        </tr></thead>
+        <tbody id="loc-body"><tr><td colspan="7" class="loading">Carregando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MOVIMENTAÇÕES ══ -->
 <div id="page-movimentacoes" class="page">
   <div class="filter-bar">
-    <label>SETOR</label>
-    <select id="m-setor"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select>
-    <label>UNIDADE</label>
-    <select id="m-unidade"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
-    <label>TIPO</label>
-    <select id="m-tipo"><option value="">Todos</option><option value="retirada">Retirada</option><option value="devolucao">Devolução</option></select>
+    <label>SETOR</label><select id="m-setor"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select>
+    <label>UNIDADE</label><select id="m-unidade"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
+    <label>TIPO</label><select id="m-tipo"><option value="">Todos</option><option value="retirada">Retirada</option><option value="devolucao">Devolução</option></select>
     <label>DE</label><input type="date" id="m-ini">
     <label>ATÉ</label><input type="date" id="m-fim">
     <button class="btn btn-primary" onclick="loadMovs()">Buscar</button>
   </div>
   <div class="table-card">
     <div class="table-header"><span class="table-title">Histórico</span><span id="mov-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span></div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Horário</th><th>Tipo</th><th>Ferramenta</th><th>UID / Bytes</th><th>Operador</th><th>Setor (B3)</th><th>Unidade (B4)</th></tr></thead>
-    <tbody id="mov-body"><tr><td colspan="7" class="loading">Carregando...</td></tr></tbody></table></div>
+    <div style="overflow-x:auto">
+      <table><thead><tr><th>Horário</th><th>Tipo</th><th>Peça</th><th>UID</th><th>Operador</th><th>Setor (leitura)</th><th>Unidade (leitura)</th><th>Terminal</th></tr></thead>
+      <tbody id="mov-body"><tr><td colspan="8" class="loading">Carregando...</td></tr></tbody></table>
+    </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════ FERRAMENTAS ══════════════════════════════ -->
-<div id="page-ferramentas" class="page">
+<!-- ══ FERRAMENTAS ══ -->
+<div id="page-pecas" class="page">
   <div class="filter-bar">
-    <label>SETOR</label>
-    <select id="f-setor" onchange="loadFer()"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select>
-    <label>UNIDADE</label>
-    <select id="f-unidade" onchange="loadFer()"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
-    <label>STATUS</label>
-    <select id="f-disp" onchange="loadFer()"><option value="">Todos</option><option value="1">Disponível</option><option value="0">Em uso</option></select>
-    <button class="btn btn-primary" id="btn-nova-ferramenta" style="display:none;margin-left:auto" onclick="abrirModalFerramenta()">+ Nova Ferramenta</button>
+    <label>STATUS</label><select id="f-disp" onchange="loadFer()"><option value="">Todos</option><option value="1">Disponível</option><option value="0">Em uso</option></select>
+    <button class="btn btn-primary" id="btn-nova-peca" style="display:none;margin-left:auto" onclick="abrirModalPeça()">+ Nova Peça</button>
   </div>
   <div class="table-card">
-    <div class="table-header"><span class="table-title">Ferramentas cadastradas</span><span id="fer-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span></div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Ferramenta</th><th>Categoria</th><th>UID</th><th>Peça (B1+B2)</th><th>Setor (B3)</th><th>Unidade (B4)</th><th>Qtd</th><th>Status</th><th id="th-acoes" style="display:none">Ações</th></tr></thead>
-    <tbody id="fer-body"><tr><td colspan="9" class="loading">Carregando...</td></tr></tbody></table></div>
+    <div class="table-header"><span class="table-title">Peças cadastradas</span><span id="fer-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span></div>
+    <div style="overflow-x:auto">
+      <table><thead><tr><th>Peça</th><th>Categoria</th><th>UID</th><th>Peça</th><th>Qtd</th><th>Status</th><th>Localização Atual</th><th id="th-acoes" style="display:none">Ações</th></tr></thead>
+      <tbody id="fer-body"><tr><td colspan="8" class="loading">Carregando...</td></tr></tbody></table>
+    </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════ OPERADORES ══════════════════════════════ -->
+<!-- ══ OPERADORES ══ -->
 <div id="page-operadores" class="page">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Sessões ativas agora</div>
@@ -321,77 +367,86 @@
   <div class="op-grid" id="op-ativos"><div class="loading">Carregando...</div></div>
   <div class="table-card">
     <div class="table-header"><span class="table-title">Todos os operadores</span></div>
-    <div style="overflow-x:auto"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>UID Crachá</th><th>Setor (B3)</th><th>Unidade (B4)</th><th id="th-op-acoes" style="display:none">Ações</th></tr></thead>
-    <tbody id="op-body"><tr><td colspan="6" class="loading">Carregando...</td></tr></tbody></table></div>
+    <div style="overflow-x:auto">
+      <table><thead><tr><th>Nome</th><th>Matrícula</th><th>UID Crachá</th><th>Peça (B1+B2)</th><th id="th-op-acoes" style="display:none">Ações</th></tr></thead>
+      <tbody id="op-body"><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table>
+    </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════ ALERTAS ══════════════════════════════ -->
+<!-- ══ ALERTAS ══ -->
 <div id="page-alertas" class="page">
   <div style="margin-bottom:20px">
-    <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Ferramentas em uso / estoque crítico</div>
+    <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Peças em uso — não devolvidas</div>
     <div id="alerta-total" style="font-family:var(--fh);font-size:48px;color:var(--danger)">--</div>
   </div>
   <div class="alertas-grid" id="alertas-grid"><div class="loading">Carregando...</div></div>
 </div>
 
-<!-- ══════════════════════════════ TERMINAL RFID ══════════════════════════════ -->
+<!-- ══ TERMINAL RFID ══ -->
 <div id="page-terminal" class="page">
+  <div class="notice warn" style="margin-bottom:24px">
+    ⚡ <strong>Novo payload v2:</strong> além do UID, o ESP32 deve enviar <code>setor_codigo</code> e <code>unidade_codigo</code> selecionados pelo operador no encoder do terminal. A tag RFID contém apenas o ID da peça (B1+B2).
+  </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
     <div class="rfid-terminal">
       <div class="terminal-title">Simular Leitura RFID</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Simule o que o ESP32 faria ao aproximar uma tag. A API decodifica os 4 bytes automaticamente.</p>
-      <div class="input-group">
-        <label>UID da Tag (8 chars hex)</label>
-        <input type="text" id="sim-uid" maxlength="8" placeholder="Ex: 00640405" oninput="previewUID(this.value)" style="text-transform:uppercase;letter-spacing:3px">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Simula o payload que o ESP32 envia após o operador selecionar o contexto no encoder.</p>
+      <div class="input-group"><label>UID da Tag (mín. 4 chars hex — apenas B1+B2 importam)</label>
+        <input type="text" id="sim-uid" placeholder="Ex: 00640000" oninput="previewUID(this.value)" style="text-transform:uppercase;letter-spacing:3px"></div>
+      <div class="form-row" style="margin-bottom:0">
+        <div class="input-group"><label>Setor (encoder do terminal)</label>
+          <select id="sim-setor"><option value="">Selecione...</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select></div>
+        <div class="input-group"><label>Unidade (encoder do terminal)</label>
+          <select id="sim-unidade"><option value="">Selecione...</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select></div>
       </div>
-      <div class="uid-preview" id="uid-preview">
-        <span class="uid-big" id="prev-uid"></span>
+      <div class="input-group"><label>Terminal ID (opcional)</label>
+        <input type="text" id="sim-terminal" placeholder="Ex: ESP-A1B2C3" value="ESP-SIM-01"></div>
+      <div class="uid-preview show" id="uid-preview">
+        <span style="font-family:var(--fm);font-size:10px;color:var(--muted)">B1+B2 → peca_code:</span>
+        <span class="uid-big" id="prev-peca" style="font-size:20px">--</span>
         <div class="byte-row" id="prev-bytes"></div>
       </div>
       <div style="margin-top:20px;display:flex;gap:10px">
         <button class="btn btn-primary" onclick="simularRFID()">▶ Enviar para API</button>
-        <button class="btn btn-ghost" onclick="uidAleatorio()">⚄ Aleatório</button>
+        <button class="btn btn-ghost" onclick="uidAleatorio()">⚄ UID aleatório</button>
       </div>
       <div class="log-box" id="rfid-log"></div>
     </div>
     <div class="rfid-terminal" style="border-top-color:var(--accent2)">
-      <div class="terminal-title" style="color:var(--accent2)">Montar UID por Partes</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Informe os campos para gerar o UID que seria gravado na tag RFID.</p>
-      <div class="input-group">
-        <label>B1+B2 — Código da Peça (0–65535)</label>
-        <input type="number" id="gp" min="0" max="65535" placeholder="Ex: 100" oninput="gerarUID()">
+      <div class="terminal-title" style="color:var(--accent2)">Payload JSON enviado</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Este é o JSON que o ESP32 deve enviar via HTTP POST para <code style="color:var(--accent)">/api/rfid</code>:</p>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:16px;font-family:var(--fm);font-size:12px;color:var(--accent3);line-height:1.8" id="payload-preview">
+{<br>
+&nbsp;&nbsp;"uid":            "00640000",<br>
+&nbsp;&nbsp;"setor_codigo":   4,<br>
+&nbsp;&nbsp;"unidade_codigo": 2,<br>
+&nbsp;&nbsp;"terminal_id":    "ESP-A1B2C3"<br>
+}
       </div>
-      <div class="input-group">
-        <label>B3 — Setor</label>
-        <select id="gs" onchange="gerarUID()"><option value="">Selecione...</option><option value="1">01 — Soldagem</option><option value="2">02 — Corte</option><option value="3">03 — Usinagem</option><option value="4">04 — Furação</option><option value="5">05 — Montagem</option><option value="6">06 — Manutenção</option><option value="7">07 — Almoxarifado</option><option value="8">08 — Qualidade</option></select>
-      </div>
-      <div class="input-group">
-        <label>B4 — Unidade</label>
-        <select id="gu" onchange="gerarUID()"><option value="">Selecione...</option><option value="1">01 — Centro</option><option value="2">02 — BH</option><option value="3">03 — Contagem</option><option value="4">04 — Betim</option><option value="5">05 — Ibirité</option></select>
-      </div>
-      <div class="uid-preview show">
-        <span style="font-family:var(--fm);font-size:11px;color:var(--muted)">UID gerado:</span>
-        <span class="uid-big" id="gen-uid" style="color:var(--accent2)">--------</span>
-        <div class="byte-row" id="gen-bytes"></div>
-      </div>
-      <div style="margin-top:16px">
-        <button class="btn btn-primary" style="background:var(--accent2)" onclick="copiarUID()">⎘ Copiar UID</button>
+      <div style="margin-top:20px">
+        <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Montar peca_code a partir dos bytes</div>
+        <div class="input-group"><label>B1+B2 — Código da Peça (0–65535)</label>
+          <input type="number" id="gp" min="0" max="65535" placeholder="Ex: 100" oninput="gerarUID()"></div>
+        <div class="uid-preview show">
+          <span style="font-family:var(--fm);font-size:11px;color:var(--muted)">UID mínimo (B1+B2):</span>
+          <span class="uid-big" id="gen-uid" style="color:var(--accent2);font-size:20px">----</span>
+          <div class="byte-row" id="gen-bytes"></div>
+        </div>
+        <button class="btn btn-primary" style="background:var(--accent2);margin-top:12px" onclick="copiarUID()">⎘ Copiar UID</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════ ADMIN ══════════════════════════════ -->
+<!-- ══ ADMIN ══ -->
 <div id="page-admin" class="page">
   <div class="admin-section">
-    <div class="section-title">Visão Geral do Sistema</div>
+    <div class="section-title">Visão Geral</div>
     <div class="info-grid" id="admin-stats"><div class="loading">Carregando...</div></div>
   </div>
-
   <div class="admin-section">
-    <div class="section-title" style="display:flex;justify-content:space-between">
-      <span>Usuários do Dashboard</span>
+    <div class="section-title">Usuários do Dashboard
       <button class="btn btn-primary btn-sm" onclick="abrirModalUsuario()">+ Novo Usuário</button>
     </div>
     <div class="table-card">
@@ -399,102 +454,82 @@
       <tbody id="usuarios-body"><tr><td colspan="6" class="loading">Carregando...</td></tr></tbody></table></div>
     </div>
   </div>
-
   <div class="admin-section">
-    <div class="section-title">Cadastro Rápido de Ferramenta</div>
+    <div class="section-title">Cadastro Rápido — Peça</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px">
-      <div class="notice">Preencha os campos abaixo para cadastrar uma nova ferramenta. O UID RFID será gerado automaticamente a partir dos bytes informados.</div>
+      <div class="notice">A peca não precisa de setor/unidade fixos. A localização é registrada automaticamente a cada leitura RFID no terminal.</div>
       <div class="form-row">
-        <div class="input-group"><label>Nome da Ferramenta</label><input type="text" id="fn-nome" placeholder="Ex: Furadeira de Bancada"></div>
+        <div class="input-group"><label>Nome</label><input type="text" id="fn-nome" placeholder="Ex: Furadeira de Bancada"></div>
         <div class="input-group"><label>Categoria</label><input type="text" id="fn-cat" placeholder="Ex: Furação"></div>
       </div>
       <div class="form-row">
-        <div class="input-group"><label>Código da Peça B1+B2 (0–65535)</label><input type="number" id="fn-peca" min="0" max="65535" placeholder="Ex: 100" oninput="previewFerramenta()"></div>
+        <div class="input-group"><label>Código da Peça — B1+B2 (0–65535)</label><input type="number" id="fn-peca" min="0" max="65535" placeholder="Ex: 100" oninput="previewPeça()"></div>
         <div class="input-group"><label>Quantidade</label><input type="number" id="fn-qtd" min="1" value="1"></div>
-      </div>
-      <div class="form-row">
-        <div class="input-group"><label>Setor (B3)</label><select id="fn-setor" onchange="previewFerramenta()"><option value="">Selecione...</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select></div>
-        <div class="input-group"><label>Unidade (B4)</label><select id="fn-unidade" onchange="previewFerramenta()"><option value="">Selecione...</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select></div>
       </div>
       <div id="fn-preview" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:16px;font-family:var(--fm);font-size:12px">
         UID gerado: <span id="fn-uid" style="color:var(--accent);font-size:16px;letter-spacing:3px"></span>
+        <span style="color:var(--muted);margin-left:12px">(B3+B4=0000, setor/unidade via terminal)</span>
       </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-primary" onclick="cadastrarFerramenta()">Cadastrar Ferramenta</button>
-        <span id="fn-msg" style="font-family:var(--fm);font-size:12px;align-self:center"></span>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn btn-primary" onclick="cadastrarPeça()">Cadastrar</button>
+        <span id="fn-msg" style="font-family:var(--fm);font-size:12px"></span>
       </div>
     </div>
   </div>
-
   <div class="admin-section">
-    <div class="section-title">Cadastro Rápido de Operador</div>
+    <div class="section-title">Cadastro Rápido — Operador</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px">
-      <div class="notice">O setor e a unidade são extraídos automaticamente dos bytes B3 e B4 do UID do crachá RFID.</div>
+      <div class="notice">O operador é identificado pelos bytes B1+B2 do UID do crachá. Setor e unidade são definidos no terminal no momento do login.</div>
       <div class="form-row">
         <div class="input-group"><label>Nome Completo</label><input type="text" id="on-nome" placeholder="Ex: João Silva"></div>
         <div class="input-group"><label>Matrícula</label><input type="text" id="on-mat" placeholder="Ex: TS-0042"></div>
       </div>
-      <div class="input-group"><label>UID do Crachá (8 chars hex)</label><input type="text" id="on-uid" maxlength="8" placeholder="Ex: A34F0302" style="text-transform:uppercase;letter-spacing:3px"></div>
-      <div style="display:flex;gap:10px;margin-top:8px">
-        <button class="btn btn-primary" onclick="cadastrarOperador()">Cadastrar Operador</button>
-        <span id="on-msg" style="font-family:var(--fm);font-size:12px;align-self:center"></span>
-      </div>
-    </div>
-  </div>
-
-  <div class="admin-section">
-    <div class="section-title" style="color:var(--danger)">Zona de Risco</div>
-    <div style="background:var(--surface);border:1px solid rgba(255,61,87,.3);border-radius:8px;padding:24px">
-      <p style="font-family:var(--fm);font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.8">
-        ⚠ As ações abaixo são irreversíveis. Certifique-se de que os dados foram exportados antes de prosseguir.
-      </p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn btn-danger" onclick="if(confirm('Encerrar TODAS as sessões de operador ativas?'))encerrarSessoes()">Encerrar Todas as Sessões</button>
+      <div class="input-group"><label>UID do Crachá (mín. 4 chars hex)</label>
+        <input type="text" id="on-uid" placeholder="Ex: 00420000" style="text-transform:uppercase;letter-spacing:3px"></div>
+      <div style="display:flex;gap:10px;margin-top:8px;align-items:center">
+        <button class="btn btn-primary" onclick="cadastrarOperador()">Cadastrar</button>
+        <span id="on-msg" style="font-family:var(--fm);font-size:12px"></span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════ MODALS ══════════════════════════════ -->
-
-<!-- Modal: Nova Ferramenta -->
-<div class="modal-overlay" id="modal-ferramenta">
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-peca">
   <div class="modal">
-    <button class="modal-close" onclick="fecharModal('modal-ferramenta')">✕</button>
-    <div class="modal-title">Nova Ferramenta</div>
+    <button class="modal-close" onclick="fecharModal('modal-peca')">✕</button>
+    <div class="modal-title">Nova Peça</div>
+    <div class="notice">Setor e unidade não são cadastrados na peca. A localização é atualizada automaticamente pelo terminal.</div>
     <div class="form-row">
       <div class="input-group"><label>Nome</label><input type="text" id="mf-nome" placeholder="Ex: Furadeira de Bancada"></div>
       <div class="input-group"><label>Categoria</label><input type="text" id="mf-cat" placeholder="Ex: Furação"></div>
     </div>
     <div class="form-row">
-      <div class="input-group"><label>Código Peça B1+B2</label><input type="number" id="mf-peca" min="0" max="65535" oninput="previewModalUID()"></div>
+      <div class="input-group"><label>Código Peça B1+B2 (0–65535)</label><input type="number" id="mf-peca" min="0" max="65535" oninput="previewModalUID()"></div>
       <div class="input-group"><label>Quantidade</label><input type="number" id="mf-qtd" value="1" min="1"></div>
-    </div>
-    <div class="form-row">
-      <div class="input-group"><label>Setor (B3)</label><select id="mf-setor" onchange="previewModalUID()"><option value="">Selecione...</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select></div>
-      <div class="input-group"><label>Unidade (B4)</label><select id="mf-unidade" onchange="previewModalUID()"><option value="">Selecione...</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select></div>
     </div>
     <div id="mf-uid-preview" style="display:none;font-family:var(--fm);font-size:12px;color:var(--muted);margin-bottom:8px">
       UID: <span id="mf-uid-val" style="color:var(--accent);letter-spacing:2px"></span>
+      <span style="color:var(--muted)"> (B3+B4 zerados)</span>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="fecharModal('modal-ferramenta')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarFerramenta()">Cadastrar</button>
+      <button class="btn btn-ghost" onclick="fecharModal('modal-peca')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarPeça()">Cadastrar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal: Novo Operador -->
 <div class="modal-overlay" id="modal-operador">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-operador')">✕</button>
     <div class="modal-title">Novo Operador</div>
-    <div class="notice">O setor e a unidade são lidos dos bytes B3 e B4 do UID do crachá.</div>
+    <div class="notice">O operador é identificado pelos bytes B1+B2 do crachá RFID. Setor e unidade são selecionados no terminal no momento do login.</div>
     <div class="form-row">
       <div class="input-group"><label>Nome Completo</label><input type="text" id="mo-nome" placeholder="Ex: João Silva"></div>
       <div class="input-group"><label>Matrícula</label><input type="text" id="mo-mat" placeholder="Ex: TS-0042"></div>
     </div>
-    <div class="input-group"><label>UID do Crachá (8 chars hex)</label><input type="text" id="mo-uid" maxlength="8" placeholder="Ex: A34F0302" style="text-transform:uppercase;letter-spacing:3px"></div>
+    <div class="input-group"><label>UID do Crachá (mín. 4 chars hex)</label>
+      <input type="text" id="mo-uid" placeholder="Ex: 00420000" style="text-transform:uppercase;letter-spacing:3px"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="fecharModal('modal-operador')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarOperador()">Cadastrar</button>
@@ -502,27 +537,21 @@
   </div>
 </div>
 
-<!-- Modal: Novo/Editar Usuário -->
 <div class="modal-overlay" id="modal-usuario">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-usuario')">✕</button>
     <div class="modal-title" id="mu-title">Novo Usuário</div>
     <input type="hidden" id="mu-id" value="">
     <div class="form-row">
-      <div class="input-group"><label>Nome</label><input type="text" id="mu-nome" placeholder="Nome completo"></div>
-      <div class="input-group"><label>Email</label><input type="email" id="mu-email" placeholder="usuario@empresa.com"></div>
+      <div class="input-group"><label>Nome</label><input type="text" id="mu-nome"></div>
+      <div class="input-group"><label>Email</label><input type="email" id="mu-email"></div>
     </div>
     <div class="form-row">
       <div class="input-group"><label>Perfil</label>
-        <select id="mu-perfil">
-          <option value="visualizador">Visualizador — só leitura</option>
-          <option value="operador">Operador — cadastros</option>
-          <option value="admin">Admin — acesso total</option>
-        </select>
+        <select id="mu-perfil"><option value="visualizador">Visualizador — só leitura</option><option value="operador">Operador — cadastros</option><option value="admin">Admin — acesso total</option></select>
       </div>
       <div class="input-group"><label>Senha <span id="mu-senha-hint" style="color:var(--muted)">(obrigatória)</span></label>
-        <input type="password" id="mu-senha" placeholder="Mínimo 6 caracteres">
-      </div>
+        <input type="password" id="mu-senha" placeholder="Mínimo 6 caracteres"></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="fecharModal('modal-usuario')">Cancelar</button>
@@ -532,117 +561,83 @@
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════════════════════
-// ESTADO GLOBAL
-// ══════════════════════════════════════════════════════════════════════
+// ══ ESTADO ══
+let charts = {};
+let usuario = null;
 const SETORES  = {1:'Soldagem',2:'Corte',3:'Usinagem',4:'Furação',5:'Montagem',6:'Manutenção',7:'Almoxarifado',8:'Qualidade'};
 const UNIDADES = {1:'Centro',2:'BH',3:'Contagem',4:'Betim',5:'Ibirité'};
-let charts  = {};
-let usuario = null;  // usuário logado
 
-// ══════════════════════════════════════════════════════════════════════
-// AUTH
-// ══════════════════════════════════════════════════════════════════════
-async function doLogin() {
-  const email = document.getElementById('l-email').value.trim();
-  const senha = document.getElementById('l-senha').value;
-  const err   = document.getElementById('l-err');
-  err.style.display = 'none';
-
-  try {
-    const r = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({email, senha})
-    });
-    const d = await r.json();
-    if (!r.ok) { err.textContent = d.erro || 'Erro ao fazer login'; err.style.display='block'; return; }
-
-    usuario = d.usuario;
-    localStorage.setItem('vl_token', d.token);
-    aplicarSessao();
-    document.getElementById('login-overlay').classList.add('hidden');
-    loadDashboard();
-    loadAlertas();
-  } catch(e) {
-    err.textContent = 'Falha de conexão com o servidor'; err.style.display='block';
-  }
+// ══ AUTH ══
+async function doLogin(){
+  const email=document.getElementById('l-email').value.trim();
+  const senha=document.getElementById('l-senha').value;
+  const err=document.getElementById('l-err'); err.style.display='none';
+  try{
+    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
+    const d=await r.json();
+    if(!r.ok){err.textContent=d.erro||'Erro ao fazer login';err.style.display='block';return;}
+    usuario=d.usuario; localStorage.setItem('vl_token',d.token);
+    aplicarSessao(); document.getElementById('login-overlay').classList.add('hidden');
+    loadDashboard(); loadAlertas();
+  }catch(e){err.textContent='Falha de conexão com o servidor';err.style.display='block';}
 }
-
-async function doLogout() {
-  await apiFetch('/api/auth/logout', 'POST');
-  localStorage.removeItem('vl_token');
-  usuario = null;
+async function doLogout(){
+  await apiFetch('/api/auth/logout','POST'); localStorage.removeItem('vl_token'); usuario=null;
   document.getElementById('login-overlay').classList.remove('hidden');
-  document.getElementById('user-chip').style.display = 'none';
-  document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('user-chip').style.display='none';
+  document.getElementById('logout-btn').style.display='none';
 }
-
-async function verificarSessao() {
-  const token = localStorage.getItem('vl_token');
-  if (!token) return;
-  try {
-    const r = await fetch('/api/auth/me', {headers:{'X-Auth-Token': token}});
-    if (!r.ok) { localStorage.removeItem('vl_token'); return; }
-    usuario = await r.json();
-    aplicarSessao();
+async function verificarSessao(){
+  const token=localStorage.getItem('vl_token'); if(!token)return;
+  try{
+    const r=await fetch('/api/auth/me',{headers:{'X-Auth-Token':token}});
+    if(!r.ok){localStorage.removeItem('vl_token');return;}
+    usuario=await r.json(); aplicarSessao();
     document.getElementById('login-overlay').classList.add('hidden');
     loadDashboard(); loadAlertas();
-  } catch(e) {}
+  }catch(e){}
 }
-
-function aplicarSessao() {
-  const u = usuario;
-  document.getElementById('user-av').textContent   = u.nome[0].toUpperCase();
-  document.getElementById('user-name').textContent  = u.nome;
-  document.getElementById('user-perfil').textContent = u.perfil.toUpperCase();
-  document.getElementById('user-chip').style.display = 'flex';
-  document.getElementById('logout-btn').style.display = 'block';
-
-  // Admin features
-  const isAdmin = u.perfil === 'admin';
-  const isOper  = isAdmin || u.perfil === 'operador';
-  document.getElementById('admin-tab').style.display        = isAdmin ? 'block' : 'none';
-  document.getElementById('btn-nova-ferramenta').style.display = isOper ? '' : 'none';
-  document.getElementById('btn-novo-operador').style.display   = isOper ? '' : 'none';
-  document.getElementById('th-acoes').style.display            = isOper ? '' : 'none';
-  document.getElementById('th-op-acoes').style.display         = isOper ? '' : 'none';
+function aplicarSessao(){
+  const u=usuario;
+  document.getElementById('user-av').textContent=u.nome[0].toUpperCase();
+  document.getElementById('user-name').textContent=u.nome;
+  document.getElementById('user-perfil').textContent=u.perfil.toUpperCase();
+  document.getElementById('user-chip').style.display='flex';
+  document.getElementById('logout-btn').style.display='block';
+  const isAdmin=u.perfil==='admin', isOper=isAdmin||u.perfil==='operador';
+  document.getElementById('admin-tab').style.display=isAdmin?'block':'none';
+  document.getElementById('btn-nova-peca').style.display=isOper?'':'none';
+  document.getElementById('btn-novo-operador').style.display=isOper?'':'none';
+  document.getElementById('th-acoes').style.display=isOper?'':'none';
+  document.getElementById('th-op-acoes').style.display=isOper?'':'none';
 }
-
-// ── Fetch autenticado ──────────────────────────────────────────────
-function getToken(){ return localStorage.getItem('vl_token') || ''; }
-const apiFetch = (path, method='GET', body=null) => {
-  const opts = { method, headers: {'X-Auth-Token': getToken()} };
-  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
-  return fetch(path, opts).then(r => r.json().then(d => ({ok: r.ok, status: r.status, data: d})));
+function getToken(){return localStorage.getItem('vl_token')||'';}
+const apiFetch=(path,method='GET',body=null)=>{
+  const opts={method,headers:{'X-Auth-Token':getToken()}};
+  if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body);}
+  return fetch(path,opts).then(r=>r.json().then(d=>({ok:r.ok,status:r.status,data:d})));
 };
-const api = path => apiFetch(path).then(r => r.data);
+const api=path=>apiFetch(path).then(r=>r.data);
 
-// ══════════════════════════════════════════════════════════════════════
-// UI HELPERS
-// ══════════════════════════════════════════════════════════════════════
-setInterval(()=>{ document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR'); }, 1000);
-
+// ══ UI HELPERS ══
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-BR');},1000);
 async function checkHealth(){
-  try{ const d=await(await fetch('/api/ping')).json(); document.getElementById('live-status').textContent='ONLINE — '+d.sistema; }
-  catch{ document.getElementById('live-status').textContent='OFFLINE'; }
+  try{const d=await(await fetch('/api/ping')).json();document.getElementById('live-status').textContent='ONLINE — '+d.sistema;}
+  catch{document.getElementById('live-status').textContent='OFFLINE';}
 }
 checkHealth(); setInterval(checkHealth,10000);
 
-function setTab(name, btn){
+function setTab(name,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('page-'+name).classList.add('active');
-  const loaders = {dashboard:loadDashboard,movimentacoes:loadMovs,ferramentas:loadFer,
-    operadores:loadOps,alertas:loadAlertas,admin:loadAdmin};
+  btn.classList.add('active'); document.getElementById('page-'+name).classList.add('active');
+  const loaders={dashboard:loadDashboard,localizacao:loadLocalizacao,movimentacoes:loadMovs,
+    pecas:loadFer,operadores:loadOps,alertas:loadAlertas,admin:loadAdmin};
   loaders[name]?.();
 }
-
-function fmt(str){ return str? new Date(str).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'--'; }
-
+function fmt(str){return str?new Date(str).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'--';}
 function mkChart(id,type,data,extra={}){
-  if(charts[id]) charts[id].destroy();
+  if(charts[id])charts[id].destroy();
   charts[id]=new Chart(document.getElementById(id).getContext('2d'),{type,data,options:{
     responsive:true,
     plugins:{legend:{display:false},tooltip:{backgroundColor:'#12121e',borderColor:'#1e1e35',borderWidth:1,
@@ -650,282 +645,282 @@ function mkChart(id,type,data,extra={}){
     scales:type==='doughnut'?{}:{
       x:{grid:{color:'rgba(30,30,53,.8)'},ticks:{color:'#5a5878',font:{family:"'IBM Plex Mono'",size:10}}},
       y:{grid:{color:'rgba(30,30,53,.8)'},ticks:{color:'#5a5878',font:{family:"'IBM Plex Mono'",size:10}}},
-    },...extra
-  }});
+    },...extra}});
 }
-
-function abrirModal(id){ document.getElementById(id).classList.add('open'); }
-function fecharModal(id){ document.getElementById(id).classList.remove('open'); }
-
-function toast(msg, ok=true){
-  const t = document.createElement('div');
-  t.textContent = msg;
-  Object.assign(t.style, {
-    position:'fixed',bottom:'24px',right:'24px',zIndex:'9000',padding:'12px 20px',borderRadius:'6px',
-    fontFamily:"'IBM Plex Mono',monospace",fontSize:'12px',fontWeight:'600',letterSpacing:'1px',
-    background: ok ? 'rgba(168,85,247,.9)' : 'rgba(255,61,87,.9)',
-    color:'#fff', boxShadow:'0 4px 20px rgba(0,0,0,.4)', transition:'opacity .4s'
-  });
+function abrirModal(id){document.getElementById(id).classList.add('open');}
+function fecharModal(id){document.getElementById(id).classList.remove('open');}
+function toast(msg,ok=true){
+  const t=document.createElement('div'); t.textContent=msg;
+  Object.assign(t.style,{position:'fixed',bottom:'24px',right:'24px',zIndex:'9000',padding:'12px 20px',
+    borderRadius:'6px',fontFamily:"'IBM Plex Mono',monospace",fontSize:'12px',fontWeight:'600',letterSpacing:'1px',
+    background:ok?'rgba(168,85,247,.9)':'rgba(255,61,87,.9)',color:'#fff',
+    boxShadow:'0 4px 20px rgba(0,0,0,.4)',transition:'opacity .4s'});
   document.body.appendChild(t);
-  setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),400); }, 2800);
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},2800);
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════════════════════════════════════
+// ══ DASHBOARD ══
 async function loadDashboard(){
   let qs='?x=1';
-  const s=document.getElementById('d-setor').value, u=document.getElementById('d-unidade').value;
-  if(s) qs+='&setor='+s; if(u) qs+='&unidade='+u;
-  const d = await api('/api/dashboard/dados'+qs);
-  const emUso = (d.em_uso||[]).length;
-
+  const s=document.getElementById('d-setor').value,u=document.getElementById('d-unidade').value;
+  if(s)qs+='&setor='+s; if(u)qs+='&unidade='+u;
+  const d=await api('/api/dashboard/dados'+qs);
+  const emUso=(d.em_uso||[]).length;
   document.getElementById('stats-grid').innerHTML=`
     <div class="stat-card" style="--ca:var(--accent)"><div class="stat-label">Total movimentações</div><div class="stat-value">${d.totais.total_movimentacoes||0}</div></div>
     <div class="stat-card" style="--ca:var(--accent2)"><div class="stat-label">Retiradas</div><div class="stat-value">${d.totais.total_retiradas||0}</div></div>
     <div class="stat-card" style="--ca:var(--accent3)"><div class="stat-label">Devoluções</div><div class="stat-value">${d.totais.total_devolucoes||0}</div></div>
     <div class="stat-card" style="--ca:var(--danger)"><div class="stat-label">Em uso agora</div><div class="stat-value">${emUso}</div><div class="stat-sub">não devolvidas</div></div>
   `;
-
   mkChart('cDias','line',{labels:d.por_dia.map(r=>r.dia),datasets:[{label:'Movs',data:d.por_dia.map(r=>r.total),
     borderColor:'#a855f7',backgroundColor:'rgba(168,85,247,.08)',fill:true,tension:.4,pointBackgroundColor:'#a855f7',pointRadius:3}]});
-
   mkChart('cUnidade','doughnut',{labels:d.por_unidade.map(r=>r.unidade),datasets:[{data:d.por_unidade.map(r=>r.movimentacoes),
     backgroundColor:['#a855f7','#ff6b35','#7fff6e','#ffb800','#ff3d57'],borderWidth:0}]},
     {plugins:{legend:{display:true,position:'bottom',labels:{color:'#5a5878',font:{family:"'IBM Plex Mono'",size:10},boxWidth:12}}}});
-
   mkChart('cSetor','bar',{labels:d.por_setor.map(r=>r.setor),datasets:[{label:'Movs',data:d.por_setor.map(r=>r.movimentacoes),
     backgroundColor:'rgba(168,85,247,.15)',borderColor:'#a855f7',borderWidth:1,borderRadius:4}]});
-
-  mkChart('cTop','bar',{labels:d.top_ferramentas.map(r=>r.nome.substring(0,18)),datasets:[{label:'Usos',
-    data:d.top_ferramentas.map(r=>r.usos),backgroundColor:'rgba(255,107,53,.2)',borderColor:'#ff6b35',borderWidth:1,borderRadius:4}]},{indexAxis:'y'});
+  mkChart('cTop','bar',{labels:d.top_pecas.map(r=>r.nome.substring(0,18)),datasets:[{label:'Usos',
+    data:d.top_pecas.map(r=>r.usos),backgroundColor:'rgba(255,107,53,.2)',borderColor:'#ff6b35',borderWidth:1,borderRadius:4}]},{indexAxis:'y'});
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// MOVIMENTAÇÕES
-// ══════════════════════════════════════════════════════════════════════
+// ══ LOCALIZAÇÃO ══
+async function loadLocalizacao(){
+  const d=await api('/api/dashboard/dados');
+  let rows=d.localizacoes||[];
+  const disp=document.getElementById('loc-disp').value;
+  const setor=document.getElementById('loc-setor').value;
+  const unid=document.getElementById('loc-unidade').value;
+  if(disp!=='') rows=rows.filter(r=>String(r.disponivel)===disp);
+  if(setor) rows=rows.filter(r=>r.localizacao_setor==setor || (r.loc_setor&&SETORES[setor]===r.loc_setor));
+  if(unid)  rows=rows.filter(r=>r.localizacao_unidade==unid || (r.loc_unidade&&UNIDADES[unid]===r.loc_unidade));
+
+  document.getElementById('loc-count').textContent=rows.length+' pecas';
+  if(!rows.length){
+    document.getElementById('loc-body').innerHTML='<tr><td colspan="7" class="no-data">Nenhuma peca encontrada</td></tr>';return;
+  }
+  document.getElementById('loc-body').innerHTML=rows.map(r=>{
+    const semLoc=!r.loc_setor;
+    const locHtml=semLoc
+      ? '<span class="loc-badge sem-loc"><span class="loc-dot" style="background:var(--muted)"></span>Sem localização</span>'
+      : `<span class="loc-badge"><span class="loc-dot ${r.disponivel?'livre':'uso'}"></span>${r.loc_setor} · ${r.loc_unidade}</span>`;
+    return `<tr>
+      <td><strong>${r.nome}</strong></td>
+      <td>${r.categoria}</td>
+      <td><span class="uid-chip">${r.uid_raw}</span><span class="byte-tip">peça: ${r.peca_code}</span></td>
+      <td>${locHtml}</td>
+      <td><span class="bt ${r.disponivel?'bt-livre':'bt-em-uso'}">${r.disponivel?'LIVRE':'EM USO'}</span></td>
+      <td>${r.ultimo_operador
+        ? `<strong>${r.ultimo_operador}</strong><span class="byte-tip">${r.ultimo_operador_mat||''}</span>`
+        : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${fmt(r.ultima_mov)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══ MOVIMENTAÇÕES ══
 async function loadMovs(){
   let qs='?limit=200';
-  const s=document.getElementById('m-setor').value, u=document.getElementById('m-unidade').value,
-        t=document.getElementById('m-tipo').value, i=document.getElementById('m-ini').value, f=document.getElementById('m-fim').value;
-  if(s) qs+='&setor='+s; if(u) qs+='&unidade='+u; if(t) qs+='&tipo='+t; if(i) qs+='&data_ini='+i; if(f) qs+='&data_fim='+f;
-
-  document.getElementById('mov-body').innerHTML='<tr><td colspan="7" class="loading">Carregando...</td></tr>';
-  const rows = await api('/api/movimentacoes'+qs);
-  document.getElementById('mov-count').textContent = rows.length+' registros';
-  if(!rows.length){ document.getElementById('mov-body').innerHTML='<tr><td colspan="7" class="no-data">Nenhum registro</td></tr>'; return; }
-
-  document.getElementById('mov-body').innerHTML = rows.map(r=>`
+  const s=document.getElementById('m-setor').value,u=document.getElementById('m-unidade').value,
+        t=document.getElementById('m-tipo').value,i=document.getElementById('m-ini').value,f=document.getElementById('m-fim').value;
+  if(s)qs+='&setor='+s;if(u)qs+='&unidade='+u;if(t)qs+='&tipo='+t;if(i)qs+='&data_ini='+i;if(f)qs+='&data_fim='+f;
+  document.getElementById('mov-body').innerHTML='<tr><td colspan="8" class="loading">Carregando...</td></tr>';
+  const rows=await api('/api/movimentacoes'+qs);
+  document.getElementById('mov-count').textContent=rows.length+' registros';
+  if(!rows.length){document.getElementById('mov-body').innerHTML='<tr><td colspan="8" class="no-data">Nenhum registro</td></tr>';return;}
+  document.getElementById('mov-body').innerHTML=rows.map(r=>`
     <tr>
       <td>${fmt(r.horario)}</td>
       <td><span class="bt bt-${r.tipo}">${r.tipo}</span></td>
-      <td>${r.ferramenta}<br><span class="byte-tip">${r.categoria}</span></td>
-      <td><span class="uid-chip">${r.uid_raw}</span>
-          <span class="byte-tip">B1+B2:${r.peca_code} · B3:0x${r.byte_B3_hex} · B4:0x${r.byte_B4_hex}</span></td>
-      <td>${r.operador}<br><span class="byte-tip">${r.matricula}</span></td>
+      <td>${r.peca}<span class="byte-tip">${r.categoria}</span></td>
+      <td><span class="uid-chip">${r.uid_raw}</span><span class="byte-tip">peça: ${r.peca_code}</span></td>
+      <td>${r.operador}<span class="byte-tip">${r.matricula}</span></td>
       <td>${r.setor}</td><td>${r.unidade}</td>
+      <td><span class="uid-chip" style="color:var(--muted)">${r.terminal_id||'—'}</span></td>
     </tr>`).join('');
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// FERRAMENTAS
-// ══════════════════════════════════════════════════════════════════════
+// ══ FERRAMENTAS ══
 async function loadFer(){
   let qs='?x=1';
-  const s=document.getElementById('f-setor').value, u=document.getElementById('f-unidade').value, d=document.getElementById('f-disp').value;
-  if(s) qs+='&setor='+s; if(u) qs+='&unidade='+u; if(d!=='') qs+='&disponivel='+d;
-  document.getElementById('fer-body').innerHTML='<tr><td colspan="9" class="loading">Carregando...</td></tr>';
-  const rows = await api('/api/ferramentas'+qs);
-  document.getElementById('fer-count').textContent=rows.length+' ferramentas';
-  if(!rows.length){ document.getElementById('fer-body').innerHTML='<tr><td colspan="9" class="no-data">Nenhuma ferramenta</td></tr>'; return; }
-  const b12=pc=>{const h=pc.toString(16).toUpperCase().padStart(4,'0'); return '0x'+h.slice(0,2)+' '+h.slice(2);};
-  const isOper = usuario && (usuario.perfil==='admin'||usuario.perfil==='operador');
-
-  document.getElementById('fer-body').innerHTML=rows.map(r=>`
-    <tr>
+  const d=document.getElementById('f-disp').value;
+  if(d!=='')qs+='&disponivel='+d;
+  document.getElementById('fer-body').innerHTML='<tr><td colspan="8" class="loading">Carregando...</td></tr>';
+  const rows=await api('/api/pecas'+qs);
+  document.getElementById('fer-count').textContent=rows.length+' pecas';
+  if(!rows.length){document.getElementById('fer-body').innerHTML='<tr><td colspan="8" class="no-data">Nenhuma peca</td></tr>';return;}
+  const isOper=usuario&&(usuario.perfil==='admin'||usuario.perfil==='operador');
+  document.getElementById('fer-body').innerHTML=rows.map(r=>{
+    const semLoc=!r.loc_setor_nome;
+    const locHtml=semLoc
+      ? '<span class="bt bt-sem-loc">Sem localização</span>'
+      : `<span class="loc-badge"><span class="loc-dot ${r.disponivel?'livre':'uso'}"></span>${r.loc_setor_nome} · ${r.loc_unidade_nome}</span>`;
+    return `<tr>
       <td><strong>${r.nome}</strong></td>
       <td>${r.categoria}</td>
       <td><span class="uid-chip">${r.uid_raw}</span></td>
-      <td><span style="color:var(--accent);font-family:var(--fm);font-size:11px">${b12(r.peca_code)}</span><span class="byte-tip">dec: ${r.peca_code}</span></td>
-      <td>${r.setor_nome}</td><td>${r.unidade_nome}</td><td>${r.quantidade}</td>
+      <td><span style="color:var(--accent);font-family:var(--fm);font-size:11px">${r.peca_code}</span></td>
+      <td>${r.quantidade}</td>
       <td><span class="bt ${r.disponivel?'bt-livre':'bt-em-uso'}">${r.disponivel?'LIVRE':'EM USO'}</span></td>
-      ${isOper?`<td style="display:''"><button class="btn btn-danger btn-sm" onclick="deletarFerramenta(${r.peca_code},'${r.nome}')">Remover</button></td>`:'<td style="display:none"></td>'}
-    </tr>`).join('');
+      <td>${locHtml}</td>
+      ${isOper?`<td><button class="btn btn-danger btn-sm" onclick="deletarPeça(${r.peca_code},'${r.nome}')">Remover</button></td>`:'<td style="display:none"></td>'}
+    </tr>`;
+  }).join('');
 }
-
-function abrirModalFerramenta(){ abrirModal('modal-ferramenta'); }
-
+function abrirModalPeça(){abrirModal('modal-peca');}
 function previewModalUID(){
   const p=parseInt(document.getElementById('mf-peca').value)||0;
-  const s=parseInt(document.getElementById('mf-setor').value)||0;
-  const u=parseInt(document.getElementById('mf-unidade').value)||0;
-  if(!p||!s||!u){ document.getElementById('mf-uid-preview').style.display='none'; return; }
+  if(!p){document.getElementById('mf-uid-preview').style.display='none';return;}
   const b1=((p>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
   const b2=(p&0xFF).toString(16).toUpperCase().padStart(2,'0');
-  const b3=s.toString(16).toUpperCase().padStart(2,'0');
-  const b4=u.toString(16).toUpperCase().padStart(2,'0');
-  document.getElementById('mf-uid-val').textContent = b1+b2+b3+b4;
-  document.getElementById('mf-uid-preview').style.display = 'block';
+  document.getElementById('mf-uid-val').textContent=b1+b2+'0000';
+  document.getElementById('mf-uid-preview').style.display='block';
+}
+async function salvarPeça(){
+  const payload={nome:document.getElementById('mf-nome').value.trim(),
+    categoria:document.getElementById('mf-cat').value.trim(),
+    peca_code:parseInt(document.getElementById('mf-peca').value),
+    quantidade:parseInt(document.getElementById('mf-qtd').value)||1};
+  const r=await apiFetch('/api/pecas','POST',payload);
+  if(r.ok){toast('Peça cadastrada!');fecharModal('modal-peca');loadFer();}
+  else toast(r.data.erro||'Erro ao cadastrar',false);
+}
+async function deletarPeça(peca,nome){
+  if(!confirm(`Remover "${nome}"?`))return;
+  const r=await apiFetch('/api/pecas/'+peca,'DELETE');
+  if(r.ok){toast('Peça removida');loadFer();}else toast(r.data.erro||'Erro',false);
 }
 
-async function salvarFerramenta(){
-  const payload = {
-    nome: document.getElementById('mf-nome').value.trim(),
-    categoria: document.getElementById('mf-cat').value.trim(),
-    peca_code: parseInt(document.getElementById('mf-peca').value),
-    setor_codigo: parseInt(document.getElementById('mf-setor').value),
-    unidade_codigo: parseInt(document.getElementById('mf-unidade').value),
-    quantidade: parseInt(document.getElementById('mf-qtd').value)||1,
-  };
-  const r = await apiFetch('/api/ferramentas', 'POST', payload);
-  if(r.ok){ toast('Ferramenta cadastrada!'); fecharModal('modal-ferramenta'); loadFer(); }
-  else toast(r.data.erro||'Erro ao cadastrar', false);
-}
-
-async function deletarFerramenta(peca, nome){
-  if(!confirm(`Remover ferramenta "${nome}"? Esta ação não pode ser desfeita.`)) return;
-  const r = await apiFetch('/api/ferramentas/'+peca, 'DELETE');
-  if(r.ok){ toast('Ferramenta removida'); loadFer(); }
-  else toast(r.data.erro||'Erro ao remover', false);
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// OPERADORES
-// ══════════════════════════════════════════════════════════════════════
+// ══ OPERADORES ══
 async function loadOps(){
-  const [ativos,todos]=await Promise.all([api('/api/operadores/ativos'),api('/api/operadores')]);
-  const isOper = usuario && (usuario.perfil==='admin'||usuario.perfil==='operador');
-
-  document.getElementById('op-ativos').innerHTML = !ativos.length
-    ? '<div style="font-family:var(--fm);font-size:12px;color:var(--muted)">Nenhum operador logado.</div>'
-    : ativos.map(o=>`<div class="op-card"><div class="op-avatar">${o.nome[0]}</div><div><div class="op-name">${o.nome}</div><div class="op-meta">${o.setor} · ${o.unidade}<br>${fmt(o.inicio)}</div></div><span class="bt bt-ativo" style="margin-left:auto">ATIVO</span></div>`).join('');
-
+  const[ativos,todos]=await Promise.all([api('/api/operadores/ativos'),api('/api/operadores')]);
+  const isOper=usuario&&(usuario.perfil==='admin'||usuario.perfil==='operador');
+  document.getElementById('op-ativos').innerHTML=!ativos.length
+    ?'<div style="font-family:var(--fm);font-size:12px;color:var(--muted)">Nenhum operador logado agora.</div>'
+    :ativos.map(o=>`<div class="op-card">
+      <div class="op-avatar">${o.nome[0]}</div>
+      <div><div class="op-name">${o.nome}</div>
+      <div class="op-meta">${o.setor} · ${o.unidade}<br>${o.terminal_id?'Terminal: '+o.terminal_id+'<br>':''} ${fmt(o.inicio)}</div></div>
+      <span class="bt bt-ativo" style="margin-left:auto">ATIVO</span></div>`).join('');
   document.getElementById('op-body').innerHTML=todos.map(o=>`
     <tr>
       <td><strong>${o.nome}</strong></td>
       <td><span class="uid-chip">${o.matricula}</span></td>
       <td><span class="uid-chip">${o.uid_raw}</span></td>
-      <td>${o.setor_nome}</td><td>${o.unidade_nome}</td>
-      ${isOper?`<td style="display:''"><button class="btn btn-danger btn-sm" onclick="deletarOperador(${o.id},'${o.nome}')">Remover</button></td>`:'<td style="display:none"></td>'}
+      <td><span style="color:var(--accent);font-family:var(--fm)">${o.peca_code}</span></td>
+      ${isOper?`<td><button class="btn btn-danger btn-sm" onclick="deletarOperador(${o.id},'${o.nome}')">Remover</button></td>`:'<td style="display:none"></td>'}
     </tr>`).join('');
 }
-
-function abrirModalOperador(){ abrirModal('modal-operador'); }
-
+function abrirModalOperador(){abrirModal('modal-operador');}
 async function salvarOperador(){
-  const payload = {
-    nome: document.getElementById('mo-nome').value.trim(),
-    matricula: document.getElementById('mo-mat').value.trim(),
-    uid_raw: document.getElementById('mo-uid').value.toUpperCase().trim(),
-  };
-  const r = await apiFetch('/api/operadores', 'POST', payload);
-  if(r.ok){ toast('Operador cadastrado!'); fecharModal('modal-operador'); loadOps(); }
-  else toast(r.data.erro||'Erro ao cadastrar', false);
+  const payload={nome:document.getElementById('mo-nome').value.trim(),
+    matricula:document.getElementById('mo-mat').value.trim(),
+    uid_raw:document.getElementById('mo-uid').value.toUpperCase().trim()};
+  const r=await apiFetch('/api/operadores','POST',payload);
+  if(r.ok){toast('Operador cadastrado!');fecharModal('modal-operador');loadOps();}
+  else toast(r.data.erro||'Erro ao cadastrar',false);
+}
+async function deletarOperador(id,nome){
+  if(!confirm(`Remover operador "${nome}"?`))return;
+  const r=await apiFetch('/api/operadores/'+id,'DELETE');
+  if(r.ok){toast('Operador removido');loadOps();}else toast(r.data.erro||'Erro',false);
 }
 
-async function deletarOperador(id, nome){
-  if(!confirm(`Remover operador "${nome}"?`)) return;
-  const r = await apiFetch('/api/operadores/'+id, 'DELETE');
-  if(r.ok){ toast('Operador removido'); loadOps(); }
-  else toast(r.data.erro||'Erro ao remover', false);
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// ALERTAS
-// ══════════════════════════════════════════════════════════════════════
+// ══ ALERTAS ══
 async function loadAlertas(){
   const data=await api('/api/alertas');
   document.getElementById('alerta-total').textContent=data.total_alertas;
   document.getElementById('alert-badge').textContent=data.total_alertas>0?'('+data.total_alertas+')':'';
-  document.getElementById('alertas-grid').innerHTML=!data.ferramentas.length
-    ? '<div style="font-family:var(--fm);font-size:12px;color:var(--accent3)">✓ Nenhuma ferramenta em estado crítico.</div>'
-    : data.ferramentas.map(f=>`
-      <div class="alerta-card">
-        <div class="alerta-nome">${f.nome}</div>
-        <div class="alerta-meta">
-          Categoria: ${f.categoria}<br>
-          Setor: ${f.setor} <span style="color:var(--accent)">B3=0x${f.byte_B3}</span><br>
-          Unidade: ${f.unidade} <span style="color:var(--accent)">B4=0x${f.byte_B4}</span><br>
-          UID: <span class="uid-chip">${f.uid_raw}</span><br>
-          <span style="color:var(--danger);font-weight:600">EM USO — não devolvida</span>
-        </div>
-      </div>`).join('');
+  document.getElementById('alertas-grid').innerHTML=!data.pecas.length
+    ?'<div style="font-family:var(--fm);font-size:12px;color:var(--accent3)">✓ Nenhuma peca em uso sem devolução.</div>'
+    :data.pecas.map(f=>`<div class="alerta-card">
+      <div class="alerta-nome">${f.nome} <span style="font-family:var(--fm);font-size:11px;color:var(--muted)">${f.categoria}</span></div>
+      <div class="alerta-meta">
+        UID: <span class="uid-chip">${f.uid_raw}</span> · peça ${f.peca_code}<br>
+        ${f.loc_setor?`Última localização: <strong>${f.loc_setor}</strong> · <strong>${f.loc_unidade}</strong><br>`:'Localização: <em>desconhecida</em><br>'}
+        Responsável: <span class="alerta-op">${f.ultimo_operador||'—'}</span>${f.ultimo_operador_mat?' ('+f.ultimo_operador_mat+')':''}<br>
+        Desde: ${fmt(f.ultima_mov)}
+      </div>
+    </div>`).join('');
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// TERMINAL RFID
-// ══════════════════════════════════════════════════════════════════════
+// ══ TERMINAL RFID ══
 function previewUID(uid){
   uid=uid.toUpperCase();
-  const prev=document.getElementById('uid-preview');
-  if(uid.length!==8){prev.classList.remove('show');return;}
-  const b1=uid.slice(0,2),b2=uid.slice(2,4),b3=uid.slice(4,6),b4=uid.slice(6,8);
-  const peca=(parseInt(b1,16)<<8)|parseInt(b2,16), s3=parseInt(b3,16), s4=parseInt(b4,16);
-  document.getElementById('prev-uid').textContent=uid;
-  document.getElementById('prev-bytes').innerHTML=`
-    <div class="byte-block"><span>B1+B2 → peça:</span> ${peca}</div>
-    <div class="byte-block"><span>B3 → setor:</span> ${SETORES[s3]||'0x'+b3}</div>
-    <div class="byte-block"><span>B4 → unidade:</span> ${UNIDADES[s4]||'0x'+b4}</div>`;
-  prev.classList.add('show');
+  if(uid.length<4){document.getElementById('prev-peca').textContent='--';document.getElementById('prev-bytes').innerHTML='';return;}
+  const b1=parseInt(uid.slice(0,2),16)||0, b2=parseInt(uid.slice(2,4),16)||0;
+  const peca=(b1<<8)|b2;
+  document.getElementById('prev-peca').textContent=peca;
+  document.getElementById('prev-bytes').innerHTML=
+    `<div class="byte-block"><span>B1:</span> 0x${uid.slice(0,2)}</div>`+
+    `<div class="byte-block"><span>B2:</span> 0x${uid.slice(2,4)}</div>`+
+    `<div class="byte-block"><span>peca_code:</span> ${peca}</div>`;
+  // Atualiza payload preview
+  const s=document.getElementById('sim-setor').value||'?';
+  const u=document.getElementById('sim-unidade').value||'?';
+  const tid=document.getElementById('sim-terminal').value||'ESP-SIM-01';
+  document.getElementById('payload-preview').innerHTML=
+    `{\n  "uid":            "${uid}",\n  "setor_codigo":   ${s},\n  "unidade_codigo": ${u},\n  "terminal_id":    "${tid}"\n}`;
 }
+
+document.addEventListener('DOMContentLoaded',()=>{
+  ['sim-setor','sim-unidade','sim-terminal'].forEach(id=>{
+    document.getElementById(id).addEventListener('change',()=>previewUID(document.getElementById('sim-uid').value));
+    document.getElementById(id).addEventListener('input',()=>previewUID(document.getElementById('sim-uid').value));
+  });
+});
 
 async function simularRFID(){
   const uid=document.getElementById('sim-uid').value.toUpperCase();
-  if(uid.length!==8){alert('UID deve ter 8 caracteres hex');return;}
+  const setor=document.getElementById('sim-setor').value;
+  const unidade=document.getElementById('sim-unidade').value;
+  const terminal=document.getElementById('sim-terminal').value||'ESP-SIM-01';
+  if(uid.length<4){alert('UID deve ter no mínimo 4 caracteres hex');return;}
+  if(!setor||!unidade){alert('Selecione setor e unidade do terminal');return;}
   const log=document.getElementById('rfid-log');
-  log.className='log-box show'; log.textContent='► POST /api/rfid  uid='+uid+'\n';
+  log.className='log-box show';
+  const payload={uid,setor_codigo:parseInt(setor),unidade_codigo:parseInt(unidade),terminal_id:terminal};
+  log.textContent='► POST /api/rfid\n'+JSON.stringify(payload,null,2)+'\n\n';
   try{
-    const res=await fetch('/api/rfid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid})});
+    const res=await fetch('/api/rfid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const data=await res.json();
     log.textContent+='◀ HTTP '+res.status+'\n\n'+JSON.stringify(data,null,2);
     log.className='log-box show'+(data.status==='erro'?' error':'');
-  }catch(e){ log.className='log-box show error'; log.textContent+='✗ Erro: '+e.message; }
+    if(data.status==='ok') loadLocalizacao();
+  }catch(e){log.className='log-box show error';log.textContent+='✗ Erro: '+e.message;}
 }
-
 function uidAleatorio(){
   const c='0123456789ABCDEF';
-  document.getElementById('sim-uid').value=[...Array(8)].map(()=>c[Math.floor(Math.random()*16)]).join('');
+  document.getElementById('sim-uid').value=[...Array(4)].map(()=>c[Math.floor(Math.random()*16)]).join('');
   previewUID(document.getElementById('sim-uid').value);
 }
-
 function gerarUID(){
   const peca=parseInt(document.getElementById('gp').value)||0;
-  const setor=parseInt(document.getElementById('gs').value)||0;
-  const unid=parseInt(document.getElementById('gu').value)||0;
   const b1=((peca>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
   const b2=(peca&0xFF).toString(16).toUpperCase().padStart(2,'0');
-  const b3=setor.toString(16).toUpperCase().padStart(2,'0');
-  const b4=unid.toString(16).toUpperCase().padStart(2,'0');
-  const uid=b1+b2+b3+b4;
-  document.getElementById('gen-uid').textContent=uid;
+  const uid=b1+b2;
+  document.getElementById('gen-uid').textContent=uid+'0000';
   document.getElementById('gen-bytes').innerHTML=
-    `<div class="byte-block"><span>B1:</span> 0x${b1}</div><div class="byte-block"><span>B2:</span> 0x${b2}</div>`+
-    `<div class="byte-block"><span>B3:</span> 0x${b3}</div><div class="byte-block"><span>B4:</span> 0x${b4}</div>`;
+    `<div class="byte-block"><span>B1:</span> 0x${b1}</div>`+
+    `<div class="byte-block"><span>B2:</span> 0x${b2}</div>`+
+    `<div class="byte-block"><span>peca_code:</span> ${peca}</div>`;
 }
-
 function copiarUID(){
   const uid=document.getElementById('gen-uid').textContent;
-  if(uid==='--------') return;
+  if(uid==='----')return;
   navigator.clipboard.writeText(uid); toast('UID '+uid+' copiado!');
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// ADMIN
-// ══════════════════════════════════════════════════════════════════════
+// ══ ADMIN ══
 async function loadAdmin(){
-  const [ferramentas, operadores, usuarios, movs] = await Promise.all([
-    api('/api/ferramentas'), api('/api/operadores'), api('/api/usuarios'), api('/api/movimentacoes?limit=1')
-  ]);
-
-  const totalMovs = await api('/api/dashboard/dados');
+  const[pecas,operadores,usuarios,dd]=await Promise.all([
+    api('/api/pecas'),api('/api/operadores'),api('/api/usuarios'),api('/api/dashboard/dados')]);
   document.getElementById('admin-stats').innerHTML=`
-    <div class="info-card"><div class="info-label">Ferramentas</div><div class="info-value">${ferramentas.length}</div></div>
+    <div class="info-card"><div class="info-label">Peças</div><div class="info-value">${pecas.length}</div></div>
     <div class="info-card"><div class="info-label">Operadores</div><div class="info-value">${operadores.length}</div></div>
-    <div class="info-card"><div class="info-label">Usuários sistema</div><div class="info-value">${usuarios.length}</div></div>
-    <div class="info-card"><div class="info-label">Total movimentações</div><div class="info-value">${totalMovs.totais.total_movimentacoes||0}</div></div>
+    <div class="info-card"><div class="info-label">Usuários</div><div class="info-value">${usuarios.length}</div></div>
+    <div class="info-card"><div class="info-label">Movimentações</div><div class="info-value">${dd.totais.total_movimentacoes||0}</div></div>
   `;
-
-  document.getElementById('usuarios-body').innerHTML = usuarios.map(u=>`
+  document.getElementById('usuarios-body').innerHTML=usuarios.map(u=>`
     <tr>
       <td><strong>${u.nome}</strong></td>
       <td style="color:var(--muted)">${u.email}</td>
@@ -938,104 +933,71 @@ async function loadAdmin(){
       </td>
     </tr>`).join('');
 }
-
 function abrirModalUsuario(){
-  document.getElementById('mu-id').value = '';
-  document.getElementById('mu-title').textContent = 'Novo Usuário';
-  document.getElementById('mu-nome').value = '';
-  document.getElementById('mu-email').value = '';
-  document.getElementById('mu-senha').value = '';
-  document.getElementById('mu-perfil').value = 'visualizador';
-  document.getElementById('mu-senha-hint').textContent = '(obrigatória)';
+  document.getElementById('mu-id').value='';
+  document.getElementById('mu-title').textContent='Novo Usuário';
+  ['mu-nome','mu-email','mu-senha'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mu-perfil').value='visualizador';
+  document.getElementById('mu-senha-hint').textContent='(obrigatória)';
   abrirModal('modal-usuario');
 }
-
-function editarUsuario(id, nome, email, perfil){
-  document.getElementById('mu-id').value    = id;
-  document.getElementById('mu-title').textContent = 'Editar Usuário';
-  document.getElementById('mu-nome').value  = nome;
-  document.getElementById('mu-email').value = email;
-  document.getElementById('mu-perfil').value= perfil;
-  document.getElementById('mu-senha').value = '';
-  document.getElementById('mu-senha-hint').textContent = '(deixe vazio para manter)';
+function editarUsuario(id,nome,email,perfil){
+  document.getElementById('mu-id').value=id;
+  document.getElementById('mu-title').textContent='Editar Usuário';
+  document.getElementById('mu-nome').value=nome;
+  document.getElementById('mu-email').value=email;
+  document.getElementById('mu-perfil').value=perfil;
+  document.getElementById('mu-senha').value='';
+  document.getElementById('mu-senha-hint').textContent='(deixe vazio para manter)';
   abrirModal('modal-usuario');
 }
-
 async function salvarUsuario(){
-  const id    = document.getElementById('mu-id').value;
-  const nome  = document.getElementById('mu-nome').value.trim();
-  const email = document.getElementById('mu-email').value.trim();
-  const senha = document.getElementById('mu-senha').value;
-  const perfil= document.getElementById('mu-perfil').value;
-
-  const payload = {nome, email, perfil};
-  if(senha) payload.senha = senha;
-
+  const id=document.getElementById('mu-id').value;
+  const payload={nome:document.getElementById('mu-nome').value.trim(),
+    email:document.getElementById('mu-email').value.trim(),
+    perfil:document.getElementById('mu-perfil').value};
+  const senha=document.getElementById('mu-senha').value;
+  if(senha)payload.senha=senha;
   let r;
-  if(id){ r = await apiFetch('/api/usuarios/'+id, 'PUT', payload); }
-  else  { if(!senha){toast('Senha obrigatória para novo usuário',false);return;} r = await apiFetch('/api/usuarios','POST',payload); }
-
-  if(r.ok){ toast('Usuário salvo!'); fecharModal('modal-usuario'); loadAdmin(); }
-  else toast(r.data.erro||'Erro ao salvar', false);
+  if(id){r=await apiFetch('/api/usuarios/'+id,'PUT',payload);}
+  else{if(!senha){toast('Senha obrigatória',false);return;}r=await apiFetch('/api/usuarios','POST',payload);}
+  if(r.ok){toast('Usuário salvo!');fecharModal('modal-usuario');loadAdmin();}
+  else toast(r.data.erro||'Erro ao salvar',false);
 }
-
-async function toggleUsuario(id, ativo, nome){
-  const acao = ativo ? 'desativar' : 'ativar';
-  if(!confirm(`Deseja ${acao} o usuário "${nome}"?`)) return;
-  const r = await apiFetch('/api/usuarios/'+id, 'PUT', {ativo: !ativo});
-  if(r.ok){ toast(`Usuário ${acao}do`); loadAdmin(); }
-  else toast(r.data.erro||'Erro', false);
+async function toggleUsuario(id,ativo,nome){
+  if(!confirm(`${ativo?'Desativar':'Ativar'} usuário "${nome}"?`))return;
+  const r=await apiFetch('/api/usuarios/'+id,'PUT',{ativo:!ativo});
+  if(r.ok){toast(`Usuário ${ativo?'desativado':'ativado'}`);loadAdmin();}else toast(r.data.erro||'Erro',false);
 }
-
-// ── Admin: Cadastro rápido no painel ──────────────────────────────
-function previewFerramenta(){
+function previewPeça(){
   const p=parseInt(document.getElementById('fn-peca').value)||0;
-  const s=parseInt(document.getElementById('fn-setor').value)||0;
-  const u=parseInt(document.getElementById('fn-unidade').value)||0;
-  if(!p||!s||!u){ document.getElementById('fn-preview').style.display='none'; return; }
+  if(!p){document.getElementById('fn-preview').style.display='none';return;}
   const b1=((p>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
   const b2=(p&0xFF).toString(16).toUpperCase().padStart(2,'0');
-  const b3=s.toString(16).toUpperCase().padStart(2,'0');
-  const b4=u.toString(16).toUpperCase().padStart(2,'0');
-  document.getElementById('fn-uid').textContent=b1+b2+b3+b4;
+  document.getElementById('fn-uid').textContent=b1+b2+'0000';
   document.getElementById('fn-preview').style.display='block';
 }
-
-async function cadastrarFerramenta(){
-  const payload = {
-    nome: document.getElementById('fn-nome').value.trim(),
-    categoria: document.getElementById('fn-cat').value.trim(),
-    peca_code: parseInt(document.getElementById('fn-peca').value),
-    setor_codigo: parseInt(document.getElementById('fn-setor').value),
-    unidade_codigo: parseInt(document.getElementById('fn-unidade').value),
-    quantidade: parseInt(document.getElementById('fn-qtd').value)||1,
-  };
-  const msg = document.getElementById('fn-msg');
-  const r = await apiFetch('/api/ferramentas','POST',payload);
-  if(r.ok){ msg.style.color='var(--accent3)'; msg.textContent='✓ Ferramenta cadastrada (UID: '+r.data.uid_gerado+')'; }
-  else { msg.style.color='var(--danger)'; msg.textContent='✗ '+(r.data.erro||'Erro'); }
+async function cadastrarPeça(){
+  const payload={nome:document.getElementById('fn-nome').value.trim(),
+    categoria:document.getElementById('fn-cat').value.trim(),
+    peca_code:parseInt(document.getElementById('fn-peca').value),
+    quantidade:parseInt(document.getElementById('fn-qtd').value)||1};
+  const msg=document.getElementById('fn-msg');
+  const r=await apiFetch('/api/pecas','POST',payload);
+  if(r.ok){msg.style.color='var(--accent3)';msg.textContent='✓ Cadastrada (UID: '+r.data.uid_gerado+')';}
+  else{msg.style.color='var(--danger)';msg.textContent='✗ '+(r.data.erro||'Erro');}
 }
-
 async function cadastrarOperador(){
-  const payload = {
-    nome: document.getElementById('on-nome').value.trim(),
-    matricula: document.getElementById('on-mat').value.trim(),
-    uid_raw: document.getElementById('on-uid').value.toUpperCase().trim(),
-  };
-  const msg = document.getElementById('on-msg');
-  const r = await apiFetch('/api/operadores','POST',payload);
-  if(r.ok){ msg.style.color='var(--accent3)'; msg.textContent='✓ Operador cadastrado'; }
-  else { msg.style.color='var(--danger)'; msg.textContent='✗ '+(r.data.erro||'Erro'); }
+  const payload={nome:document.getElementById('on-nome').value.trim(),
+    matricula:document.getElementById('on-mat').value.trim(),
+    uid_raw:document.getElementById('on-uid').value.toUpperCase().trim()};
+  const msg=document.getElementById('on-msg');
+  const r=await apiFetch('/api/operadores','POST',payload);
+  if(r.ok){msg.style.color='var(--accent3)';msg.textContent='✓ Operador cadastrado';}
+  else{msg.style.color='var(--danger)';msg.textContent='✗ '+(r.data.erro||'Erro');}
 }
 
-async function encerrarSessoes(){
-  // Encerra via operadores (lista todos e força logout das sessões)
-  toast('Sessões encerradas via banco. Reinicie o servidor para efeito imediato.');
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════════════════════
+// ══ INIT ══
 verificarSessao();
 </script>
 </body>
