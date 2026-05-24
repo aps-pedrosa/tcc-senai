@@ -3,21 +3,23 @@ routes/rfid.py — VoidLog v2
 ─────────────────────────────────────────────────────────────────
 POST /api/rfid — recebe leituras do ESP32.
 
-NOVO PAYLOAD (v2):
+PAYLOAD (v2):
 {
-    "uid":            "0064AABB",   ← UID bruto lido pelo RC522
-    "setor_codigo":   4,            ← selecionado no encoder do terminal
-    "unidade_codigo": 2,            ← selecionado no encoder do terminal
+    "uid":            "04A3F21B7C",  ← UID COMPLETO lido pelo RC522 (todos os bytes)
+    "setor_codigo":   4,             ← selecionado no encoder do terminal
+    "unidade_codigo": 2,             ← selecionado no encoder do terminal
     "terminal_id":    "ESP-A1B2C3"  ← opcional, ID do ESP32
 }
 
 Fluxo:
-  1. Parse do UID → extrai peca_code (B1+B2), ignora demais bytes
+  1. Parse do UID → uid_raw = UID completo, peca_code = B1+B2
   2. Setor e unidade vêm do payload (não da tag)
-  3. Identifica se é CRACHÁ ou TAG de peca pelo banco
+  3. Identifica crachá ou peça:
+       a) Busca por uid_raw EXATO no banco (lookup primário — UID completo)
+       b) Fallback: busca por peca_code (compatibilidade barcodes / cadastro manual)
   4. Crachá  → abre/encerra sessão do operador naquele terminal
-  5. Peça → registra retirada ou devolução com localização atual
-  6. Atualiza localização atual e último operador da peca
+  5. Peça    → registra retirada ou devolução com localização atual
+  6. Atualiza localização atual e último operador da peça
 """
 
 from flask import Blueprint, request, jsonify
@@ -71,12 +73,13 @@ def leitura_rfid():
         "terminal_id":    terminal_id,
     }
 
-    # ── É crachá de operador? (busca por uid_raw exato) ───────────
+    # ── É crachá de operador? ─────────────────────────────────────
+    # Lookup primário: uid_raw completo (todos os bytes)
     operador = db.execute(
         "SELECT * FROM operadores WHERE uid_raw = ?", (uid["uid_raw"],)
     ).fetchone()
 
-    # Fallback: busca apenas pelo peca_code (compatibilidade com UIDs curtos)
+    # Fallback: peca_code (compatibilidade com barcodes e UIDs antigos)
     if not operador:
         operador = db.execute(
             "SELECT * FROM operadores WHERE peca_code = ?", (uid["peca_code"],)
@@ -85,17 +88,24 @@ def leitura_rfid():
     if operador:
         return _registrar_sessao(db, operador, uid, ctx)
 
-    # ── É tag de peca? ──────────────────────────────────────
+    # ── É peça RFID? ─────────────────────────────────────────────
+    # Lookup primário: uid_raw completo
     peca = db.execute(
-        "SELECT * FROM pecas WHERE peca_code = ?", (uid["peca_code"],)
+        "SELECT * FROM pecas WHERE uid_raw = ?", (uid["uid_raw"],)
     ).fetchone()
+
+    # Fallback: peca_code (compatibilidade com barcodes e cadastro manual)
+    if not peca:
+        peca = db.execute(
+            "SELECT * FROM pecas WHERE peca_code = ?", (uid["peca_code"],)
+        ).fetchone()
 
     if peca:
         return _registrar_movimentacao(db, peca, uid, ctx)
 
     # ── UID não cadastrado ────────────────────────────────────────
     return _erro(
-        f"Tag não cadastrada. peca_code={uid['peca_code']} (UID: {uid['uid_raw']})"
+        f"Tag não cadastrada. uid_raw={uid['uid_raw']} peca_code={uid['peca_code']}"
     ), 404
 
 
@@ -103,7 +113,6 @@ def leitura_rfid():
 
 def _registrar_sessao(db, operador, uid, ctx):
     """Abre ou encerra sessão do operador no terminal informado."""
-    # Sessão ativa deste operador neste terminal
     sessao_ativa = db.execute(
         """SELECT * FROM sessoes
            WHERE operador_id=? AND terminal_id=? AND ativa=1
@@ -150,7 +159,7 @@ def _registrar_sessao(db, operador, uid, ctx):
         })
 
 
-# ── Movimentação de peca ────────────────────────────────────
+# ── Movimentação de peça ──────────────────────────────────────────
 
 def _registrar_movimentacao(db, peca, uid, ctx):
     """Registra retirada ou devolução usando o contexto do terminal."""
@@ -165,7 +174,7 @@ def _registrar_movimentacao(db, peca, uid, ctx):
         (ctx["terminal_id"],)
     ).fetchone()
 
-    # Fallback: qualquer sessão ativa (terminal_id = 'default' ou único terminal)
+    # Fallback: qualquer sessão ativa
     if not sessao:
         sessao = db.execute(
             """SELECT s.*, o.nome as op_nome, o.id as op_id, o.matricula as op_mat
@@ -176,7 +185,7 @@ def _registrar_movimentacao(db, peca, uid, ctx):
         ).fetchone()
 
     if not sessao:
-        return _erro("Nenhum operador identificado. Passe o cracha primeiro."), 403
+        return _erro("Nenhum operador identificado. Passe o crachá primeiro."), 403
 
     tipo      = "devolucao" if peca["disponivel"] == 0 else "retirada"
     nova_disp = 1 if tipo == "devolucao" else 0
@@ -222,15 +231,15 @@ def _registrar_movimentacao(db, peca, uid, ctx):
         "acao":   tipo,
         "msg":    f"{label}: {peca['nome'][:20]}",
         "detalhes": {
-            "peca":    peca["nome"],
-            "categoria":     peca["categoria"],
-            "peca_code":     peca["peca_code"],
-            "uid_raw":       uid["uid_raw"],
-            "operador":      sessao["op_nome"],
-            "matricula":     sessao["op_mat"],
+            "peca":      peca["nome"],
+            "categoria": peca["categoria"],
+            "peca_code": peca["peca_code"],
+            "uid_raw":   uid["uid_raw"],
+            "operador":  sessao["op_nome"],
+            "matricula": sessao["op_mat"],
             "localizacao": {
-                "setor":   ctx["setor_nome"],
-                "unidade": ctx["unidade_nome"],
+                "setor":      ctx["setor_nome"],
+                "unidade":    ctx["unidade_nome"],
                 "terminal_id": ctx["terminal_id"],
             },
         }

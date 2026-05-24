@@ -88,3 +88,10 @@ if __name__ == "__main__":
     print("[VoidLog] Login padrão: admin@voidlog.local / admin123")
     print("[VoidLog] Mapa de rotas: http://localhost:5000/api/rotas\n")
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+admin = conn.execute("SELECT id FROM usuarios WHERE email='admin@voidlog.local'").fetchone()
+if not admin:
+    conn.execute(
+        "INSERT INTO usuarios (nome,email,senha_hash,perfil) VALUES (?,?,?,?)",
+        ("Administrador", "admin@voidlog.local", _hash("admin123"), "admin")
+    )

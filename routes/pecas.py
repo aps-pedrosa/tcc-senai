@@ -1,9 +1,18 @@
 """
 routes/pecas.py — VoidLog v2
 ─────────────────────────────────────────────────────────────────
-Peça agora não tem setor/unidade fixos.
+Peça não tem setor/unidade fixos.
 Localização atual é atualizada a cada movimentação.
-GET /api/pecas retorna localização atual + último operador.
+
+uid_raw armazena o UID COMPLETO da tag (todos os bytes).
+Lookup por uid_raw tem prioridade sobre peca_code.
+
+GET  /api/pecas                → lista todas (filtros: setor, unidade, disponivel)
+GET  /api/pecas/<peca_code>    → detalhe de uma peça
+POST /api/pecas                → cadastra nova peça
+PUT  /api/pecas/<peca_code>    → edita peça
+DELETE /api/pecas/<peca_code>  → remove peça
+GET  /api/pecas/uid/<uid>      → decodifica bytes de um UID
 """
 
 from flask import Blueprint, request, jsonify
@@ -67,14 +76,20 @@ def detalhe_peca(peca_code):
 @pecas_bp.route("/pecas", methods=["POST"])
 def cadastrar_peca():
     """
-    Payload v2 (sem setor/unidade fixos):
+    Payload v2:
     {
         "nome":       "Furadeira de Bancada",
         "categoria":  "Furação",
         "peca_code":  100,
-        "quantidade": 3
+        "quantidade": 3,
+        "uid_raw":    "04A3F21B7C8D90"   ← opcional: UID COMPLETO da tag RFID.
+                                            Se omitido, gerado como B1B2 (hex de peca_code).
     }
-    uid_raw gerado como B1B2+0000 (sem setor/unidade na tag).
+
+    uid_raw pode ser qualquer comprimento válido de UID RFID
+    (4, 7 ou 10 bytes = 8, 14 ou 20 chars hex).
+    Quando fornecido, é usado como identificador primário de lookup
+    (permite distinguir tags com mesmo B1+B2 de fabricantes diferentes).
     """
     data = request.get_json(silent=True) or {}
     for campo in ["nome", "categoria", "peca_code"]:
@@ -82,9 +97,18 @@ def cadastrar_peca():
             return jsonify({"erro": f"Campo obrigatório ausente: {campo}"}), 400
 
     peca_code = data["peca_code"]
-    b1 = (peca_code >> 8) & 0xFF
-    b2 = peca_code & 0xFF
-    uid_raw = f"{b1:02X}{b2:02X}0000"
+
+    # uid_raw: usa o UID completo fornecido ou gera a partir do peca_code
+    if "uid_raw" in data and data["uid_raw"]:
+        try:
+            parsed = parse_uid(data["uid_raw"])
+            uid_raw = parsed["uid_raw"]
+        except UIDParseError as e:
+            return jsonify({"erro": str(e)}), 422
+    else:
+        b1 = (peca_code >> 8) & 0xFF
+        b2 = peca_code & 0xFF
+        uid_raw = f"{b1:02X}{b2:02X}"
 
     db = get_db()
     try:
@@ -100,8 +124,8 @@ def cadastrar_peca():
     return jsonify({
         "mensagem":   "Peça cadastrada com sucesso",
         "peca_code":  peca_code,
-        "uid_gerado": uid_raw,
-        "nota":       "B3 e B4 zerados — setor/unidade definidos pelo terminal na leitura",
+        "uid_raw":    uid_raw,
+        "nota":       "uid_raw completo usado como identificador primário da tag RFID",
     }), 201
 
 
@@ -119,6 +143,12 @@ def editar_peca(peca_code):
             campos.append(f"{campo} = ?"); valores.append(data[campo])
     if "disponivel" in data:
         campos.append("disponivel = ?"); valores.append(1 if data["disponivel"] else 0)
+    if "uid_raw" in data and data["uid_raw"]:
+        try:
+            parsed = parse_uid(data["uid_raw"])
+            campos.append("uid_raw = ?"); valores.append(parsed["uid_raw"])
+        except UIDParseError as e:
+            return jsonify({"erro": str(e)}), 422
 
     if not campos:
         return jsonify({"erro": "Nada para atualizar"}), 400

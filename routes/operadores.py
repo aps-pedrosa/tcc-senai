@@ -1,8 +1,14 @@
 """
 routes/operadores.py — VoidLog v2
 ─────────────────────────────────────────────────────────────────
-Operador não tem mais setor/unidade fixos.
-Apenas uid_raw, nome e matricula são obrigatórios no cadastro.
+Operador não tem setor/unidade fixos.
+uid_raw armazena o UID COMPLETO do crachá (todos os bytes).
+Lookup por uid_raw completo tem prioridade sobre peca_code.
+
+GET    /api/operadores        → lista todos
+POST   /api/operadores        → cadastra novo operador
+DELETE /api/operadores/<id>   → remove operador
+GET    /api/operadores/ativos → sessões abertas agora
 """
 
 from flask import Blueprint, request, jsonify
@@ -25,11 +31,15 @@ def cadastrar_operador():
     """
     Payload v2:
     {
-        "uid_raw":   "0042FFFF",   ← UID do crachá (B1+B2 = peca_code)
+        "uid_raw":   "04A3F21B7C8D90",  ← UID COMPLETO do crachá (todos os bytes)
         "nome":      "João Silva",
         "matricula": "TS-0042"
     }
-    Setor e unidade não são mais necessários no cadastro.
+
+    uid_raw deve ser o UID completo lido pelo RC522 (8, 14 ou 20 chars hex
+    para tags de 4, 7 ou 10 bytes respectivamente).
+    peca_code (B1+B2) é extraído automaticamente do uid_raw.
+    Setor e unidade não são necessários no cadastro.
     """
     data = request.get_json(silent=True) or {}
     for campo in ["uid_raw", "nome", "matricula"]:
@@ -57,6 +67,7 @@ def cadastrar_operador():
         "matricula": data["matricula"],
         "peca_code": uid["peca_code"],
         "uid_raw":   uid["uid_raw"],
+        "num_bytes": uid["num_bytes"],
     }), 201
 
 

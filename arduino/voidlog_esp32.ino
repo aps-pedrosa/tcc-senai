@@ -16,19 +16,28 @@
  *   1. Operador digita setor no teclado  (1–8, confirmado com #)
  *   2. Operador digita unidade no teclado (1–5, confirmado com #)
  *   3. Operador passa o crachá RFID → login registrado na API
- *   4. Operador lê o código de barras da peça → mov. registrada
+ *   4. Operador lê o código de barras da peça → movimentação registrada
  *   5. LCD exibe resultado; após 3s volta ao passo 4
  *   6. Para trocar operador: botão * no teclado → logout + volta ao passo 3
  *   7. Botão RESET físico → volta ao passo 1 (redefine setor/unidade)
  *
+ * UID RFID — IDENTIFICAÇÃO COMPLETA:
+ *   O firmware envia o UID COMPLETO da tag (todos os bytes lidos pelo RC522).
+ *   Tags de 4 bytes → 8 chars hex  (ex: "04A3F21B")
+ *   Tags de 7 bytes → 14 chars hex (ex: "04A3F21B7C8D90")
+ *   Tags de 10 bytes → 20 chars hex
+ *   A API usa o uid_raw completo como identificador primário, evitando
+ *   colisões entre tags de fabricantes diferentes com mesmos B1+B2.
+ *
  * PAYLOAD ENVIADO À API (POST /api/rfid):
  *   {
- *     "uid":            "00640000",   ← peca_code em hex (barcode → 2 bytes)
- *     "setor_codigo":   4,            ← digitado no teclado
- *     "unidade_codigo": 2,            ← digitado no teclado
- *     "terminal_id":    "ESP-AABBCC"  ← MAC address do ESP32
+ *     "uid":            "04A3F21B7C8D90", ← UID COMPLETO da tag (todos os bytes)
+ *     "setor_codigo":   4,                ← digitado no teclado
+ *     "unidade_codigo": 2,                ← digitado no teclado
+ *     "terminal_id":    "ESP-AABBCC"      ← MAC address do ESP32
  *   }
- *   O crachá do operador envia o mesmo payload com seu uid_raw.
+ *   O crachá do operador envia o mesmo payload com seu uid_raw completo.
+ *   Barcodes de peças são convertidos para UID de 2 bytes (B1+B2).
  *
  * MAPEAMENTO DO TECLADO 4x3:
  *   ┌───┬───┬───┐
@@ -102,7 +111,7 @@ const char* API_HOST      = "http://192.168.1.100:5000";  // IP do servidor Flas
 #define BARCODE_TX  17   // não usado, mas Serial2 exige declaração
 
 // Teclado 4x3
-//   Linhas  (saída):  L1→13  L2→12  L3→14  L4→27
+//   Linhas  (saída):   L1→13  L2→12  L3→14  L4→27
 //   Colunas (entrada): C1→26  C2→25  C3→33
 #define KBD_ROWS 4
 #define KBD_COLS 3
@@ -175,7 +184,7 @@ String operadorNome = "";
 String inputBuffer = "";
 
 // Controle de tempo
-unsigned long tResultado   = 0;
+unsigned long tResultado     = 0;
 unsigned long tAguardaCracha = 0;
 
 // ID do terminal (gerado no setup a partir do MAC)
@@ -185,17 +194,16 @@ String terminalId = "ESP-??????";
 // PROTÓTIPOS
 // ═══════════════════════════════════════════════════════════════════
 
-void conectarWifi();
-void exibirLCD(String l1, String l2);
-void exibirLCDInput(String titulo, String input, String hint);
-void bip(bool ok);
-void ledStatus(bool ok, int ms = 1500);
-bool chamarAPI(String uid, String &msgL1, String &msgL2, bool &sucesso);
+void  conectarWifi();
+void  exibirLCD(String l1, String l2);
+void  exibirLCDInput(String titulo, String input, String hint);
+void  bip(bool ok);
+void  ledStatus(bool ok, int ms = 1500);
+bool  chamarAPI(String uid, String &msgL1, String &msgL2, bool &sucesso);
 String lerBarcode();
-String lerRFID();
-String pecaCodeParaUID(int peca);
-int   uidParaPecaCode(String uid);
-void  mostrarMenu();
+String lerRFID();           // retorna UID COMPLETO em hex maiúsculo
+String barcodeParaUID(String barcode);
+uint16_t crc16(String s);
 void  processarTeclado(char tecla);
 
 // ═══════════════════════════════════════════════════════════════════
@@ -206,10 +214,10 @@ void setup() {
   Serial.begin(115200);
 
   // Periféricos
-  pinMode(BUZZER,   OUTPUT); digitalWrite(BUZZER,  LOW);
-  pinMode(LED_OK,   OUTPUT); digitalWrite(LED_OK,  LOW);
-  pinMode(LED_ERR,  OUTPUT); digitalWrite(LED_ERR, LOW);
-  pinMode(BTN_RESET, INPUT);   // GPIO 34 é input-only, sem pull-up
+  pinMode(BUZZER,    OUTPUT); digitalWrite(BUZZER,  LOW);
+  pinMode(LED_OK,    OUTPUT); digitalWrite(LED_OK,  LOW);
+  pinMode(LED_ERR,   OUTPUT); digitalWrite(LED_ERR, LOW);
+  pinMode(BTN_RESET, INPUT);  // GPIO 34 é input-only, sem pull-up interno
 
   // LCD
   Wire.begin(21, 22);
@@ -298,12 +306,11 @@ void loop() {
         break;
       }
 
-      // Tenta ler crachá RFID
+      // Tenta ler crachá RFID — envia UID COMPLETO
       String uid = lerRFID();
       if (uid.length() == 0) break;
 
-      // Envia para a API
-      Serial.println("[CRACHA] UID: " + uid);
+      Serial.println("[CRACHA] UID completo: " + uid);
       exibirLCD("Verificando...", uid.substring(0, 16));
       estado = PROCESSANDO;
 
@@ -312,7 +319,6 @@ void loop() {
 
       if (ok && sucesso) {
         operadorLogado = true;
-        // Extrai primeiro nome da msg ("Ola, Joao!" → "Joao")
         operadorNome = l2.length() > 5 ? l2.substring(5) : l2;
         operadorNome.replace("!", "");
         exibirLCD(l1, l2);
@@ -341,7 +347,6 @@ void loop() {
       char t = teclado.getKey();
       if (t == '*') {
         Serial.println("[LOGOUT] Operador encerrou sessao via teclado");
-        // Envia logout do crachá (futuro: guardar uid do crachá para logout)
         operadorLogado = false; operadorNome = "";
         estado = AGUARDAR_CRACHA;
         tAguardaCracha = millis();
@@ -352,7 +357,7 @@ void loop() {
         break;
       }
 
-      // Verifica se chegou crachá RFID (troca de operador)
+      // Verifica se chegou crachá RFID (troca de operador) — UID COMPLETO
       if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
         String uid = "";
         for (byte i = 0; i < rfid.uid.size; i++) {
@@ -363,8 +368,8 @@ void loop() {
         rfid.PICC_HaltA();
         rfid.PCD_StopCrypto1();
 
-        // Verifica se é crachá (a API decide)
-        Serial.println("[RFID] Tag lida em modo barcode: " + uid);
+        Serial.println("[RFID] UID completo (modo barcode): " + uid
+                       + " (" + String(rfid.uid.size) + " bytes)");
         estado = PROCESSANDO;
         exibirLCD("Verificando...", uid.substring(0, 16));
 
@@ -375,7 +380,6 @@ void loop() {
         delay(T_RESULTADO);
 
         if (ok && sucesso) {
-          // Se foi login/logout de operador, atualiza nome
           operadorNome = l2.length() > 5 ? l2.substring(5) : l2;
           operadorNome.replace("!", "");
         }
@@ -387,17 +391,15 @@ void loop() {
         break;
       }
 
-      // Lê código de barras
+      // Lê código de barras da peça
       String barcode = lerBarcode();
       if (barcode.length() == 0) break;
 
       Serial.println("[BARCODE] Lido: " + barcode);
 
-      // Converte barcode → peca_code → uid hex de 2 bytes
-      // O barcode pode ser:
-      //   a) Numérico puro:  "100"   → peca_code=100  → "00640000"
-      //   b) Hex puro:       "0064"  → usa direto como B1B2
-      //   c) Qualquer outra string → hash simples para 2 bytes
+      // Converte barcode → peca_code → uid hex de 2 bytes (B1+B2)
+      // O UID enviado para barcodes contém apenas B1+B2 (sem bytes extras).
+      // A API faz o fallback por peca_code quando uid_raw não é encontrado.
       String uid = barcodeParaUID(barcode);
 
       Serial.println("[BARCODE] UID calculado: " + uid);
@@ -417,7 +419,6 @@ void loop() {
 
     // ── PROCESSANDO ───────────────────────────────────────────────
     case PROCESSANDO:
-      // Estado transitório — tratado inline nos cases acima
       break;
 
     // ── RESULTADO ─────────────────────────────────────────────────
@@ -442,7 +443,6 @@ void processarTeclado(char tecla) {
 
   if (estado == DIGITAR_SETOR) {
     if (tecla == '#') {
-      // Confirma setor
       int val = inputBuffer.toInt();
       if (val < 1 || val > NUM_SETORES) {
         bip(false);
@@ -493,7 +493,6 @@ void processarTeclado(char tecla) {
       Serial.printf("[KBD] Unidade selecionada: %d (%s)\n", unidadeSel, UNIDADES[unidadeSel]);
     }
     else if (tecla == '*') {
-      // Volta ao setor
       inputBuffer = "";
       estado = DIGITAR_SETOR;
       exibirLCDInput("Setor (1-8):", "", "# confirma");
@@ -505,6 +504,39 @@ void processarTeclado(char tecla) {
       }
     }
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LEITURA DO RFID — RETORNA UID COMPLETO
+// ═══════════════════════════════════════════════════════════════════
+/*
+ * lerRFID() retorna o UID COMPLETO da tag em hex maiúsculo.
+ * Tags ISO 14443A podem ter 4, 7 ou 10 bytes:
+ *   4 bytes  → 8  chars hex  (ex: "04A3F21B")
+ *   7 bytes  → 14 chars hex  (ex: "04A3F21B7C8D90")
+ *   10 bytes → 20 chars hex
+ *
+ * O UID completo é enviado para a API, que o armazena como uid_raw
+ * e o usa como identificador primário da tag — evitando colisões
+ * entre chips de fabricantes diferentes que compartilhem B1+B2.
+ */
+
+String lerRFID() {
+  if (!rfid.PICC_IsNewCardPresent()) return "";
+  if (!rfid.PICC_ReadCardSerial())   return "";
+
+  String uid = "";
+  for (byte i = 0; i < rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] < 0x10) uid += "0";
+    uid += String(rfid.uid.uidByte[i], HEX);
+  }
+  uid.toUpperCase();
+
+  Serial.printf("[RFID] UID: %s (%d bytes)\n", uid.c_str(), rfid.uid.size);
+
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+  return uid;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -536,40 +568,18 @@ String lerBarcode() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LEITURA DO RFID (crachá)
-// ═══════════════════════════════════════════════════════════════════
-
-String lerRFID() {
-  if (!rfid.PICC_IsNewCardPresent()) return "";
-  if (!rfid.PICC_ReadCardSerial())   return "";
-
-  String uid = "";
-  for (byte i = 0; i < rfid.uid.size; i++) {
-    if (rfid.uid.uidByte[i] < 0x10) uid += "0";
-    uid += String(rfid.uid.uidByte[i], HEX);
-  }
-  uid.toUpperCase();
-
-  rfid.PICC_HaltA();
-  rfid.PCD_StopCrypto1();
-  return uid;
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// CONVERSÃO BARCODE → UID
+// CONVERSÃO BARCODE → UID (apenas para peças lidas por código de barras)
 // ═══════════════════════════════════════════════════════════════════
 /*
- * O UID enviado para a API contém apenas os 2 primeiros bytes (B1+B2)
- * que identificam o peca_code. B3 e B4 são zerados (setor/unidade
- * vêm do payload separadamente).
+ * Barcodes de peças são convertidos para UID de 2 bytes (B1+B2).
+ * A API usa o peca_code como fallback quando uid_raw não bate exato.
  *
  * Estratégias:
- *   1. Barcode totalmente numérico → peca_code = número
- *      Ex: "100" → peca_code=100 → uid="00640000"
- *   2. Barcode hexadecimal (4 chars) → usa B1+B2 direto
- *      Ex: "0064" → uid="00640000"
- *   3. Barcode alfanumérico → CRC16 dos bytes → peca_code
- *      Garante colisão mínima em barcodes de prateleira padrão.
+ *   1. Barcode numérico → peca_code = número  → uid="B1B2"
+ *      Ex: "100" → peca_code=100 → uid="0064"
+ *   2. Barcode hex 4 chars → B1+B2 direto
+ *      Ex: "0064" → uid="0064"
+ *   3. Barcode alfanumérico → CRC-16 → peca_code → uid="B1B2"
  */
 
 String barcodeParaUID(String barcode) {
@@ -581,9 +591,9 @@ String barcodeParaUID(String barcode) {
   for (char c : barcode) { if (!isDigit(c)) { ehNumerico = false; break; } }
   if (ehNumerico && barcode.length() > 0) {
     long val = barcode.toInt();
-    peca = (int)(val & 0xFFFF);  // trunca para 16 bits
+    peca = (int)(val & 0xFFFF);
   }
-  // Estratégia 2: hex de 4 chars (ex: "00A3")
+  // Estratégia 2: hex de exatamente 4 chars (ex: "00A3")
   else if (barcode.length() == 4) {
     bool ehHex = true;
     for (char c : barcode) {
@@ -595,17 +605,18 @@ String barcodeParaUID(String barcode) {
       peca = crc16(barcode);
     }
   }
-  // Estratégia 3: CRC16
+  // Estratégia 3: CRC-16
   else {
     peca = crc16(barcode);
   }
 
-  char buf[9];
-  sprintf(buf, "%02X%02X0000", (peca >> 8) & 0xFF, peca & 0xFF);
+  // Gera UID de 2 bytes (B1+B2) — sem bytes extras
+  char buf[5];
+  sprintf(buf, "%02X%02X", (peca >> 8) & 0xFF, peca & 0xFF);
   return String(buf);
 }
 
-// CRC-16/CCITT para mapeamento de strings a 16 bits
+// CRC-16/CCITT para mapeamento de strings alfanuméricas a 16 bits
 uint16_t crc16(String s) {
   uint16_t crc = 0xFFFF;
   for (char c : s) {
@@ -623,7 +634,7 @@ uint16_t crc16(String s) {
 bool chamarAPI(String uid, String &msgL1, String &msgL2, bool &sucesso) {
   if (WiFi.status() != WL_CONNECTED) conectarWifi();
 
-  // Monta payload v2
+  // Monta payload — uid contém o UID COMPLETO (RFID) ou B1+B2 (barcode)
   StaticJsonDocument<256> req;
   req["uid"]            = uid;
   req["setor_codigo"]   = setorSel;
@@ -639,7 +650,7 @@ bool chamarAPI(String uid, String &msgL1, String &msgL2, bool &sucesso) {
   http.addHeader("Content-Type", "application/json");
   http.setTimeout(6000);
 
-  int code   = http.POST(payload);
+  int    code = http.POST(payload);
   String body = http.getString();
   http.end();
 
@@ -670,7 +681,7 @@ bool chamarAPI(String uid, String &msgL1, String &msgL2, bool &sucesso) {
 
   if (strcmp(tipo, "operador") == 0) {
     msgL1 = (strcmp(acao, "login") == 0) ? ">> LOGIN OK" : "<< LOGOUT OK";
-  } else if (strcmp(tipo, "ferramenta") == 0) {
+  } else if (strcmp(tipo, "peca") == 0) {
     msgL1 = (strcmp(acao, "retirada") == 0) ? "RETIRADA OK" : "DEVOLUCAO OK";
   } else {
     msgL1 = sucesso ? "OK" : "ERRO";
@@ -706,7 +717,6 @@ void conectarWifi() {
 // ═══════════════════════════════════════════════════════════════════
 
 void exibirLCD(String l1, String l2) {
-  // Centraliza nas 16 colunas
   while (l1.length() < 16) l1 = " " + l1;
   while (l2.length() < 16) l2 = " " + l2;
   lcd.clear();
@@ -715,8 +725,6 @@ void exibirLCD(String l1, String l2) {
 }
 
 void exibirLCDInput(String titulo, String input, String hint) {
-  // Linha 1: título
-  // Linha 2: input atual + cursor
   String l1 = titulo; while (l1.length() < 16) l1 += " ";
   String l2 = "> " + input;
   if (hint.length() > 0 && input.length() == 0) l2 = hint;

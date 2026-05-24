@@ -220,13 +220,13 @@ Arquivo → Preferências → URLs adicionais:
 ```
 https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
 ```
-Ferramentas → Gerenciador de placas → buscar "esp32" → instalar
+Peças → Gerenciador de placas → buscar "esp32" → instalar
 
 ### 2. Selecionar a placa
-Ferramentas → Placa → ESP32 Arduino → **ESP32 Dev Module**
+Peças → Placa → ESP32 Arduino → **ESP32 Dev Module**
 
 ### 3. Instalar bibliotecas
-Ferramentas → Gerenciar Bibliotecas → instalar:
+Peças → Gerenciar Bibliotecas → instalar:
 - `MFRC522` (by GithubCommunity)
 - `LiquidCrystal_I2C` (by Frank de Brabander)
 - `ArduinoJson` (by Benoit Blanchon)
@@ -243,7 +243,7 @@ const char* API_HOST      = "http://192.168.1.100:5000";
 
 ### 5. Upload
 1. Conecte o ESP32 via USB
-2. Ferramentas → Porta → selecione a porta correta
+2. Peças → Porta → selecione a porta correta
 3. Clique em Upload (→)
 4. Se travar em "Connecting...", segure o botão **BOOT** do ESP32 durante o upload
 
@@ -255,11 +255,11 @@ const char* API_HOST      = "http://192.168.1.100:5000";
    - Digite `4` + `#` (Furação)
    - Digite `2` + `#` (BH)
    - Passe o crachá → LCD mostra "LOGIN OK"
-   - Leia o barcode da ferramenta → LCD mostra "RETIRADA OK"
+   - Leia o barcode da peça → LCD mostra "RETIRADA OK"
    - Mostre o dashboard atualizando em tempo real
 
 2. **Backup:** grave um vídeo do sistema funcionando caso a rede falhe.
 
-3. **Barcodes de teste:** imprima etiquetas com barcodes dos números 100, 200, 300... e cole nas ferramentas de demonstração.
+3. **Barcodes de teste:** imprima etiquetas com barcodes dos números 100, 200, 300... e cole nas peças de demonstração.
 
 4. **Caixa:** coloque tudo em uma caixa de MDF com recortes para o LCD, teclado, leitor e antena RFID.
