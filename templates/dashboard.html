@@ -225,10 +225,39 @@ tr:hover td{background:rgba(168,85,247,.04)}
 .info-label{font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px}
 .info-value{font-family:var(--fh);font-size:22px;color:var(--accent)}
 
+/* TERMINAIS */
+.term-status-aprovado{background:rgba(127,255,110,.15);color:var(--accent3)}
+.term-status-pendente{background:rgba(255,184,0,.12);color:var(--warn);animation:pulse-warn 1.4s infinite}
+.term-status-rejeitado{background:rgba(255,61,87,.12);color:var(--danger)}
+@keyframes pulse-warn{0%,100%{opacity:1}50%{opacity:.5}}
+.term-badge-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;
+  border-radius:50%;background:var(--warn);color:#000;font-size:10px;font-weight:700;margin-left:6px;line-height:1}
+.term-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;
+  margin-bottom:12px;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
+.term-card.pendente{border-color:rgba(255,184,0,.35);box-shadow:0 0 0 1px rgba(255,184,0,.1)}
+.term-card.rejeitado{border-color:rgba(255,61,87,.25);opacity:.7}
+.term-icon{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;background:var(--accent-dim);border:1px solid rgba(168,85,247,.2)}
+.term-icon.pendente{background:rgba(255,184,0,.1);border-color:rgba(255,184,0,.3)}
+.term-icon.rejeitado{background:rgba(255,61,87,.1);border-color:rgba(255,61,87,.2)}
+.term-meta{font-family:var(--fm);font-size:11px;color:var(--muted);margin-top:3px;line-height:1.7}
+.term-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn-aprovar{background:rgba(127,255,110,.15);color:var(--accent3);border:1px solid rgba(127,255,110,.3)}
+.btn-aprovar:hover{background:rgba(127,255,110,.3)}
+.btn-rejeitar{background:rgba(255,184,0,.1);color:var(--warn);border:1px solid rgba(255,184,0,.3)}
+.btn-rejeitar:hover{background:rgba(255,184,0,.25)}
+.notif-bar{position:fixed;top:60px;left:0;right:0;z-index:200;background:rgba(255,184,0,.95);
+  color:#000;padding:10px 32px;font-family:var(--fm);font-size:12px;font-weight:600;letter-spacing:1px;
+  display:none;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.notif-bar.show{display:flex}
+.notif-bar button{background:rgba(0,0,0,.2);border:none;border-radius:4px;padding:4px 12px;
+  font-family:var(--fm);font-size:11px;font-weight:700;cursor:pointer;color:#000}
+
 @media(max-width:768px){
   .charts-grid,.charts-row,.form-row{grid-template-columns:1fr}
   header{padding:0 16px}.page{padding:16px}nav.tabs{padding:0 16px}
   .header-right{gap:10px}
+  .term-card{grid-template-columns:auto 1fr;}.term-actions{grid-column:1/-1}
 }
 </style>
 </head>
@@ -247,6 +276,13 @@ tr:hover td{background:rgba(168,85,247,.04)}
     <button class="login-btn" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="l-err"></div>
   </div>
+</div>
+
+<!-- NOTIF BAR — terminais pendentes -->
+<div class="notif-bar" id="notif-pendentes">
+  <span id="notif-text">⚡ Há terminais RFID aguardando aprovação.</span>
+  <button onclick="setTabByName('terminais')">Ver terminais →</button>
+  <button onclick="document.getElementById('notif-pendentes').classList.remove('show')" style="margin-left:4px">✕</button>
 </div>
 
 <!-- HEADER -->
@@ -274,6 +310,7 @@ tr:hover td{background:rgba(168,85,247,.04)}
   <button class="tab-btn"           onclick="setTab('operadores',this)">Operadores</button>
   <button class="tab-btn"           onclick="setTab('alertas',this)">Alertas <span id="alert-badge" style="color:var(--danger)"></span></button>
   <button class="tab-btn"           onclick="setTab('terminal',this)">Terminal RFID</button>
+  <button class="tab-btn admin-tab" id="terminais-tab" style="display:none" onclick="setTab('terminais',this)">Terminais ESP32 <span id="term-badge" class="term-badge-count" style="display:none"></span></button>
   <button class="tab-btn admin-tab" id="admin-tab" style="display:none" onclick="setTab('admin',this)">⚙ Admin</button>
 </nav>
 
@@ -439,6 +476,48 @@ tr:hover td{background:rgba(168,85,247,.04)}
   </div>
 </div>
 
+<!-- ══ TERMINAIS ESP32 ══ -->
+<div id="page-terminais" class="page">
+  <div class="filter-bar" style="margin-bottom:20px">
+    <label>FILTRO</label>
+    <select id="term-filtro" onchange="loadTerminais()">
+      <option value="">Todos</option>
+      <option value="pendente">Pendentes</option>
+      <option value="aprovado">Aprovados</option>
+      <option value="rejeitado">Rejeitados</option>
+    </select>
+    <button class="btn btn-ghost" onclick="loadTerminais()">↻ Atualizar</button>
+    <span id="term-summary" style="font-family:var(--fm);font-size:11px;color:var(--muted);margin-left:8px"></span>
+  </div>
+
+  <!-- Seção pendentes destacada -->
+  <div id="term-pendentes-section" style="display:none;margin-bottom:28px">
+    <div class="section-title" style="color:var(--warn);border-color:rgba(255,184,0,.2)">
+      ⏳ Aguardando aprovação
+      <span id="term-pend-count" style="font-family:var(--fm);font-size:11px;font-weight:400"></span>
+    </div>
+    <div id="term-pendentes-list"></div>
+  </div>
+
+  <!-- Todos os terminais -->
+  <div class="table-card">
+    <div class="table-header">
+      <span class="table-title">Todos os terminais</span>
+      <span id="term-total" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Terminal ID</th><th>Apelido</th><th>Status</th>
+          <th>Setor padrão</th><th>Unidade padrão</th>
+          <th>IP</th><th>Firmware</th><th>Último acesso</th><th>Ações</th>
+        </tr></thead>
+        <tbody id="term-body"><tr><td colspan="9" class="loading">Carregando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- ══ ADMIN ══ -->
 <div id="page-admin" class="page">
   <div class="admin-section">
@@ -502,11 +581,20 @@ tr:hover td{background:rgba(168,85,247,.04)}
     <div class="notice">Setor e unidade não são cadastrados na peca. A localização é atualizada automaticamente pelo terminal.</div>
     <div class="form-row">
       <div class="input-group"><label>Nome</label><input type="text" id="mf-nome" placeholder="Ex: Furadeira de Bancada"></div>
-      <div class="input-group"><label>Categoria</label><input type="text" id="mf-cat" placeholder="Ex: Furação"></div>
+      <div class="input-group">
+        <label>Categoria</label>
+        <select id="mf-cat" onchange="toggleCatCustom()">
+          <option value="" disabled selected>Selecione uma categoria</option>
+        </select>
+        <input type="text" id="mf-cat-custom" placeholder="Digite a categoria..." style="display:none;margin-top:6px">
+      </div>
     </div>
     <div class="form-row">
       <div class="input-group"><label>Código Peça B1+B2 (0–65535)</label><input type="number" id="mf-peca" min="0" max="65535" oninput="previewModalUID()"></div>
       <div class="input-group"><label>Quantidade</label><input type="number" id="mf-qtd" value="1" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="input-group"><label>Peso (kg) <span style="color:var(--muted);font-weight:400;font-size:11px">opcional</span></label><input type="number" id="mf-peso" min="0" step="0.001" placeholder="Ex: 2.5"></div>
     </div>
     <div id="mf-uid-preview" style="display:none;font-family:var(--fm);font-size:12px;color:var(--muted);margin-bottom:8px">
       UID: <span id="mf-uid-val" style="color:var(--accent);letter-spacing:2px"></span>
@@ -560,6 +648,64 @@ tr:hover td{background:rgba(168,85,247,.04)}
   </div>
 </div>
 
+<!-- MODAL — Aprovar terminal -->
+<div class="modal-overlay" id="modal-aprovar-terminal">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-aprovar-terminal')">✕</button>
+    <div class="modal-title">Aprovar Terminal</div>
+    <input type="hidden" id="mat-id">
+    <div class="notice">Ao aprovar, o terminal poderá conectar-se ao sistema. Opcionalmente pré-configure o setor e unidade padrão (o operador poderá alterar pelo teclado).</div>
+    <div class="input-group">
+      <label>Apelido (opcional)</label>
+      <input type="text" id="mat-apelido" placeholder="Ex: Terminal Soldagem 01">
+    </div>
+    <div class="form-row">
+      <div class="input-group">
+        <label>Setor padrão (opcional)</label>
+        <select id="mat-setor"><option value="">Nenhum — operador seleciona</option></select>
+      </div>
+      <div class="input-group">
+        <label>Unidade padrão (opcional)</label>
+        <select id="mat-unidade"><option value="">Nenhuma — operador seleciona</option></select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-aprovar-terminal')">Cancelar</button>
+      <button class="btn btn-aprovar" onclick="confirmarAprovacao()">✓ Aprovar Terminal</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL — Configurar terminal aprovado -->
+<div class="modal-overlay" id="modal-config-terminal">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-config-terminal')">✕</button>
+    <div class="modal-title">Configurar Terminal</div>
+    <input type="hidden" id="mct-id">
+    <div class="input-group">
+      <label>Apelido</label>
+      <input type="text" id="mct-apelido" placeholder="Ex: Terminal Soldagem 01">
+    </div>
+    <div class="form-row">
+      <div class="input-group">
+        <label>Setor padrão</label>
+        <select id="mct-setor"><option value="">Nenhum — operador seleciona</option></select>
+      </div>
+      <div class="input-group">
+        <label>Unidade padrão</label>
+        <select id="mct-unidade"><option value="">Nenhuma — operador seleciona</option></select>
+      </div>
+    </div>
+    <div class="notice" style="margin-top:4px">
+      Se configurado, o terminal pula a tela de seleção no próximo sincronismo (≤1 min).
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-config-terminal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarConfigTerminal()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══ ESTADO ══
 let charts = {};
@@ -606,10 +752,12 @@ function aplicarSessao(){
   document.getElementById('logout-btn').style.display='block';
   const isAdmin=u.perfil==='admin', isOper=isAdmin||u.perfil==='operador';
   document.getElementById('admin-tab').style.display=isAdmin?'block':'none';
+  document.getElementById('terminais-tab').style.display=isAdmin?'block':'none';
   document.getElementById('btn-nova-peca').style.display=isOper?'':'none';
   document.getElementById('btn-novo-operador').style.display=isOper?'':'none';
   document.getElementById('th-acoes').style.display=isOper?'':'none';
   document.getElementById('th-op-acoes').style.display=isOper?'':'none';
+  if(isAdmin) verificarPendentes();
 }
 function getToken(){return localStorage.getItem('vl_token')||'';}
 const apiFetch=(path,method='GET',body=null)=>{
@@ -632,8 +780,12 @@ function setTab(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active'); document.getElementById('page-'+name).classList.add('active');
   const loaders={dashboard:loadDashboard,localizacao:loadLocalizacao,movimentacoes:loadMovs,
-    pecas:loadFer,operadores:loadOps,alertas:loadAlertas,admin:loadAdmin};
+    pecas:loadFer,operadores:loadOps,alertas:loadAlertas,admin:loadAdmin,terminais:loadTerminais};
   loaders[name]?.();
+}
+function setTabByName(name){
+  const btn=document.querySelector(`.tab-btn[onclick*="'${name}'"]`);
+  if(btn) setTab(name,btn);
 }
 function fmt(str){return str?new Date(str).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'--';}
 function mkChart(id,type,data,extra={}){
@@ -766,7 +918,20 @@ async function loadFer(){
     </tr>`;
   }).join('');
 }
-function abrirModalPeça(){abrirModal('modal-peca');}
+function abrirModalPeça(){abrirModal('modal-peca');carregarCategorias();}
+async function carregarCategorias(){
+  const cats=await api('/api/pecas/categorias').catch(()=>[]);
+  const sel=document.getElementById('mf-cat');
+  const current=sel.value;
+  sel.innerHTML='<option value="" disabled selected>Selecione uma categoria</option>';
+  cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+  const outro=document.createElement('option');outro.value='__outro__';outro.textContent='+ Outra categoria…';sel.appendChild(outro);
+  if(current)sel.value=current;
+}
+function toggleCatCustom(){
+  const sel=document.getElementById('mf-cat');
+  document.getElementById('mf-cat-custom').style.display=sel.value==='__outro__'?'block':'none';
+}
 function previewModalUID(){
   const p=parseInt(document.getElementById('mf-peca').value)||0;
   if(!p){document.getElementById('mf-uid-preview').style.display='none';return;}
@@ -776,10 +941,14 @@ function previewModalUID(){
   document.getElementById('mf-uid-preview').style.display='block';
 }
 async function salvarPeça(){
+  const sel=document.getElementById('mf-cat');
+  const cat=sel.value==='__outro__'?document.getElementById('mf-cat-custom').value.trim():sel.value;
+  const pesoVal=parseFloat(document.getElementById('mf-peso').value);
   const payload={nome:document.getElementById('mf-nome').value.trim(),
-    categoria:document.getElementById('mf-cat').value.trim(),
+    categoria:cat,
     peca_code:parseInt(document.getElementById('mf-peca').value),
-    quantidade:parseInt(document.getElementById('mf-qtd').value)||1};
+    quantidade:parseInt(document.getElementById('mf-qtd').value)||1,
+    ...(isNaN(pesoVal)?{}:{peso:pesoVal})};
   const r=await apiFetch('/api/pecas','POST',payload);
   if(r.ok){toast('Peça cadastrada!');fecharModal('modal-peca');loadFer();}
   else toast(r.data.erro||'Erro ao cadastrar',false);
@@ -996,6 +1165,207 @@ async function cadastrarOperador(){
   if(r.ok){msg.style.color='var(--accent3)';msg.textContent='✓ Operador cadastrado';}
   else{msg.style.color='var(--danger)';msg.textContent='✗ '+(r.data.erro||'Erro');}
 }
+
+// ══ TERMINAIS ESP32 ══
+let _setoresList=[], _unidadesList=[];
+
+async function carregarSetoresUnidades(){
+  if(_setoresList.length) return;
+  const[s,u]=await Promise.all([api('/api/terminais').catch(()=>[]),api('/api/dashboard/dados').catch(()=>({}))]);
+  // Usa listas fixas conhecidas se API de terminais não tiver
+  _setoresList=Object.entries(SETORES).map(([k,v])=>({codigo:parseInt(k),nome:v}));
+  _unidadesList=Object.entries(UNIDADES).map(([k,v])=>({codigo:parseInt(k),nome:v}));
+}
+
+function popularSelectSetor(selId, valorAtual){
+  const sel=document.getElementById(selId);
+  sel.innerHTML='<option value="">Nenhum — operador seleciona</option>';
+  _setoresList.forEach(s=>{
+    const o=document.createElement('option');
+    o.value=s.codigo; o.textContent=s.nome;
+    if(s.codigo==valorAtual) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+function popularSelectUnidade(selId, valorAtual){
+  const sel=document.getElementById(selId);
+  sel.innerHTML='<option value="">Nenhuma — operador seleciona</option>';
+  _unidadesList.forEach(u=>{
+    const o=document.createElement('option');
+    o.value=u.codigo; o.textContent=u.nome;
+    if(u.codigo==valorAtual) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+async function verificarPendentes(){
+  try{
+    const d=await api('/api/terminais/pendentes');
+    const n=d.total||0;
+    const badge=document.getElementById('term-badge');
+    const notif=document.getElementById('notif-pendentes');
+    if(n>0){
+      badge.textContent=n; badge.style.display='inline-flex';
+      document.getElementById('notif-text').textContent=
+        `⏳ ${n} terminal${n>1?'is':''} RFID aguardando aprovação do administrador.`;
+      notif.classList.add('show');
+    } else {
+      badge.style.display='none';
+      notif.classList.remove('show');
+    }
+  }catch(e){}
+}
+
+async function loadTerminais(){
+  await carregarSetoresUnidades();
+  const filtro=document.getElementById('term-filtro').value;
+  let rows=await api('/api/terminais');
+  if(filtro) rows=rows.filter(r=>r.status===filtro);
+
+  // Resumo
+  const total=rows.length;
+  const pend=rows.filter(r=>r.status==='pendente').length;
+  const aprov=rows.filter(r=>r.status==='aprovado').length;
+  const rejeit=rows.filter(r=>r.status==='rejeitado').length;
+  document.getElementById('term-total').textContent=`${total} terminais`;
+  document.getElementById('term-summary').textContent=
+    `${aprov} aprovados · ${pend} pendentes · ${rejeit} rejeitados`;
+
+  // Seção pendentes destacada
+  const pendSection=document.getElementById('term-pendentes-section');
+  const pendentes=rows.filter(r=>r.status==='pendente');
+  if(pendentes.length && (!filtro || filtro==='pendente')){
+    pendSection.style.display='block';
+    document.getElementById('term-pend-count').textContent=`— ${pendentes.length} aguardando`;
+    document.getElementById('term-pendentes-list').innerHTML=pendentes.map(t=>termCardHtml(t,true)).join('');
+  } else {
+    pendSection.style.display='none';
+  }
+
+  // Tabela
+  if(!rows.length){
+    document.getElementById('term-body').innerHTML=
+      '<tr><td colspan="9" class="no-data">Nenhum terminal encontrado.</td></tr>';
+    return;
+  }
+  document.getElementById('term-body').innerHTML=rows.map(t=>{
+    const st=t.status;
+    const stHtml=`<span class="bt term-status-${st}">${st.toUpperCase()}</span>`;
+    const setor=t.setor_nome||'<span style="color:var(--muted)">—</span>';
+    const unid=t.unidade_nome||'<span style="color:var(--muted)">—</span>';
+    const ip=t.ip_address||'—';
+    const fw=t.firmware_ver||'—';
+    const acesso=fmt(t.ultimo_acesso);
+    const acoes=termAcoesHtml(t);
+    return `<tr>
+      <td><span class="uid-chip">${t.terminal_id}</span></td>
+      <td><strong>${t.apelido||t.terminal_id}</strong></td>
+      <td>${stHtml}</td>
+      <td>${setor}</td><td>${unid}</td>
+      <td style="color:var(--muted)">${ip}</td>
+      <td style="color:var(--muted)">${fw}</td>
+      <td>${acesso}</td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap">${acoes}</div></td>
+    </tr>`;
+  }).join('');
+
+  // Atualiza badge
+  verificarPendentes();
+}
+
+function termCardHtml(t, isPendCard){
+  return `<div class="term-card ${t.status}">
+    <div class="term-icon ${t.status}">📡</div>
+    <div>
+      <div style="font-weight:600;font-size:14px">${t.apelido||t.terminal_id}
+        <span class="uid-chip" style="margin-left:8px;font-size:10px">${t.terminal_id}</span>
+      </div>
+      <div class="term-meta">
+        IP: ${t.ip_address||'desconhecido'} · Firmware v${t.firmware_ver||'?'}<br>
+        Primeiro contato: ${fmt(t.ultimo_acesso)}
+      </div>
+    </div>
+    <div class="term-actions">${termAcoesHtml(t)}</div>
+  </div>`;
+}
+
+function termAcoesHtml(t){
+  const id=t.terminal_id;
+  if(t.status==='pendente') return `
+    <button class="btn btn-sm btn-aprovar" onclick="abrirAprovar('${id}')">✓ Aprovar</button>
+    <button class="btn btn-sm btn-rejeitar" onclick="rejeitarTerminal('${id}')">✕ Rejeitar</button>`;
+  if(t.status==='aprovado') return `
+    <button class="btn btn-sm btn-ghost" onclick="abrirConfig('${id}','${(t.apelido||'').replace(/'/g,"\\'")}',${t.setor_codigo||'null'},${t.unidade_codigo||'null'})">⚙ Configurar</button>
+    <button class="btn btn-sm btn-rejeitar" onclick="rejeitarTerminal('${id}')">Revogar</button>
+    <button class="btn btn-sm btn-danger" onclick="removerTerminal('${id}')">Remover</button>`;
+  if(t.status==='rejeitado') return `
+    <button class="btn btn-sm btn-aprovar" onclick="abrirAprovar('${id}')">↺ Reativar</button>
+    <button class="btn btn-sm btn-danger" onclick="removerTerminal('${id}')">Remover</button>`;
+  return '';
+}
+
+async function abrirAprovar(id){
+  await carregarSetoresUnidades();
+  document.getElementById('mat-id').value=id;
+  document.getElementById('mat-apelido').value='';
+  popularSelectSetor('mat-setor', null);
+  popularSelectUnidade('mat-unidade', null);
+  abrirModal('modal-aprovar-terminal');
+}
+
+async function confirmarAprovacao(){
+  const id=document.getElementById('mat-id').value;
+  const apelido=document.getElementById('mat-apelido').value.trim()||null;
+  const setor=document.getElementById('mat-setor').value||null;
+  const unidade=document.getElementById('mat-unidade').value||null;
+  const body={};
+  if(apelido) body.apelido=apelido;
+  if(setor)   body.setor_codigo=parseInt(setor);
+  if(unidade) body.unidade_codigo=parseInt(unidade);
+  const r=await apiFetch(`/api/terminal/${id}/aprovar`,'PUT',body);
+  if(r.ok){toast('Terminal aprovado!');fecharModal('modal-aprovar-terminal');loadTerminais();}
+  else toast(r.data.msg||'Erro ao aprovar',false);
+}
+
+async function abrirConfig(id,apelido,setorAtual,unidadeAtual){
+  await carregarSetoresUnidades();
+  document.getElementById('mct-id').value=id;
+  document.getElementById('mct-apelido').value=apelido;
+  popularSelectSetor('mct-setor', setorAtual);
+  popularSelectUnidade('mct-unidade', unidadeAtual);
+  abrirModal('modal-config-terminal');
+}
+
+async function salvarConfigTerminal(){
+  const id=document.getElementById('mct-id').value;
+  const apelido=document.getElementById('mct-apelido').value.trim()||null;
+  const setor=document.getElementById('mct-setor').value||null;
+  const unidade=document.getElementById('mct-unidade').value||null;
+  const body={};
+  if(apelido) body.apelido=apelido;
+  if(setor)   body.setor_codigo=parseInt(setor);
+  if(unidade) body.unidade_codigo=parseInt(unidade);
+  const r=await apiFetch(`/api/terminal/${id}/config`,'PUT',body);
+  if(r.ok){toast('Configuração salva! Terminal sincronizará em até 1 min.');fecharModal('modal-config-terminal');loadTerminais();}
+  else toast(r.data.msg||'Erro',false);
+}
+
+async function rejeitarTerminal(id){
+  if(!confirm(`Rejeitar/revogar terminal "${id}"?\nEle ficará bloqueado até ser reaprovado.`))return;
+  const r=await apiFetch(`/api/terminal/${id}/rejeitar`,'PUT',{});
+  if(r.ok){toast('Terminal rejeitado.');loadTerminais();}
+  else toast(r.data.msg||'Erro',false);
+}
+
+async function removerTerminal(id){
+  if(!confirm(`Remover completamente o terminal "${id}"?\nEle precisará ser reaprovado se conectar novamente.`))return;
+  const r=await apiFetch(`/api/terminal/${id}`,'DELETE');
+  if(r.ok){toast('Terminal removido.');loadTerminais();}
+  else toast(r.data.msg||'Erro',false);
+}
+
+// Polling de pendentes a cada 30s para admins
+setInterval(()=>{if(usuario&&usuario.perfil==='admin')verificarPendentes();},30000);
 
 // ══ INIT ══
 verificarSessao();

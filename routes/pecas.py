@@ -22,6 +22,14 @@ from uid_parser import parse_uid, uid_from_parts, UIDParseError
 pecas_bp = Blueprint("pecas", __name__)
 
 
+@pecas_bp.route("/pecas/categorias", methods=["GET"])
+def listar_categorias():
+    rows = get_db().execute(
+        "SELECT DISTINCT categoria FROM pecas WHERE categoria IS NOT NULL ORDER BY categoria"
+    ).fetchall()
+    return jsonify([r["categoria"] for r in rows])
+
+
 @pecas_bp.route("/pecas", methods=["GET"])
 def listar_pecas():
     setor      = request.args.get("setor")
@@ -113,9 +121,9 @@ def cadastrar_peca():
     db = get_db()
     try:
         db.execute(
-            """INSERT INTO pecas (peca_code, uid_raw, nome, categoria, quantidade)
-               VALUES (?,?,?,?,?)""",
-            (peca_code, uid_raw, data["nome"], data["categoria"], data.get("quantidade", 1))
+            """INSERT INTO pecas (peca_code, uid_raw, nome, categoria, quantidade, peso)
+               VALUES (?,?,?,?,?,?)""",
+            (peca_code, uid_raw, data["nome"], data["categoria"], data.get("quantidade", 1), data.get("peso"))
         )
         db.commit()
     except Exception as e:
@@ -138,7 +146,7 @@ def editar_peca(peca_code):
         return jsonify({"erro": "Peça não encontrada"}), 404
 
     campos, valores = [], []
-    for campo in ["nome", "categoria", "quantidade"]:
+    for campo in ["nome", "categoria", "quantidade", "peso"]:
         if campo in data:
             campos.append(f"{campo} = ?"); valores.append(data[campo])
     if "disponivel" in data:

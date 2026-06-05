@@ -54,6 +54,7 @@ def init_db():
             nome                TEXT    NOT NULL,
             categoria           TEXT    NOT NULL,
             quantidade          INTEGER NOT NULL DEFAULT 1,
+            peso                REAL,
             disponivel          INTEGER NOT NULL DEFAULT 1,
             -- Localização atual (última movimentação)
             localizacao_setor   INTEGER REFERENCES setores(codigo),
@@ -120,6 +121,22 @@ def init_db():
             criado_em   DATETIME DEFAULT CURRENT_TIMESTAMP,
             expira_em   DATETIME NOT NULL,
             expirado    INTEGER NOT NULL DEFAULT 0
+        );
+
+        -- ── Terminais (ESP32) ───────────────────────────────────────
+        -- Cada ESP32 se registra automaticamente pelo terminal_id (MAC).
+        -- status: 'pendente' | 'aprovado' | 'rejeitado'
+        -- Admin aprova/rejeita pelo dashboard. Apenas aprovados recebem config.
+        CREATE TABLE IF NOT EXISTS terminais (
+            terminal_id     TEXT    PRIMARY KEY,
+            apelido         TEXT,
+            status          TEXT    NOT NULL DEFAULT 'pendente'
+                                    CHECK(status IN ('pendente','aprovado','rejeitado')),
+            setor_codigo    INTEGER REFERENCES setores(codigo),
+            unidade_codigo  INTEGER REFERENCES unidades(codigo),
+            ultimo_acesso   DATETIME DEFAULT CURRENT_TIMESTAMP,
+            ip_address      TEXT,
+            firmware_ver    TEXT    DEFAULT '3.0'
         );
 
         -- ── Seeds ────────────────────────────────────────────────────
@@ -195,7 +212,8 @@ def _migrate(conn):
     else:
         # Banco já é v2 — apenas adiciona colunas de localização se faltarem
         for col, typ in [("localizacao_setor","INTEGER"),("localizacao_unidade","INTEGER"),
-                         ("ultimo_operador_id","INTEGER"),("ultima_mov","DATETIME")]:
+                         ("ultimo_operador_id","INTEGER"),("ultima_mov","DATETIME"),
+                         ("peso","REAL")]:
             if col not in cols_f:
                 conn.execute(f"ALTER TABLE pecas ADD COLUMN {col} {typ}")
 
@@ -208,6 +226,13 @@ def _migrate(conn):
     cols_m = {r[1] for r in conn.execute("PRAGMA table_info(movimentacoes)")}
     if "terminal_id" not in cols_m:
         conn.execute("ALTER TABLE movimentacoes ADD COLUMN terminal_id TEXT NOT NULL DEFAULT 'default'")
+
+    # ── terminais: garante coluna status ─────────────────────────────────
+    cols_t = {r[1] for r in conn.execute("PRAGMA table_info(terminais)")}
+    if "status" not in cols_t:
+        conn.execute("ALTER TABLE terminais ADD COLUMN status TEXT NOT NULL DEFAULT 'pendente'")
+    if "firmware_ver" not in cols_t:
+        conn.execute("ALTER TABLE terminais ADD COLUMN firmware_ver TEXT DEFAULT '3.0'")
 
     conn.execute("PRAGMA foreign_keys = ON")
     conn.commit()

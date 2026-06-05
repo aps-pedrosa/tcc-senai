@@ -73,6 +73,15 @@ def leitura_rfid():
         "terminal_id":    terminal_id,
     }
 
+    # ── Verifica se terminal está aprovado ────────────────────────
+    if terminal_id != "default":
+        term = db.execute(
+            "SELECT status FROM terminais WHERE terminal_id=?", (terminal_id,)
+        ).fetchone()
+        if term is None or term["status"] != "aprovado":
+            status_msg = term["status"] if term else "não cadastrado"
+            return _erro(f"Terminal {terminal_id} não autorizado ({status_msg})."), 403
+
     # ── É crachá de operador? ─────────────────────────────────────
     # Lookup primário: uid_raw completo (todos os bytes)
     operador = db.execute(

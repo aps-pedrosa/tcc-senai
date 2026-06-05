@@ -16,16 +16,18 @@ from routes.pecas import pecas_bp
 from routes.movimentacoes import mov_bp
 from routes.operadores import operadores_bp
 from routes.auth import auth_bp
+from routes.terminais import terminais_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("VOIDLOG_SECRET", "voidlog-dev-secret-change-in-prod")
 
 # Registra todos os blueprints sob /api
-app.register_blueprint(rfid_bp,         url_prefix="/api")
-app.register_blueprint(pecas_bp,  url_prefix="/api")
-app.register_blueprint(mov_bp,          url_prefix="/api")
-app.register_blueprint(operadores_bp,   url_prefix="/api")
-app.register_blueprint(auth_bp,         url_prefix="/api")
+app.register_blueprint(rfid_bp,        url_prefix="/api")
+app.register_blueprint(pecas_bp,       url_prefix="/api")
+app.register_blueprint(mov_bp,         url_prefix="/api")
+app.register_blueprint(operadores_bp,  url_prefix="/api")
+app.register_blueprint(auth_bp,        url_prefix="/api")
+app.register_blueprint(terminais_bp,   url_prefix="/api")
 
 
 @app.route('/')

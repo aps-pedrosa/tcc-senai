@@ -62,42 +62,42 @@
 // ★  ÚNICA CONFIGURAÇÃO NECESSÁRIA — só WiFi e IP do servidor
 // ═══════════════════════════════════════════════════════════════════
 
-const char* WIFI_SSID     = "SUA_REDE_WIFI";
-const char* WIFI_PASSWORD = "SUA_SENHA_WIFI";
-const char* API_HOST      = "192.168.1.100";  // IP do servidor Flask (sem http://)
-const int   API_PORT      = 5000;
+const char* WIFI_SSID = "TurboNet-CASA-2G";
+const char* WIFI_PASSWORD = "AA12A48A82M57";
+const char* API_HOST = "192.168.100.23";  // IP do servidor Flask (sem http://)
+const int API_PORT = 5000;
 
 // Firmware version reportada ao servidor
 #define FIRMWARE_VER "3.0"
 
 // Intervalo de resync de configuração com o servidor (ms)
-#define CONFIG_SYNC_INTERVAL  60000UL   // 1 minuto
+#define CONFIG_SYNC_INTERVAL 60000UL  // 1 minuto
 
 // Tempo (ms) que o resultado fica no LCD
-#define T_RESULTADO           3000
+#define T_RESULTADO 3000
 
 // Timeout aguardando tag antes de voltar à seleção de setor (ms)
-#define T_AGUARDAR_TAG        60000UL   // 1 minuto
+#define T_AGUARDAR_TAG 60000UL  // 1 minuto
 
 // Tamanho máximo de setores/unidades carregados da API
-#define MAX_SETORES   20
-#define MAX_UNIDADES  20
+#define MAX_SETORES 20
+#define MAX_UNIDADES 20
 
 // ═══════════════════════════════════════════════════════════════════
 // PINOS
 // ═══════════════════════════════════════════════════════════════════
 
-#define RC522_SS    5
-#define RC522_RST   4
+#define RC522_SS 5
+#define RC522_RST 4
 
 #define KBD_ROWS 4
 #define KBD_COLS 4
-byte KBD_ROW_PINS[KBD_ROWS] = {13, 12, 14, 27};
-byte KBD_COL_PINS[KBD_COLS] = {26, 25, 33, 32};
+byte KBD_ROW_PINS[KBD_ROWS] = { 13, 12, 14, 27 };
+byte KBD_COL_PINS[KBD_COLS] = { 26, 25, 33, 32 };
 
-#define BUZZER    15
-#define LED_OK    17
-#define LED_ERR   2
+#define BUZZER 15
+#define LED_OK 17
+#define LED_ERR 2
 #define BTN_RESET 34
 
 // ═══════════════════════════════════════════════════════════════════
@@ -105,10 +105,10 @@ byte KBD_COL_PINS[KBD_COLS] = {26, 25, 33, 32};
 // ═══════════════════════════════════════════════════════════════════
 
 char KBD_MAP[KBD_ROWS][KBD_COLS] = {
-  {'1','2','3','A'},
-  {'4','5','6','B'},
-  {'7','8','9','C'},
-  {'*','0','#','D'}
+  { '1', '2', '3', 'A' },
+  { '4', '5', '6', 'B' },
+  { '7', '8', '9', 'C' },
+  { '*', '0', '#', 'D' }
 };
 Keypad teclado = Keypad(makeKeymap(KBD_MAP), KBD_ROW_PINS, KBD_COL_PINS, KBD_ROWS, KBD_COLS);
 
@@ -116,26 +116,26 @@ Keypad teclado = Keypad(makeKeymap(KBD_MAP), KBD_ROW_PINS, KBD_COL_PINS, KBD_ROW
 // PERIFÉRICOS
 // ═══════════════════════════════════════════════════════════════════
 
-MFRC522           rfid(RC522_SS, RC522_RST);
+MFRC522 rfid(RC522_SS, RC522_RST);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
-WiFiClient        wifiClient;   // cliente persistente — evita HTTP -1
+WiFiClient wifiClient;  // cliente persistente — evita HTTP -1
 
 // ═══════════════════════════════════════════════════════════════════
 // DADOS CARREGADOS DO SERVIDOR (setores e unidades)
 // ═══════════════════════════════════════════════════════════════════
 
 struct ItemTabela {
-  int    codigo;
-  char   nome[20];
+  int codigo;
+  char nome[20];
 };
 
 ItemTabela setores[MAX_SETORES];
 ItemTabela unidades[MAX_UNIDADES];
-int numSetores  = 0;
+int numSetores = 0;
 int numUnidades = 0;
 
 // Configuração padrão pré-definida pelo admin no dashboard
-int setorPadrao   = 0;   // 0 = não configurado
+int setorPadrao = 0;  // 0 = não configurado
 int unidadePadrao = 0;
 
 // ═══════════════════════════════════════════════════════════════════
@@ -153,13 +153,13 @@ enum Estado {
 
 Estado estado = CARREGANDO_CONFIG;
 
-int    setorSel    = 0;
-int    unidadeSel  = 0;
+int setorSel = 0;
+int unidadeSel = 0;
 String inputBuffer = "";
 
-unsigned long tResultado      = 0;
-unsigned long tAguardaTag     = 0;
-unsigned long tUltimoSync     = 0;
+unsigned long tResultado = 0;
+unsigned long tAguardaTag = 0;
+unsigned long tUltimoSync = 0;
 
 String terminalId = "ESP-??????";
 
@@ -167,20 +167,20 @@ String terminalId = "ESP-??????";
 // PROTÓTIPOS
 // ═══════════════════════════════════════════════════════════════════
 
-void   conectarWifi();
-bool   carregarConfig();   // returns int internally — declared bool for compat
-void   aguardarAprovacao();
-void   iniciarModoOperacao();
+void conectarWifi();
+int carregarConfig();
+void aguardarAprovacao();
+void iniciarModoOperacao();
 String httpGET(String path);
 String httpPOST(String path, String payload);
-void   exibirLCD(String l1, String l2);
-void   exibirLCDInput(String titulo, String input, String hint);
-void   bip(bool ok);
-void   ledStatus(bool ok, int ms = 1500);
-bool   chamarAPI(String uid, String &msgL1, String &msgL2, bool &sucesso);
+void exibirLCD(String l1, String l2);
+void exibirLCDInput(String titulo, String input, String hint);
+void bip(bool ok);
+void ledStatus(bool ok, int ms = 1500);
+bool chamarAPI(String uid, String& msgL1, String& msgL2, bool& sucesso);
 String lerRFID();
-void   processarTeclado(char tecla);
-void   logUID(String uid);
+void processarTeclado(char tecla);
+void logUID(String uid);
 String nomeSetor(int codigo);
 String nomeUnidade(int codigo);
 
@@ -191,12 +191,15 @@ String nomeUnidade(int codigo);
 void setup() {
   Serial.begin(115200);
   Serial.println("\n\n╔═══════════════════════════════╗");
-  Serial.println(  "║  VoidLog — RFID Only v3.0     ║");
-  Serial.println(  "╚═══════════════════════════════╝");
+  Serial.println("║  VoidLog — RFID Only v3.0     ║");
+  Serial.println("╚═══════════════════════════════╝");
 
-  pinMode(BUZZER,    OUTPUT); digitalWrite(BUZZER,  LOW);
-  pinMode(LED_OK,    OUTPUT); digitalWrite(LED_OK,  LOW);
-  pinMode(LED_ERR,   OUTPUT); digitalWrite(LED_ERR, LOW);
+  pinMode(BUZZER, OUTPUT);
+  digitalWrite(BUZZER, LOW);
+  pinMode(LED_OK, OUTPUT);
+  digitalWrite(LED_OK, LOW);
+  pinMode(LED_ERR, OUTPUT);
+  digitalWrite(LED_ERR, LOW);
   pinMode(BTN_RESET, INPUT);
 
   Wire.begin(21, 22);
@@ -223,7 +226,7 @@ void setup() {
 
   // Carrega config do servidor — trata pendente/rejeitado
   exibirLCD("Registrando...", terminalId.substring(0, 16));
-  aguardarAprovacao();   // bloqueia até aprovado ou timeout
+  aguardarAprovacao();  // bloqueia até aprovado ou timeout
 
   tUltimoSync = millis();
   iniciarModoOperacao();
@@ -234,17 +237,20 @@ void setup() {
 // ═══════════════════════════════════════════════════════════════════
 
 void loop() {
-
+  /*
   // ── Botão RESET físico ─────────────────────────────────────────
   if (digitalRead(BTN_RESET) == LOW) {
     delay(50);
     if (digitalRead(BTN_RESET) == LOW) {
       Serial.println("\n[RESET] Reiniciando...");
-      bip(true); delay(200); bip(true);
+      bip(true);
+      delay(200);
+      bip(true);
       while (digitalRead(BTN_RESET) == LOW) delay(10);
       ESP.restart();
     }
   }
+*/
 
   // ── Resync periódico de configuração ──────────────────────────
   if (millis() - tUltimoSync > CONFIG_SYNC_INTERVAL) {
@@ -269,56 +275,61 @@ void loop() {
       // Estado temporário — iniciarModoOperacao() sai dele no setup
       break;
 
-    case DIGITAR_SETOR: {
-      char t = teclado.getKey();
-      if (t) processarTeclado(t);
-      break;
-    }
-
-    case DIGITAR_UNIDADE: {
-      char t = teclado.getKey();
-      if (t) processarTeclado(t);
-      break;
-    }
-
-    case AGUARDAR_TAG: {
-      // Timeout
-      if (millis() - tAguardaTag > T_AGUARDAR_TAG) {
-        Serial.println("[TIMEOUT] Sem tag — reiniciando seleção");
-        setorSel = 0; unidadeSel = 0; inputBuffer = "";
-        iniciarModoOperacao();
+    case DIGITAR_SETOR:
+      {
+        char t = teclado.getKey();
+        if (t) processarTeclado(t);
         break;
       }
 
-      // Tecla * → volta ao início
-      char t = teclado.getKey();
-      if (t == '*') {
-        Serial.println("[KBD] * → reiniciando seleção");
-        inputBuffer = "";
-        iniciarModoOperacao();
+    case DIGITAR_UNIDADE:
+      {
+        char t = teclado.getKey();
+        if (t) processarTeclado(t);
         break;
       }
 
-      // Tenta ler tag
-      String uid = lerRFID();
-      if (uid.length() == 0) break;
+    case AGUARDAR_TAG:
+      {
+        // Timeout
+        if (millis() - tAguardaTag > T_AGUARDAR_TAG) {
+          Serial.println("[TIMEOUT] Sem tag — reiniciando seleção");
+          setorSel = 0;
+          unidadeSel = 0;
+          inputBuffer = "";
+          iniciarModoOperacao();
+          break;
+        }
 
-      logUID(uid);
-      exibirLCD("Enviando...", uid.substring(0, 16));
-      estado = PROCESSANDO;
+        // Tecla * → volta ao início
+        char t = teclado.getKey();
+        if (t == '*') {
+          Serial.println("[KBD] * → reiniciando seleção");
+          inputBuffer = "";
+          iniciarModoOperacao();
+          break;
+        }
 
-      String l1, l2;
-      bool sucesso;
-      bool ok = chamarAPI(uid, l1, l2, sucesso);
+        // Tenta ler tag
+        String uid = lerRFID();
+        if (uid.length() == 0) break;
 
-      exibirLCD(l1, l2);
-      bip(ok && sucesso);
-      ledStatus(ok && sucesso, 1000);
-      tResultado  = millis();
-      tAguardaTag = millis();
-      estado = RESULTADO;
-      break;
-    }
+        logUID(uid);
+        exibirLCD("Enviando...", uid.substring(0, 16));
+        estado = PROCESSANDO;
+
+        String l1, l2;
+        bool sucesso;
+        bool ok = chamarAPI(uid, l1, l2, sucesso);
+
+        exibirLCD(l1, l2);
+        bip(ok && sucesso);
+        ledStatus(ok && sucesso, 1000);
+        tResultado = millis();
+        tAguardaTag = millis();
+        estado = RESULTADO;
+        break;
+      }
 
     case PROCESSANDO:
       break;
@@ -326,7 +337,7 @@ void loop() {
     case RESULTADO:
       if (millis() - tResultado > T_RESULTADO) {
         String ctx = nomeSetor(setorSel).substring(0, 7)
-                   + "/" + nomeUnidade(unidadeSel).substring(0, 6);
+                     + "/" + nomeUnidade(unidadeSel).substring(0, 6);
         exibirLCD(ctx, "Passe a tag");
         estado = AGUARDAR_TAG;
       }
@@ -396,7 +407,7 @@ int carregarConfig() {
   }
 
   JsonObject term = doc["terminal"];
-  setorPadrao   = term["setor_codigo"]   | 0;
+  setorPadrao = term["setor_codigo"] | 0;
   unidadePadrao = term["unidade_codigo"] | 0;
 
   Serial.printf("[CONFIG] ✓ %d setores, %d unidades | padrão setor=%d unidade=%d\n",
@@ -454,22 +465,22 @@ void aguardarAprovacao() {
 void iniciarModoOperacao() {
   // Se admin pré-configurou setor E unidade → usa direto
   if (setorPadrao > 0 && unidadePadrao > 0) {
-    setorSel   = setorPadrao;
+    setorSel = setorPadrao;
     unidadeSel = unidadePadrao;
     tAguardaTag = millis();
     String ctx = nomeSetor(setorSel).substring(0, 7)
-               + "/" + nomeUnidade(unidadeSel).substring(0, 6);
+                 + "/" + nomeUnidade(unidadeSel).substring(0, 6);
     exibirLCD(ctx, "Passe a tag");
     estado = AGUARDAR_TAG;
     Serial.printf("[PRONTO] Auto: setor=%s unidade=%s\n",
                   nomeSetor(setorSel).c_str(), nomeUnidade(unidadeSel).c_str());
   } else {
     // Pede setor no teclado
-    setorSel   = 0;
+    setorSel = 0;
     unidadeSel = 0;
     inputBuffer = "";
     estado = DIGITAR_SETOR;
-    String hint = "1-" + String(numSetores > 0 ? setores[numSetores-1].codigo : 8);
+    String hint = "1-" + String(numSetores > 0 ? setores[numSetores - 1].codigo : 8);
     exibirLCDInput("Setor (" + hint + "):", "", "# confirma");
     Serial.println("[ESTADO] Aguardando setor...");
   }
@@ -573,33 +584,34 @@ void processarTeclado(char tecla) {
       // Valida contra lista carregada do servidor
       bool valido = false;
       for (int i = 0; i < numSetores; i++) {
-        if (setores[i].codigo == val) { valido = true; break; }
+        if (setores[i].codigo == val) {
+          valido = true;
+          break;
+        }
       }
       if (!valido) {
         bip(false);
-        exibirLCDInput("Setor invalido!", "1-" + String(numSetores > 0 ? setores[numSetores-1].codigo : 8), "");
+        exibirLCDInput("Setor invalido!", "1-" + String(numSetores > 0 ? setores[numSetores - 1].codigo : 8), "");
         delay(1200);
         inputBuffer = "";
-        String hint = "1-" + String(numSetores > 0 ? setores[numSetores-1].codigo : 8);
+        String hint = "1-" + String(numSetores > 0 ? setores[numSetores - 1].codigo : 8);
         exibirLCDInput("Setor (" + hint + "):", "", "# confirma");
         return;
       }
-      setorSel    = val;
+      setorSel = val;
       inputBuffer = "";
       bip(true);
       estado = DIGITAR_UNIDADE;
-      String hint2 = "1-" + String(numUnidades > 0 ? unidades[numUnidades-1].codigo : 5);
+      String hint2 = "1-" + String(numUnidades > 0 ? unidades[numUnidades - 1].codigo : 5);
       exibirLCDInput("Unidade(" + hint2 + "):", "", "# confirma");
       Serial.printf("[KBD] ✓ Setor: %d (%s)\n", setorSel, nomeSetor(setorSel).c_str());
-    }
-    else if (tecla == '*') {
+    } else if (tecla == '*') {
       inputBuffer = "";
-      String hint = "1-" + String(numSetores > 0 ? setores[numSetores-1].codigo : 8);
+      String hint = "1-" + String(numSetores > 0 ? setores[numSetores - 1].codigo : 8);
       exibirLCDInput("Setor (" + hint + "):", "", "# confirma");
-    }
-    else if (isDigit(tecla) && inputBuffer.length() < 2) {
+    } else if (isDigit(tecla) && inputBuffer.length() < 2) {
       inputBuffer += tecla;
-      String hint = "1-" + String(numSetores > 0 ? setores[numSetores-1].codigo : 8);
+      String hint = "1-" + String(numSetores > 0 ? setores[numSetores - 1].codigo : 8);
       exibirLCDInput("Setor (" + hint + "):", inputBuffer, "# confirma");
     }
   }
@@ -610,39 +622,42 @@ void processarTeclado(char tecla) {
       int val = inputBuffer.toInt();
       bool valido = false;
       for (int i = 0; i < numUnidades; i++) {
-        if (unidades[i].codigo == val) { valido = true; break; }
+        if (unidades[i].codigo == val) {
+          valido = true;
+          break;
+        }
       }
       if (!valido) {
         bip(false);
-        exibirLCDInput("Unid. invalida!", "1-" + String(numUnidades > 0 ? unidades[numUnidades-1].codigo : 5), "");
+        exibirLCDInput("Unid. invalida!", "1-" + String(numUnidades > 0 ? unidades[numUnidades - 1].codigo : 5), "");
         delay(1200);
         inputBuffer = "";
-        String hint = "1-" + String(numUnidades > 0 ? unidades[numUnidades-1].codigo : 5);
+        String hint = "1-" + String(numUnidades > 0 ? unidades[numUnidades - 1].codigo : 5);
         exibirLCDInput("Unidade(" + hint + "):", "", "# confirma");
         return;
       }
-      unidadeSel  = val;
+      unidadeSel = val;
       inputBuffer = "";
-      bip(true); delay(80); bip(true);
+      bip(true);
+      delay(80);
+      bip(true);
       estado = AGUARDAR_TAG;
       tAguardaTag = millis();
       String ctx = nomeSetor(setorSel).substring(0, 7)
-                 + "/" + nomeUnidade(unidadeSel).substring(0, 6);
+                   + "/" + nomeUnidade(unidadeSel).substring(0, 6);
       exibirLCD(ctx, "Passe a tag");
       Serial.printf("[KBD] ✓ Unidade: %d (%s)\n", unidadeSel, nomeUnidade(unidadeSel).c_str());
       Serial.println("─────────────────────────────────");
       Serial.printf("[PRONTO] %s / %s\n",
                     nomeSetor(setorSel).c_str(), nomeUnidade(unidadeSel).c_str());
-    }
-    else if (tecla == '*') {
+    } else if (tecla == '*') {
       inputBuffer = "";
       estado = DIGITAR_SETOR;
-      String hint = "1-" + String(numSetores > 0 ? setores[numSetores-1].codigo : 8);
+      String hint = "1-" + String(numSetores > 0 ? setores[numSetores - 1].codigo : 8);
       exibirLCDInput("Setor (" + hint + "):", "", "# confirma");
-    }
-    else if (isDigit(tecla) && inputBuffer.length() < 2) {
+    } else if (isDigit(tecla) && inputBuffer.length() < 2) {
       inputBuffer += tecla;
-      String hint = "1-" + String(numUnidades > 0 ? unidades[numUnidades-1].codigo : 5);
+      String hint = "1-" + String(numUnidades > 0 ? unidades[numUnidades - 1].codigo : 5);
       exibirLCDInput("Unidade(" + hint + "):", inputBuffer, "# confirma");
     }
   }
@@ -654,7 +669,7 @@ void processarTeclado(char tecla) {
 
 String lerRFID() {
   if (!rfid.PICC_IsNewCardPresent()) return "";
-  if (!rfid.PICC_ReadCardSerial())   return "";
+  if (!rfid.PICC_ReadCardSerial()) return "";
   String uid = "";
   for (byte i = 0; i < rfid.uid.size; i++) {
     if (rfid.uid.uidByte[i] < 0x10) uid += "0";
@@ -673,26 +688,26 @@ String lerRFID() {
 
 void logUID(String uid) {
   Serial.println("\n┌─────────────────────────────────┐");
-  Serial.println(  "│          TAG RFID LIDA           │");
-  Serial.println(  "├─────────────────────────────────┤");
-  Serial.printf(   "│  UID     : %-22s│\n", uid.c_str());
-  Serial.printf(   "│  Bytes   : %-22d│\n", uid.length() / 2);
-  Serial.printf(   "│  Setor   : %d - %-18s│\n", setorSel,   nomeSetor(setorSel).c_str());
-  Serial.printf(   "│  Unidade : %d - %-18s│\n", unidadeSel, nomeUnidade(unidadeSel).c_str());
-  Serial.printf(   "│  Terminal: %-22s│\n", terminalId.c_str());
-  Serial.println(  "└─────────────────────────────────┘");
+  Serial.println("│          TAG RFID LIDA           │");
+  Serial.println("├─────────────────────────────────┤");
+  Serial.printf("│  UID     : %-22s│\n", uid.c_str());
+  Serial.printf("│  Bytes   : %-22d│\n", uid.length() / 2);
+  Serial.printf("│  Setor   : %d - %-18s│\n", setorSel, nomeSetor(setorSel).c_str());
+  Serial.printf("│  Unidade : %d - %-18s│\n", unidadeSel, nomeUnidade(unidadeSel).c_str());
+  Serial.printf("│  Terminal: %-22s│\n", terminalId.c_str());
+  Serial.println("└─────────────────────────────────┘");
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // CHAMADA À API — POST /api/rfid
 // ═══════════════════════════════════════════════════════════════════
 
-bool chamarAPI(String uid, String &msgL1, String &msgL2, bool &sucesso) {
+bool chamarAPI(String uid, String& msgL1, String& msgL2, bool& sucesso) {
   StaticJsonDocument<256> req;
-  req["uid"]            = uid;
-  req["setor_codigo"]   = setorSel;
+  req["uid"] = uid;
+  req["setor_codigo"] = setorSel;
   req["unidade_codigo"] = unidadeSel;
-  req["terminal_id"]    = terminalId;
+  req["terminal_id"] = terminalId;
 
   String payload;
   serializeJson(req, payload);
@@ -710,16 +725,16 @@ bool chamarAPI(String uid, String &msgL1, String &msgL2, bool &sucesso) {
   StaticJsonDocument<512> doc;
   DeserializationError err = deserializeJson(doc, body);
   if (err) {
-    msgL1   = "JSON invalido";
-    msgL2   = err.c_str();
+    msgL1 = "JSON invalido";
+    msgL2 = err.c_str();
     sucesso = false;
     return true;
   }
 
   const char* status = doc["status"] | "erro";
-  const char* msg    = doc["msg"]    | "Sem resposta";
-  const char* tipo   = doc["tipo"]   | "";
-  const char* acao   = doc["acao"]   | "";
+  const char* msg = doc["msg"] | "Sem resposta";
+  const char* tipo = doc["tipo"] | "";
+  const char* acao = doc["acao"] | "";
 
   sucesso = (strcmp(status, "ok") == 0);
 
@@ -786,17 +801,22 @@ void exibirLCD(String l1, String l2) {
   while (l1.length() < 16) l1 = " " + l1;
   while (l2.length() < 16) l2 = " " + l2;
   lcd.clear();
-  lcd.setCursor(0, 0); lcd.print(l1.substring(0, 16));
-  lcd.setCursor(0, 1); lcd.print(l2.substring(0, 16));
+  lcd.setCursor(0, 0);
+  lcd.print(l1.substring(0, 16));
+  lcd.setCursor(0, 1);
+  lcd.print(l2.substring(0, 16));
 }
 
 void exibirLCDInput(String titulo, String input, String hint) {
-  String l1 = titulo; while (l1.length() < 16) l1 += " ";
+  String l1 = titulo;
+  while (l1.length() < 16) l1 += " ";
   String l2 = (hint.length() > 0 && input.length() == 0) ? hint : "> " + input;
   while (l2.length() < 16) l2 += " ";
   lcd.clear();
-  lcd.setCursor(0, 0); lcd.print(l1.substring(0, 16));
-  lcd.setCursor(0, 1); lcd.print(l2.substring(0, 16));
+  lcd.setCursor(0, 0);
+  lcd.print(l1.substring(0, 16));
+  lcd.setCursor(0, 1);
+  lcd.print(l2.substring(0, 16));
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -805,19 +825,23 @@ void exibirLCDInput(String titulo, String input, String hint) {
 
 void bip(bool ok) {
   if (ok) {
-    digitalWrite(BUZZER, HIGH); delay(80); digitalWrite(BUZZER, LOW);
+    digitalWrite(BUZZER, HIGH);
+    delay(80);
+    digitalWrite(BUZZER, LOW);
   } else {
     for (int i = 0; i < 3; i++) {
-      digitalWrite(BUZZER, HIGH); delay(100);
-      digitalWrite(BUZZER, LOW);  delay(100);
+      digitalWrite(BUZZER, HIGH);
+      delay(100);
+      digitalWrite(BUZZER, LOW);
+      delay(100);
     }
   }
 }
 
 void ledStatus(bool ok, int ms) {
-  digitalWrite(LED_OK,  ok  ? HIGH : LOW);
+  digitalWrite(LED_OK, ok ? HIGH : LOW);
   digitalWrite(LED_ERR, !ok ? HIGH : LOW);
   delay(ms);
-  digitalWrite(LED_OK,  LOW);
+  digitalWrite(LED_OK, LOW);
   digitalWrite(LED_ERR, LOW);
 }
