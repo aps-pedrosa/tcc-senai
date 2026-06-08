@@ -9,7 +9,11 @@ A API sobe em http://0.0.0.0:5000
 """
 
 import os
-from flask import Flask, jsonify, render_template, send_from_directory
+import json
+import time
+import queue
+import threading
+from flask import Flask, jsonify, render_template, send_from_directory, Response, stream_with_context
 from database import init_db
 from routes.rfid import rfid_bp
 from routes.pecas import pecas_bp
@@ -20,6 +24,28 @@ from routes.terminais import terminais_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("VOIDLOG_SECRET", "voidlog-dev-secret-change-in-prod")
+
+# ── SSE broadcast broker ────────────────────────────────────────────
+# Qualquer parte do backend chama `sse_push(evento, dados)` para
+# notificar todos os clientes conectados em tempo real.
+_sse_clients: list[queue.Queue] = []
+_sse_lock = threading.Lock()
+
+def sse_push(event: str, data: dict | None = None):
+    """Envia um evento SSE para todos os clientes conectados."""
+    msg = f"event: {event}\ndata: {json.dumps(data or {})}\n\n"
+    with _sse_lock:
+        dead = []
+        for q in _sse_clients:
+            try:
+                q.put_nowait(msg)
+            except queue.Full:
+                dead.append(q)
+        for q in dead:
+            _sse_clients.remove(q)
+
+# Expõe para os blueprints importarem
+app.sse_push = sse_push
 
 # Registra todos os blueprints sob /api
 app.register_blueprint(rfid_bp,        url_prefix="/api")
@@ -33,6 +59,41 @@ app.register_blueprint(terminais_bp,   url_prefix="/api")
 @app.route('/')
 def index():
     return render_template('dashboard.html')
+
+
+# ── SSE stream ──────────────────────────────────────────────────────
+@app.route("/api/events")
+def events():
+    """Endpoint SSE — dashboard escuta aqui para atualizações em tempo real."""
+    q: queue.Queue = queue.Queue(maxsize=50)
+    with _sse_lock:
+        _sse_clients.append(q)
+
+    def generate():
+        # Heartbeat inicial
+        yield ": connected\n\n"
+        try:
+            while True:
+                try:
+                    msg = q.get(timeout=25)
+                    yield msg
+                except queue.Empty:
+                    yield ": ping\n\n"   # mantém conexão viva
+        except GeneratorExit:
+            pass
+        finally:
+            with _sse_lock:
+                if q in _sse_clients:
+                    _sse_clients.remove(q)
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control":   "no-cache",
+            "X-Accel-Buffering": "no",
+        }
+    )
 
 
 # ── Rota de saúde ───────────────────────────────────────────────────

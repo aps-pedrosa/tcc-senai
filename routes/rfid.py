@@ -22,7 +22,7 @@ Fluxo:
   6. Atualiza localização atual e último operador da peça
 """
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from database import get_db
 from uid_parser import parse_uid, UIDParseError
 
@@ -134,7 +134,7 @@ def _registrar_sessao(db, operador, uid, ctx):
     if sessao_ativa:
         db.execute("UPDATE sessoes SET ativa=0 WHERE id=?", (sessao_ativa["id"],))
         db.commit()
-        return jsonify({
+        resp = {
             "status": "ok",
             "tipo":   "operador",
             "acao":   "logout",
@@ -145,7 +145,9 @@ def _registrar_sessao(db, operador, uid, ctx):
                 "matricula": operador["matricula"],
             },
             "terminal": ctx,
-        })
+        }
+        current_app.sse_push("operador", {"acao": "logout", "nome": operador["nome"]})
+        return jsonify(resp)
     else:
         db.execute(
             """INSERT INTO sessoes
@@ -154,7 +156,7 @@ def _registrar_sessao(db, operador, uid, ctx):
             (operador["id"], ctx["terminal_id"], ctx["setor_codigo"], ctx["unidade_codigo"])
         )
         db.commit()
-        return jsonify({
+        resp = {
             "status": "ok",
             "tipo":   "operador",
             "acao":   "login",
@@ -165,7 +167,9 @@ def _registrar_sessao(db, operador, uid, ctx):
                 "matricula": operador["matricula"],
             },
             "terminal": ctx,
-        })
+        }
+        current_app.sse_push("operador", {"acao": "login", "nome": operador["nome"]})
+        return jsonify(resp)
 
 
 # ── Movimentação de peça ──────────────────────────────────────────
@@ -234,6 +238,14 @@ def _registrar_movimentacao(db, peca, uid, ctx):
     db.commit()
 
     label = "Retirada" if tipo == "retirada" else "Devolvida"
+    current_app.sse_push("movimentacao", {
+        "tipo":      tipo,
+        "peca":      peca["nome"],
+        "peca_code": peca["peca_code"],
+        "operador":  sessao["op_nome"],
+        "setor":     ctx["setor_nome"],
+        "unidade":   ctx["unidade_nome"],
+    })
     return jsonify({
         "status": "ok",
         "tipo":   "peca",

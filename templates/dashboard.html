@@ -293,6 +293,7 @@ tr:hover td{background:rgba(168,85,247,.04)}
       <div><span class="live-dot"></span><span id="live-status">CONECTANDO...</span></div>
       <div id="clock">--:--:--</div>
     </div>
+    <span id="sse-indicator" title="Atualização automática" style="font-size:9px;cursor:default;color:var(--muted);user-select:none">○</span>
     <div class="user-chip" id="user-chip" style="display:none">
       <div class="user-avatar" id="user-av">?</div>
       <div><div class="user-name" id="user-name">--</div><div class="user-perfil" id="user-perfil">--</div></div>
@@ -536,7 +537,7 @@ tr:hover td{background:rgba(168,85,247,.04)}
   <div class="admin-section">
     <div class="section-title">Cadastro Rápido — Peça</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px">
-      <div class="notice">A peca não precisa de setor/unidade fixos. A localização é registrada automaticamente a cada leitura RFID no terminal.</div>
+      <div class="notice">A peça não precisa de setor/unidade fixos. A localização é registrada automaticamente a cada leitura RFID no terminal.</div>
       <div class="form-row">
         <div class="input-group"><label>Nome</label><input type="text" id="fn-nome" placeholder="Ex: Furadeira de Bancada"></div>
         <div class="input-group"><label>Categoria</label><input type="text" id="fn-cat" placeholder="Ex: Furação"></div>
@@ -545,9 +546,14 @@ tr:hover td{background:rgba(168,85,247,.04)}
         <div class="input-group"><label>Código da Peça — B1+B2 (0–65535)</label><input type="number" id="fn-peca" min="0" max="65535" placeholder="Ex: 100" oninput="previewPeça()"></div>
         <div class="input-group"><label>Quantidade</label><input type="number" id="fn-qtd" min="1" value="1"></div>
       </div>
+      <div class="input-group">
+        <label>UID da Tag RFID <span style="color:var(--muted);font-weight:400">(cole aqui o UID completo lido do leitor — opcional)</span></label>
+        <input type="text" id="fn-uid-raw" placeholder="Ex: 04A3F21B7C8D90" style="text-transform:uppercase;letter-spacing:2px;font-family:var(--fm)"
+          oninput="this.value=this.value.toUpperCase().replace(/[^0-9A-F]/g,'');previewPeça()">
+      </div>
       <div id="fn-preview" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:16px;font-family:var(--fm);font-size:12px">
-        UID gerado: <span id="fn-uid" style="color:var(--accent);font-size:16px;letter-spacing:3px"></span>
-        <span style="color:var(--muted);margin-left:12px">(B3+B4=0000, setor/unidade via terminal)</span>
+        UID: <span id="fn-uid" style="color:var(--accent);font-size:15px;letter-spacing:3px"></span>
+        <span id="fn-uid-src" style="color:var(--muted);margin-left:12px"></span>
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <button class="btn btn-primary" onclick="cadastrarPeça()">Cadastrar</button>
@@ -578,7 +584,7 @@ tr:hover td{background:rgba(168,85,247,.04)}
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-peca')">✕</button>
     <div class="modal-title">Nova Peça</div>
-    <div class="notice">Setor e unidade não são cadastrados na peca. A localização é atualizada automaticamente pelo terminal.</div>
+    <div class="notice">Setor e unidade não são cadastrados na peça. A localização é atualizada automaticamente pelo terminal.</div>
     <div class="form-row">
       <div class="input-group"><label>Nome</label><input type="text" id="mf-nome" placeholder="Ex: Furadeira de Bancada"></div>
       <div class="input-group">
@@ -592,6 +598,11 @@ tr:hover td{background:rgba(168,85,247,.04)}
     <div class="form-row">
       <div class="input-group"><label>Código Peça B1+B2 (0–65535)</label><input type="number" id="mf-peca" min="0" max="65535" oninput="previewModalUID()"></div>
       <div class="input-group"><label>Quantidade</label><input type="number" id="mf-qtd" value="1" min="1"></div>
+    </div>
+    <div class="input-group">
+      <label>UID da Tag RFID <span style="color:var(--muted);font-weight:400">(cole o UID completo da tag — opcional, se omitido é gerado do código)</span></label>
+      <input type="text" id="mf-uid" placeholder="Ex: 04A3F21B7C8D90" style="text-transform:uppercase;letter-spacing:2px;font-family:var(--fm)"
+        oninput="this.value=this.value.toUpperCase().replace(/[^0-9A-F]/g,'')">
     </div>
     <div class="form-row">
       <div class="input-group"><label>Peso (kg) <span style="color:var(--muted);font-weight:400;font-size:11px">opcional</span></label><input type="number" id="mf-peso" min="0" step="0.001" placeholder="Ex: 2.5"></div>
@@ -725,9 +736,11 @@ async function doLogin(){
     usuario=d.usuario; localStorage.setItem('vl_token',d.token);
     aplicarSessao(); document.getElementById('login-overlay').classList.add('hidden');
     loadDashboard(); loadAlertas();
+    iniciarSSE();
   }catch(e){err.textContent='Falha de conexão com o servidor';err.style.display='block';}
 }
 async function doLogout(){
+  pararSSE();
   await apiFetch('/api/auth/logout','POST'); localStorage.removeItem('vl_token'); usuario=null;
   document.getElementById('login-overlay').classList.remove('hidden');
   document.getElementById('user-chip').style.display='none';
@@ -741,6 +754,7 @@ async function verificarSessao(){
     usuario=await r.json(); aplicarSessao();
     document.getElementById('login-overlay').classList.add('hidden');
     loadDashboard(); loadAlertas();
+    iniciarSSE();
   }catch(e){}
 }
 function aplicarSessao(){
@@ -801,14 +815,14 @@ function mkChart(id,type,data,extra={}){
 }
 function abrirModal(id){document.getElementById(id).classList.add('open');}
 function fecharModal(id){document.getElementById(id).classList.remove('open');}
-function toast(msg,ok=true){
+function toast(msg,ok=true,dur=2800){
   const t=document.createElement('div'); t.textContent=msg;
-  Object.assign(t.style,{position:'fixed',bottom:'24px',right:'24px',zIndex:'9000',padding:'12px 20px',
+  Object.assign(t.style,{position:'fixed',bottom:'24px',right:'24px',zIndex:'9000',padding:'10px 18px',
     borderRadius:'6px',fontFamily:"'IBM Plex Mono',monospace",fontSize:'12px',fontWeight:'600',letterSpacing:'1px',
     background:ok?'rgba(168,85,247,.9)':'rgba(255,61,87,.9)',color:'#fff',
-    boxShadow:'0 4px 20px rgba(0,0,0,.4)',transition:'opacity .4s'});
+    boxShadow:'0 4px 20px rgba(0,0,0,.4)',transition:'opacity .4s',maxWidth:'340px'});
   document.body.appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},2800);
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},dur);
 }
 
 // ══ DASHBOARD ══
@@ -934,24 +948,36 @@ function toggleCatCustom(){
 }
 function previewModalUID(){
   const p=parseInt(document.getElementById('mf-peca').value)||0;
-  if(!p){document.getElementById('mf-uid-preview').style.display='none';return;}
-  const b1=((p>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
-  const b2=(p&0xFF).toString(16).toUpperCase().padStart(2,'0');
-  document.getElementById('mf-uid-val').textContent=b1+b2+'0000';
+  const uidManual=(document.getElementById('mf-uid')||{value:''}).value.trim();
+  if(!p && !uidManual){document.getElementById('mf-uid-preview').style.display='none';return;}
+  if(uidManual){
+    document.getElementById('mf-uid-val').textContent=uidManual;
+  } else {
+    const b1=((p>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
+    const b2=(p&0xFF).toString(16).toUpperCase().padStart(2,'0');
+    document.getElementById('mf-uid-val').textContent=b1+b2+'0000';
+  }
   document.getElementById('mf-uid-preview').style.display='block';
 }
 async function salvarPeça(){
   const sel=document.getElementById('mf-cat');
   const cat=sel.value==='__outro__'?document.getElementById('mf-cat-custom').value.trim():sel.value;
   const pesoVal=parseFloat(document.getElementById('mf-peso').value);
-  const payload={nome:document.getElementById('mf-nome').value.trim(),
+  const uidRaw=(document.getElementById('mf-uid')||{value:''}).value.trim();
+  const payload={
+    nome:document.getElementById('mf-nome').value.trim(),
     categoria:cat,
     peca_code:parseInt(document.getElementById('mf-peca').value),
     quantidade:parseInt(document.getElementById('mf-qtd').value)||1,
-    ...(isNaN(pesoVal)?{}:{peso:pesoVal})};
+    ...(isNaN(pesoVal)?{}:{peso:pesoVal}),
+    ...(uidRaw?{uid_raw:uidRaw}:{})
+  };
   const r=await apiFetch('/api/pecas','POST',payload);
-  if(r.ok){toast('Peça cadastrada!');fecharModal('modal-peca');loadFer();}
-  else toast(r.data.erro||'Erro ao cadastrar',false);
+  if(r.ok){
+    toast('Peça cadastrada! UID: '+(r.data.uid_raw||'?'));
+    fecharModal('modal-peca');
+    loadFer();
+  } else toast(r.data.erro||'Erro ao cadastrar',false);
 }
 async function deletarPeça(peca,nome){
   if(!confirm(`Remover "${nome}"?`))return;
@@ -1140,21 +1166,43 @@ async function toggleUsuario(id,ativo,nome){
 }
 function previewPeça(){
   const p=parseInt(document.getElementById('fn-peca').value)||0;
-  if(!p){document.getElementById('fn-preview').style.display='none';return;}
-  const b1=((p>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
-  const b2=(p&0xFF).toString(16).toUpperCase().padStart(2,'0');
-  document.getElementById('fn-uid').textContent=b1+b2+'0000';
+  const uidManual=document.getElementById('fn-uid-raw').value.trim();
+  if(!p && !uidManual){document.getElementById('fn-preview').style.display='none';return;}
+  if(uidManual){
+    document.getElementById('fn-uid').textContent=uidManual;
+    document.getElementById('fn-uid-src').textContent='(UID inserido manualmente)';
+  } else {
+    const b1=((p>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
+    const b2=(p&0xFF).toString(16).toUpperCase().padStart(2,'0');
+    document.getElementById('fn-uid').textContent=b1+b2+'0000';
+    document.getElementById('fn-uid-src').textContent='(gerado do código — B3+B4=0000)';
+  }
   document.getElementById('fn-preview').style.display='block';
 }
 async function cadastrarPeça(){
-  const payload={nome:document.getElementById('fn-nome').value.trim(),
+  const uidRaw=document.getElementById('fn-uid-raw').value.trim();
+  const payload={
+    nome:document.getElementById('fn-nome').value.trim(),
     categoria:document.getElementById('fn-cat').value.trim(),
     peca_code:parseInt(document.getElementById('fn-peca').value),
-    quantidade:parseInt(document.getElementById('fn-qtd').value)||1};
+    quantidade:parseInt(document.getElementById('fn-qtd').value)||1
+  };
+  if(uidRaw) payload.uid_raw=uidRaw;
   const msg=document.getElementById('fn-msg');
   const r=await apiFetch('/api/pecas','POST',payload);
-  if(r.ok){msg.style.color='var(--accent3)';msg.textContent='✓ Cadastrada (UID: '+r.data.uid_gerado+')';}
-  else{msg.style.color='var(--danger)';msg.textContent='✗ '+(r.data.erro||'Erro');}
+  if(r.ok){
+    msg.style.color='var(--accent3)';
+    msg.textContent='✓ Cadastrada — UID: '+(r.data.uid_raw||r.data.uid_gerado||'?');
+    document.getElementById('fn-nome').value='';
+    document.getElementById('fn-cat').value='';
+    document.getElementById('fn-peca').value='';
+    document.getElementById('fn-qtd').value='1';
+    document.getElementById('fn-uid-raw').value='';
+    document.getElementById('fn-preview').style.display='none';
+    loadFer();
+  } else {
+    msg.style.color='var(--danger)';msg.textContent='✗ '+(r.data.erro||'Erro');
+  }
 }
 async function cadastrarOperador(){
   const payload={nome:document.getElementById('on-nome').value.trim(),
@@ -1366,6 +1414,121 @@ async function removerTerminal(id){
 
 // Polling de pendentes a cada 30s para admins
 setInterval(()=>{if(usuario&&usuario.perfil==='admin')verificarPendentes();},30000);
+
+// ══ AUTO-REFRESH SSE ══
+// Ouve /api/events (Server-Sent Events).
+// Quando o ESP32 passa uma tag, o backend dispara um evento que
+// chega aqui em <1 segundo — sem precisar recarregar a página.
+
+let _sseSource = null;
+let _sseAtiva  = false;
+let _sseReconectando = false;
+
+// Quais abas precisam atualizar para cada evento
+const SSE_MAP = {
+  movimentacao: ['dashboard','localizacao','movimentacoes','pecas','alertas'],
+  operador:     ['dashboard','localizacao','operadores'],
+  terminal:     ['terminais'],
+};
+
+// Fila de abas pendentes: atualiza só as visíveis agora;
+// as demais são marcadas para atualizar quando o usuário navegar
+const _pendentes = new Set();
+
+function _recarregarAba(nome){
+  const loaders={
+    dashboard:    loadDashboard,
+    localizacao:  loadLocalizacao,
+    movimentacoes:loadMovs,
+    pecas:        loadFer,
+    operadores:   loadOps,
+    alertas:      loadAlertas,
+    terminais:    loadTerminais,
+  };
+  loaders[nome]?.();
+}
+
+function _abaAtiva(){
+  const p = document.querySelector('.page.active');
+  return p ? p.id.replace('page-','') : 'dashboard';
+}
+
+function _handleSSEEvento(tipo, dados){
+  const abas = SSE_MAP[tipo] || [];
+  const ativa = _abaAtiva();
+
+  // Mostra toast discreto
+  const msgs = {
+    movimentacao: `↻ ${dados.tipo==='retirada'?'Retirada':'Devolução'}: ${dados.peca||'peça'} (${dados.operador||'?'})`,
+    operador:     `↻ Operador ${dados.acao==='login'?'entrou':'saiu'}: ${dados.nome||'?'}`,
+    terminal:     `↻ Terminal atualizado`,
+  };
+  toast(msgs[tipo]||'↻ Atualizado', true, 2500);
+
+  abas.forEach(aba => {
+    if(aba === ativa){
+      _recarregarAba(aba);
+    } else {
+      _pendentes.add(aba);
+    }
+  });
+}
+
+// Intercepta setTab para descarregar pendentes ao navegar
+const _setTabOriginal = setTab;
+window.setTab = function(name, btn){
+  _setTabOriginal(name, btn);
+  if(_pendentes.has(name)){
+    _pendentes.delete(name);
+    // já foi chamado por setTab via loaders — não recarrega duplo
+  }
+};
+
+function _atualizarIndicadorSSE(ok){
+  const el = document.getElementById('sse-indicator');
+  if(!el) return;
+  el.title       = ok ? 'Atualização automática ativa' : 'Reconectando...';
+  el.style.color = ok ? 'var(--accent3)' : 'var(--muted)';
+  el.textContent = ok ? '⬤' : '○';
+}
+
+function iniciarSSE(){
+  if(_sseSource) _sseSource.close();
+  _sseSource = new EventSource('/api/events');
+  _sseAtiva  = true;
+
+  _sseSource.addEventListener('movimentacao', e => {
+    try{ _handleSSEEvento('movimentacao', JSON.parse(e.data)); }catch(_){}
+  });
+  _sseSource.addEventListener('operador', e => {
+    try{ _handleSSEEvento('operador', JSON.parse(e.data)); }catch(_){}
+  });
+  _sseSource.addEventListener('terminal', e => {
+    try{ _handleSSEEvento('terminal', JSON.parse(e.data)); }catch(_){}
+  });
+
+  _sseSource.onopen = () => {
+    _sseReconectando = false;
+    _atualizarIndicadorSSE(true);
+    console.log('[SSE] Conectado ao servidor VoidLog');
+  };
+
+  _sseSource.onerror = () => {
+    _atualizarIndicadorSSE(false);
+    if(_sseReconectando) return;
+    _sseReconectando = true;
+    console.warn('[SSE] Conexão perdida — reconectando em 5s...');
+    _sseSource.close();
+    setTimeout(()=>{ if(_sseAtiva) iniciarSSE(); }, 5000);
+  };
+}
+
+function pararSSE(){
+  _sseAtiva = false;
+  _atualizarIndicadorSSE(false);
+  _sseSource?.close();
+  _sseSource = null;
+}
 
 // ══ INIT ══
 verificarSessao();
