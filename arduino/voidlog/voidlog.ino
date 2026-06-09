@@ -62,8 +62,8 @@
 // ★  ÚNICA CONFIGURAÇÃO NECESSÁRIA — só WiFi e IP do servidor
 // ═══════════════════════════════════════════════════════════════════
 
-const char* WIFI_SSID = "TurboNet-CASA-2G";
-const char* WIFI_PASSWORD = "AA12A48A82M57";
+const char* WIFI_SSID = "PedrosaNetwork";
+const char* WIFI_PASSWORD = "fortestingpurposes";
 const char* API_HOST = "192.168.100.23";
 const int   API_PORT      = 5000;
 
