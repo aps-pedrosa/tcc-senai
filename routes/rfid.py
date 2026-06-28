@@ -1,25 +1,14 @@
 """
-routes/rfid.py — VoidLog v2
-─────────────────────────────────────────────────────────────────
+routes/rfid.py — VoidLog v3
 POST /api/rfid — recebe leituras do ESP32.
 
-PAYLOAD (v2):
+PAYLOAD:
 {
-    "uid":            "04A3F21B7C",  ← UID COMPLETO lido pelo RC522 (todos os bytes)
-    "setor_codigo":   4,             ← selecionado no encoder do terminal
-    "unidade_codigo": 2,             ← selecionado no encoder do terminal
-    "terminal_id":    "ESP-A1B2C3"  ← opcional, ID do ESP32
+    "uid":            "04A3F21B7C",
+    "setor_codigo":   4,
+    "unidade_codigo": 2,
+    "terminal_id":    "AA:BB:CC:DD:EE:FF"  ← MAC do ESP
 }
-
-Fluxo:
-  1. Parse do UID → uid_raw = UID completo, peca_code = B1+B2
-  2. Setor e unidade vêm do payload (não da tag)
-  3. Identifica crachá ou peça:
-       a) Busca por uid_raw EXATO no banco (lookup primário — UID completo)
-       b) Fallback: busca por peca_code (compatibilidade barcodes / cadastro manual)
-  4. Crachá  → abre/encerra sessão do operador naquele terminal
-  5. Peça    → registra retirada ou devolução com localização atual
-  6. Atualiza localização atual e último operador da peça
 """
 
 from flask import Blueprint, request, jsonify, current_app
@@ -35,7 +24,6 @@ def leitura_rfid():
     if not body or "uid" not in body:
         return _erro("JSON inválido. Chave 'uid' ausente.")
 
-    # ── Valida setor e unidade do terminal ────────────────────────
     setor_codigo   = body.get("setor_codigo")
     unidade_codigo = body.get("unidade_codigo")
     terminal_id    = body.get("terminal_id", "default")
@@ -49,7 +37,6 @@ def leitura_rfid():
     except (ValueError, TypeError):
         return _erro("setor_codigo e unidade_codigo devem ser inteiros")
 
-    # ── Parse do UID ──────────────────────────────────────────────
     try:
         uid = parse_uid(body["uid"])
     except UIDParseError as e:
@@ -57,13 +44,12 @@ def leitura_rfid():
 
     db = get_db()
 
-    # ── Valida setor e unidade no banco ───────────────────────────
     setor   = db.execute("SELECT * FROM setores   WHERE codigo=?", (setor_codigo,)).fetchone()
     unidade = db.execute("SELECT * FROM unidades  WHERE codigo=?", (unidade_codigo,)).fetchone()
     if not setor:
-        return _erro(f"Setor {setor_codigo} não encontrado no banco."), 404
+        return _erro(f"Setor {setor_codigo} não encontrado."), 404
     if not unidade:
-        return _erro(f"Unidade {unidade_codigo} não encontrada no banco."), 404
+        return _erro(f"Unidade {unidade_codigo} não encontrada."), 404
 
     ctx = {
         "setor_codigo":   setor_codigo,
@@ -73,55 +59,59 @@ def leitura_rfid():
         "terminal_id":    terminal_id,
     }
 
-    # ── Verifica se terminal está aprovado ────────────────────────
+    # Valida terminal (pelo MAC)
     if terminal_id != "default":
         term = db.execute(
-            "SELECT status FROM terminais WHERE terminal_id=?", (terminal_id,)
+            "SELECT * FROM terminais WHERE terminal_id=?", (terminal_id,)
         ).fetchone()
         if term is None or term["status"] != "aprovado":
             status_msg = term["status"] if term else "não cadastrado"
             return _erro(f"Terminal {terminal_id} não autorizado ({status_msg})."), 403
+        # Atualiza ultimo_acesso
+        db.execute("UPDATE terminais SET ultimo_acesso=CURRENT_TIMESTAMP WHERE terminal_id=?",
+                   (terminal_id,))
 
-    # ── É crachá de operador? ─────────────────────────────────────
-    # Lookup primário: uid_raw completo (todos os bytes)
+    # ── Operador? ─────────────────────────────────────────────────────────
     operador = db.execute(
         "SELECT * FROM operadores WHERE uid_raw = ?", (uid["uid_raw"],)
     ).fetchone()
-
-    # Fallback: peca_code (compatibilidade com barcodes e UIDs antigos)
     if not operador:
         operador = db.execute(
-            "SELECT * FROM operadores WHERE peca_code = ?", (uid["peca_code"],)
+            "SELECT * FROM operadores WHERE equipamento_code = ?", (uid["peca_code"],)
         ).fetchone()
 
     if operador:
         return _registrar_sessao(db, operador, uid, ctx)
 
-    # ── É peça RFID? ─────────────────────────────────────────────
-    # Lookup primário: uid_raw completo
-    peca = db.execute(
-        "SELECT * FROM pecas WHERE uid_raw = ?", (uid["uid_raw"],)
+    # ── Equipamento RFID? ─────────────────────────────────────────────────
+    equip = db.execute(
+        "SELECT * FROM equipamentos WHERE uid_raw = ?", (uid["uid_raw"],)
     ).fetchone()
-
-    # Fallback: peca_code (compatibilidade com barcodes e cadastro manual)
-    if not peca:
-        peca = db.execute(
-            "SELECT * FROM pecas WHERE peca_code = ?", (uid["peca_code"],)
+    if not equip:
+        equip = db.execute(
+            "SELECT * FROM equipamentos WHERE equipamento_code = ?", (uid["peca_code"],)
         ).fetchone()
 
-    if peca:
-        return _registrar_movimentacao(db, peca, uid, ctx)
+    if equip:
+        # Bloqueia equipamentos em manutenção
+        if equip["em_manutencao"]:
+            return jsonify({
+                "status": "erro",
+                "tipo":   "equipamento",
+                "acao":   "bloqueado",
+                "msg":    f"Em manutenção: {equip['nome'][:20]}",
+                "detalhes": {"equipamento": equip["nome"], "em_manutencao": True}
+            }), 403
+        return _registrar_movimentacao(db, equip, uid, ctx)
 
-    # ── UID não cadastrado ────────────────────────────────────────
     return _erro(
-        f"Tag não cadastrada. uid_raw={uid['uid_raw']} peca_code={uid['peca_code']}"
+        f"Tag não cadastrada. uid_raw={uid['uid_raw']} code={uid['peca_code']}"
     ), 404
 
 
-# ── Sessão de operador ────────────────────────────────────────────
+# ── Sessão de operador ─────────────────────────────────────────────────────
 
 def _registrar_sessao(db, operador, uid, ctx):
-    """Abre ou encerra sessão do operador no terminal informado."""
     sessao_ativa = db.execute(
         """SELECT * FROM sessoes
            WHERE operador_id=? AND terminal_id=? AND ativa=1
@@ -134,50 +124,38 @@ def _registrar_sessao(db, operador, uid, ctx):
     if sessao_ativa:
         db.execute("UPDATE sessoes SET ativa=0 WHERE id=?", (sessao_ativa["id"],))
         db.commit()
-        resp = {
+        current_app.sse_push("operador", {"acao": "logout", "nome": operador["nome"]})
+        return jsonify({
             "status": "ok",
             "tipo":   "operador",
             "acao":   "logout",
             "msg":    f"Tchau, {primeiro}!",
-            "operador": {
-                "id":        operador["id"],
-                "nome":      operador["nome"],
-                "matricula": operador["matricula"],
-            },
+            "operador": {"id": operador["id"], "nome": operador["nome"],
+                         "matricula": operador["matricula"]},
             "terminal": ctx,
-        }
-        current_app.sse_push("operador", {"acao": "logout", "nome": operador["nome"]})
-        return jsonify(resp)
+        })
     else:
         db.execute(
-            """INSERT INTO sessoes
-               (operador_id, terminal_id, setor_codigo, unidade_codigo)
+            """INSERT INTO sessoes (operador_id, terminal_id, setor_codigo, unidade_codigo)
                VALUES (?,?,?,?)""",
             (operador["id"], ctx["terminal_id"], ctx["setor_codigo"], ctx["unidade_codigo"])
         )
         db.commit()
-        resp = {
+        current_app.sse_push("operador", {"acao": "login", "nome": operador["nome"]})
+        return jsonify({
             "status": "ok",
             "tipo":   "operador",
             "acao":   "login",
             "msg":    f"Ola, {primeiro}!",
-            "operador": {
-                "id":        operador["id"],
-                "nome":      operador["nome"],
-                "matricula": operador["matricula"],
-            },
+            "operador": {"id": operador["id"], "nome": operador["nome"],
+                         "matricula": operador["matricula"]},
             "terminal": ctx,
-        }
-        current_app.sse_push("operador", {"acao": "login", "nome": operador["nome"]})
-        return jsonify(resp)
+        })
 
 
-# ── Movimentação de peça ──────────────────────────────────────────
+# ── Movimentação de equipamento ───────────────────────────────────────────
 
-def _registrar_movimentacao(db, peca, uid, ctx):
-    """Registra retirada ou devolução usando o contexto do terminal."""
-
-    # Busca sessão ativa no mesmo terminal
+def _registrar_movimentacao(db, equip, uid, ctx):
     sessao = db.execute(
         """SELECT s.*, o.nome as op_nome, o.id as op_id, o.matricula as op_mat
            FROM sessoes s
@@ -187,7 +165,6 @@ def _registrar_movimentacao(db, peca, uid, ctx):
         (ctx["terminal_id"],)
     ).fetchone()
 
-    # Fallback: qualquer sessão ativa
     if not sessao:
         sessao = db.execute(
             """SELECT s.*, o.nome as op_nome, o.id as op_id, o.matricula as op_mat
@@ -200,64 +177,51 @@ def _registrar_movimentacao(db, peca, uid, ctx):
     if not sessao:
         return _erro("Nenhum operador identificado. Passe o crachá primeiro."), 403
 
-    tipo      = "devolucao" if peca["disponivel"] == 0 else "retirada"
+    tipo      = "devolucao" if equip["disponivel"] == 0 else "retirada"
     nova_disp = 1 if tipo == "devolucao" else 0
 
-    # Grava movimentação com contexto do terminal
     db.execute(
         """INSERT INTO movimentacoes
-           (peca_peca, operador_id, terminal_id, setor_codigo, unidade_codigo, tipo)
+           (equipamento_code, operador_id, terminal_id, setor_codigo, unidade_codigo, tipo)
            VALUES (?,?,?,?,?,?)""",
-        (
-            peca["peca_code"],
-            sessao["op_id"],
-            ctx["terminal_id"],
-            ctx["setor_codigo"],
-            ctx["unidade_codigo"],
-            tipo,
-        )
+        (equip["equipamento_code"], sessao["op_id"],
+         ctx["terminal_id"], ctx["setor_codigo"], ctx["unidade_codigo"], tipo)
     )
 
-    # Atualiza disponibilidade + localização atual + último operador
     db.execute(
-        """UPDATE pecas SET
+        """UPDATE equipamentos SET
                disponivel          = ?,
                localizacao_setor   = ?,
                localizacao_unidade = ?,
                ultimo_operador_id  = ?,
                ultima_mov          = CURRENT_TIMESTAMP
-           WHERE peca_code = ?""",
-        (
-            nova_disp,
-            ctx["setor_codigo"],
-            ctx["unidade_codigo"],
-            sessao["op_id"],
-            peca["peca_code"],
-        )
+           WHERE equipamento_code = ?""",
+        (nova_disp, ctx["setor_codigo"], ctx["unidade_codigo"],
+         sessao["op_id"], equip["equipamento_code"])
     )
     db.commit()
 
     label = "Retirada" if tipo == "retirada" else "Devolvida"
     current_app.sse_push("movimentacao", {
-        "tipo":      tipo,
-        "peca":      peca["nome"],
-        "peca_code": peca["peca_code"],
-        "operador":  sessao["op_nome"],
-        "setor":     ctx["setor_nome"],
-        "unidade":   ctx["unidade_nome"],
+        "tipo":              tipo,
+        "equipamento":       equip["nome"],
+        "equipamento_code":  equip["equipamento_code"],
+        "operador":          sessao["op_nome"],
+        "setor":             ctx["setor_nome"],
+        "unidade":           ctx["unidade_nome"],
     })
     return jsonify({
         "status": "ok",
-        "tipo":   "peca",
+        "tipo":   "equipamento",
         "acao":   tipo,
-        "msg":    f"{label}: {peca['nome'][:20]}",
+        "msg":    f"{label}: {equip['nome'][:20]}",
         "detalhes": {
-            "peca":      peca["nome"],
-            "categoria": peca["categoria"],
-            "peca_code": peca["peca_code"],
-            "uid_raw":   uid["uid_raw"],
-            "operador":  sessao["op_nome"],
-            "matricula": sessao["op_mat"],
+            "equipamento":      equip["nome"],
+            "categoria":        equip["categoria"],
+            "equipamento_code": equip["equipamento_code"],
+            "uid_raw":          uid["uid_raw"],
+            "operador":         sessao["op_nome"],
+            "matricula":        sessao["op_mat"],
             "localizacao": {
                 "setor":      ctx["setor_nome"],
                 "unidade":    ctx["unidade_nome"],

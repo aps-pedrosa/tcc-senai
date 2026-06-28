@@ -1,9 +1,0 @@
-{
-  "additionalFiles": "",
-  "compiler.optimization_flags": "-Os",
-  "customBuildProperties": "",
-  "fqbn": "esp32:esp32:esp32",
-  "hardwareFolders": "/home/aps/.arduino15/packages/esp32/hardware/esp32/3.3.9,/home/aps/.arduino15/packages/esp32/hardware/esp32/3.3.9",
-  "otherLibrariesFolders": "/home/aps/Arduino/libraries",
-  "sketchLocation": "/home/aps/code/tcc-senai-modified/voidlog"
-}

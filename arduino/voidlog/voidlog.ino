@@ -59,13 +59,26 @@
 #include <Keypad.h>
 
 // ═══════════════════════════════════════════════════════════════════
-// ★  ÚNICA CONFIGURAÇÃO NECESSÁRIA — só WiFi e IP do servidor
+// ★  CONFIGURAÇÃO — WiFi (servidor descoberto automaticamente por MAC)
 // ═══════════════════════════════════════════════════════════════════
 
-const char* WIFI_SSID = "PedrosaNetwork";
-const char* WIFI_PASSWORD = "fortestingpurposes";
-const char* API_HOST = "192.168.100.23";
+const char* WIFI_SSID     = "SUA_REDE_WIFI";
+const char* WIFI_PASSWORD = "SUA_SENHA_WIFI";
 const int   API_PORT      = 5000;
+
+// Fallback: IP fixo caso a descoberta automática falhe
+const char* API_HOST_FALLBACK = "192.168.1.100";
+
+// IP descoberto em runtime (preenchido por descobrirServidor())
+String g_apiHost = "";
+
+// Macro de compatibilidade — usa g_apiHost
+#define API_HOST (g_apiHost.c_str())
+
+// ── Descoberta de servidor (GET /api/terminais/descobrir?mac=<MAC>) ────────
+// Tenta IPs candidatos na sub-rede local. Quando encontrar, salva em g_apiHost.
+// Tecla C no teclado durante AGUARDAR_TAG aciona re-descoberta interativa.
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Firmware version reportada ao servidor
 #define FIRMWARE_VER "3.0"
@@ -171,6 +184,8 @@ void   conectarWifi();
 int   carregarConfig();   // returns int internally — declared bool for compat
 void   aguardarAprovacao();
 void   iniciarModoOperacao();
+void   descobrirServidor();
+bool   _tentarHost(const String& host);
 String httpGET(String path);
 String httpPOST(String path, String payload);
 void   exibirLCD(String l1, String l2);
@@ -210,15 +225,18 @@ void setup() {
 
   conectarWifi();
 
-  // Terminal ID via MAC
-  uint8_t mac[6];
-  WiFi.macAddress(mac);
-  char buf[13];
-  sprintf(buf, "%02X%02X%02X", mac[3], mac[4], mac[5]);
-  terminalId = "ESP-" + String(buf);
-  Serial.println("[TERMINAL] ID:  " + terminalId);
+  // Terminal ID = MAC address completo (usado para identificação no servidor)
+  terminalId = WiFi.macAddress();
+  terminalId.replace(":", "");
+  terminalId.toUpperCase();
+  Serial.println("[TERMINAL] MAC: " + terminalId);
   Serial.println("[TERMINAL] IP:  " + WiFi.localIP().toString());
-  Serial.println("[TERMINAL] API: " + String(API_HOST) + ":" + String(API_PORT));
+
+  // Descobre servidor automaticamente na rede local
+  exibirLCD("Descobrindo...", "servidor");
+  descobrirServidor();
+
+  Serial.println("[TERMINAL] API: " + g_apiHost + ":" + String(API_PORT));
   Serial.println("─────────────────────────────────");
 
   // Carrega config do servidor — trata pendente/rejeitado
@@ -296,6 +314,17 @@ void loop() {
       if (t == '*') {
         Serial.println("[KBD] * → reiniciando seleção");
         inputBuffer = "";
+        iniciarModoOperacao();
+        break;
+      }
+
+      // Tecla C → re-descobre servidor na rede (útil se IP mudou)
+      if (t == 'C') {
+        Serial.println("[KBD] C → redescobrir servidor");
+        exibirLCD("Descobrindo...", "servidor...");
+        descobrirServidor();
+        exibirLCD("Servidor:", g_apiHost.substring(0, 16));
+        delay(1500);
         iniciarModoOperacao();
         break;
       }
@@ -491,7 +520,7 @@ String httpGET(String path) {
   WiFiClient client;
   HTTPClient http;
 
-  String url = "http://" + String(API_HOST) + ":" + String(API_PORT) + path;
+  String url = "http://" + g_apiHost + ":" + String(API_PORT) + path;
   Serial.println("[HTTP] GET " + url);
 
   http.begin(client, url);
@@ -529,7 +558,7 @@ String httpPOST(String path, String payload) {
     WiFiClient client;
     HTTPClient http;
 
-    String url = "http://" + String(API_HOST) + ":" + String(API_PORT) + path;
+    String url = "http://" + g_apiHost + ":" + String(API_PORT) + path;
     if (tentativa > 1) Serial.println("[HTTP] Retry " + String(tentativa));
     Serial.println("[HTTP] POST " + url);
 
@@ -761,6 +790,55 @@ void conectarWifi() {
     exibirLCD("WiFi FALHOU", "Sem rede!");
   }
   delay(1200);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DESCOBERTA DE SERVIDOR — Percorre IPs da sub-rede local e verifica
+// qual responde com {"servidor":"voidlog"}
+// Tecla C durante AGUARDAR_TAG → re-executa esta função
+// ═══════════════════════════════════════════════════════════════════
+
+bool _tentarHost(const String& host) {
+  WiFiClient c;
+  HTTPClient h;
+  String url = "http://" + host + ":" + String(API_PORT)
+             + "/api/terminais/descobrir?mac=" + terminalId;
+  h.begin(c, url);
+  h.setTimeout(1200);
+  int code = h.GET();
+  String resp = h.getString();
+  h.end();
+  if (code != 200) return false;
+  StaticJsonDocument<128> doc;
+  if (deserializeJson(doc, resp) != DeserializationError::Ok) return false;
+  return strcmp(doc["servidor"] | "", "voidlog") == 0;
+}
+
+void descobrirServidor() {
+  if (WiFi.status() != WL_CONNECTED) {
+    g_apiHost = String(API_HOST_FALLBACK);
+    return;
+  }
+
+  IPAddress localIP = WiFi.localIP();
+  String base = String(localIP[0]) + "." + String(localIP[1]) + "."
+              + String(localIP[2]) + ".";
+
+  // Candidatos prioritários
+  int candidatos[] = {1, 100, 101, 200, 10, 50, 2, 254};
+  for (int ip : candidatos) {
+    String host = base + String(ip);
+    Serial.println("[DISCOVERY] Tentando " + host);
+    if (_tentarHost(host)) {
+      g_apiHost = host;
+      Serial.println("[DISCOVERY] ✓ Servidor: " + g_apiHost);
+      return;
+    }
+  }
+
+  // Fallback
+  g_apiHost = String(API_HOST_FALLBACK);
+  Serial.println("[DISCOVERY] Fallback: " + g_apiHost);
 }
 
 // ═══════════════════════════════════════════════════════════════════

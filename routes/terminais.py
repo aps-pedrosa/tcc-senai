@@ -1,188 +1,179 @@
 """
-routes/terminais.py — VoidLog
-─────────────────────────────────────────────────────────────────
-Gerenciamento de terminais ESP32.
-
-GET  /api/terminal/<id>/config      → ESP32 busca config + registra presença
-GET  /api/terminais                 → lista todos (dashboard)
-GET  /api/terminais/pendentes       → apenas aguardando aprovação
-PUT  /api/terminal/<id>/config      → admin salva setor/unidade/apelido
-PUT  /api/terminal/<id>/aprovar     → admin aprova terminal
-PUT  /api/terminal/<id>/rejeitar    → admin rejeita terminal
-DELETE /api/terminal/<id>           → admin remove terminal
+routes/terminais.py — VoidLog v3
+GET    /api/terminais              → lista todos
+GET    /api/terminais/pendentes    → lista pendentes
+POST   /api/terminais/registro     → ESP registra (pelo MAC)
+POST   /api/terminais/<tid>/aprovar
+POST   /api/terminais/<tid>/rejeitar
+PUT    /api/terminais/<tid>        → edita (apelido, tipo, setor, unidade)
+DELETE /api/terminais/<tid>        → remove
+GET    /api/terminais/descobrir    → ESP pergunta se servidor reconhece ele (por MAC)
 """
 
 from flask import Blueprint, request, jsonify
 from database import get_db
+from datetime import datetime
 
 terminais_bp = Blueprint("terminais", __name__)
 
 
-# ── GET config — chamado pelo ESP32 ──────────────────────────────
-
-@terminais_bp.route("/terminal/<terminal_id>/config", methods=["GET"])
-def get_config(terminal_id):
-    db  = get_db()
-    ip  = request.remote_addr
-    ver = request.args.get("fw", "2.0")
-
-    # Verifica se terminal já existe
-    terminal = db.execute(
-        "SELECT * FROM terminais WHERE terminal_id = ?", (terminal_id,)
-    ).fetchone()
-
-    if terminal is None:
-        # Primeiro acesso — cria como pendente
-        db.execute("""
-            INSERT INTO terminais (terminal_id, ip_address, firmware_ver, status, ultimo_acesso)
-            VALUES (?, ?, ?, 'pendente', CURRENT_TIMESTAMP)
-        """, (terminal_id, ip, ver))
-        db.commit()
-        return jsonify({
-            "status": "pendente",
-            "msg": "Terminal aguardando aprovação do administrador."
-        }), 403
-
-    status = terminal["status"] or "pendente"
-
-    if status == "pendente":
-        return jsonify({
-            "status": "pendente",
-            "msg": "Terminal aguardando aprovação do administrador."
-        }), 403
-
-    if status == "rejeitado":
-        return jsonify({
-            "status": "rejeitado",
-            "msg": "Terminal rejeitado pelo administrador."
-        }), 403
-
-    # Aprovado — atualiza presença e devolve config
-    db.execute("""
-        UPDATE terminais SET ip_address=?, firmware_ver=?, ultimo_acesso=CURRENT_TIMESTAMP
-        WHERE terminal_id=?
-    """, (ip, ver, terminal_id))
-    db.commit()
-
-    setores  = db.execute("SELECT codigo, nome FROM setores  ORDER BY codigo").fetchall()
-    unidades = db.execute("SELECT codigo, nome FROM unidades ORDER BY codigo").fetchall()
-
-    return jsonify({
-        "status": "ok",
-        "terminal": {
-            "terminal_id":    terminal_id,
-            "apelido":        terminal["apelido"] or terminal_id,
-            "setor_codigo":   terminal["setor_codigo"],
-            "unidade_codigo": terminal["unidade_codigo"],
-        },
-        "setores":  [{"codigo": r["codigo"], "nome": r["nome"]} for r in setores],
-        "unidades": [{"codigo": r["codigo"], "nome": r["nome"]} for r in unidades],
-    })
-
-
-# ── GET lista — para o dashboard ─────────────────────────────────
-
 @terminais_bp.route("/terminais", methods=["GET"])
 def listar_terminais():
-    db = get_db()
-    rows = db.execute("""
+    rows = get_db().execute("""
         SELECT t.*,
                s.nome AS setor_nome,
                u.nome AS unidade_nome
         FROM terminais t
         LEFT JOIN setores  s ON s.codigo = t.setor_codigo
         LEFT JOIN unidades u ON u.codigo = t.unidade_codigo
-        ORDER BY
-            CASE t.status WHEN 'pendente' THEN 0 WHEN 'aprovado' THEN 1 ELSE 2 END,
-            t.ultimo_acesso DESC
+        ORDER BY t.ultimo_acesso DESC
     """).fetchall()
+    return jsonify([dict(r) for r in rows])
 
-    return jsonify([{
-        "terminal_id":    r["terminal_id"],
-        "apelido":        r["apelido"] or r["terminal_id"],
-        "status":         r["status"] or "pendente",
-        "setor_codigo":   r["setor_codigo"],
-        "setor_nome":     r["setor_nome"],
-        "unidade_codigo": r["unidade_codigo"],
-        "unidade_nome":   r["unidade_nome"],
-        "ip_address":     r["ip_address"],
-        "firmware_ver":   r["firmware_ver"],
-        "ultimo_acesso":  r["ultimo_acesso"],
-    } for r in rows])
-
-
-# ── GET pendentes — badge no dashboard ───────────────────────────
 
 @terminais_bp.route("/terminais/pendentes", methods=["GET"])
-def pendentes():
+def listar_pendentes():
+    rows = get_db().execute(
+        "SELECT * FROM terminais WHERE status='pendente' ORDER BY ultimo_acesso DESC"
+    ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@terminais_bp.route("/terminais/registro", methods=["POST"])
+def registrar_terminal():
+    """
+    ESP32 chama este endpoint ao ligar.
+    Payload: { terminal_id: "<MAC>", firmware_ver: "3.0", tipo: "normal"|"manutencao" }
+    Retorna: { status: "aprovado"|"pendente"|"rejeitado", setor, unidade }
+    """
+    data = request.get_json(silent=True) or {}
+    terminal_id = (data.get("terminal_id") or "").upper().strip()
+    if not terminal_id:
+        return jsonify({"erro": "terminal_id (MAC) obrigatório"}), 400
+
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "")
+    tipo = data.get("tipo", "normal")
+    if tipo not in ("normal", "manutencao"):
+        tipo = "normal"
+
     db = get_db()
-    n = db.execute(
-        "SELECT COUNT(*) FROM terminais WHERE status='pendente'"
-    ).fetchone()[0]
-    return jsonify({"total": n})
+    row = db.execute("SELECT * FROM terminais WHERE terminal_id=?", (terminal_id,)).fetchone()
+
+    if row:
+        db.execute(
+            "UPDATE terminais SET ultimo_acesso=?, ip_address=?, firmware_ver=? WHERE terminal_id=?",
+            (datetime.now().isoformat(), ip, data.get("firmware_ver", "3.0"), terminal_id)
+        )
+        db.commit()
+        return jsonify({
+            "status":   row["status"],
+            "tipo":     row["tipo"],
+            "setor":    row["setor_codigo"],
+            "unidade":  row["unidade_codigo"],
+            "apelido":  row["apelido"] or terminal_id,
+        })
+    else:
+        db.execute("""
+            INSERT INTO terminais (terminal_id, tipo, status, ip_address, firmware_ver)
+            VALUES (?,?,?,?,?)
+        """, (terminal_id, tipo, "pendente", ip, data.get("firmware_ver", "3.0")))
+        db.commit()
+        return jsonify({
+            "status":  "pendente",
+            "tipo":    tipo,
+            "setor":   None,
+            "unidade": None,
+            "apelido": terminal_id,
+        }), 202
 
 
-# ── PUT config — admin configura setor/unidade/apelido ───────────
-
-@terminais_bp.route("/terminal/<terminal_id>/config", methods=["PUT"])
-def set_config(terminal_id):
-    body           = request.get_json(silent=True) or {}
-    setor_codigo   = body.get("setor_codigo")
-    unidade_codigo = body.get("unidade_codigo")
-    apelido        = body.get("apelido")
+@terminais_bp.route("/terminais/descobrir", methods=["GET"])
+def descobrir_servidor():
+    """
+    ESP32 faz GET /api/terminais/descobrir?mac=XX:XX:XX:XX:XX:XX
+    para confirmar que achou o servidor certo.
+    """
+    mac = (request.args.get("mac") or "").upper().strip()
+    if not mac:
+        return jsonify({"ok": True, "servidor": "voidlog", "versao": "3.0"})
     db = get_db()
+    row = db.execute("SELECT * FROM terminais WHERE terminal_id=?", (mac,)).fetchone()
+    return jsonify({
+        "ok":      True,
+        "servidor": "voidlog",
+        "versao":  "3.0",
+        "mac":     mac,
+        "status":  row["status"] if row else "desconhecido",
+    })
 
-    db.execute("""
-        INSERT INTO terminais (terminal_id, setor_codigo, unidade_codigo, apelido, status)
-        VALUES (?, ?, ?, ?, 'aprovado')
-        ON CONFLICT(terminal_id) DO UPDATE SET
-            setor_codigo   = COALESCE(excluded.setor_codigo,   terminais.setor_codigo),
-            unidade_codigo = COALESCE(excluded.unidade_codigo, terminais.unidade_codigo),
-            apelido        = COALESCE(excluded.apelido,        terminais.apelido)
-    """, (terminal_id, setor_codigo, unidade_codigo, apelido))
+
+@terminais_bp.route("/terminais/<string:terminal_id>/aprovar", methods=["POST"])
+def aprovar_terminal(terminal_id):
+    data = request.get_json(silent=True) or {}
+    db   = get_db()
+    row  = db.execute("SELECT * FROM terminais WHERE terminal_id=?", (terminal_id,)).fetchone()
+    if not row:
+        return jsonify({"erro": "Terminal não encontrado"}), 404
+
+    campos = ["status='aprovado'"]
+    valores = []
+    if data.get("setor"):
+        campos.append("setor_codigo=?");  valores.append(int(data["setor"]))
+    if data.get("unidade"):
+        campos.append("unidade_codigo=?"); valores.append(int(data["unidade"]))
+    if data.get("apelido"):
+        campos.append("apelido=?");        valores.append(data["apelido"])
+    if data.get("tipo") in ("normal", "manutencao"):
+        campos.append("tipo=?");           valores.append(data["tipo"])
+
+    valores.append(terminal_id)
+    db.execute(f"UPDATE terminais SET {', '.join(campos)} WHERE terminal_id=?", valores)
     db.commit()
-    return jsonify({"status": "ok", "msg": "Configuração salva."})
+    return jsonify({"ok": True, "mensagem": "Terminal aprovado"})
 
 
-# ── PUT aprovar ───────────────────────────────────────────────────
-
-@terminais_bp.route("/terminal/<terminal_id>/aprovar", methods=["PUT"])
-def aprovar(terminal_id):
-    body           = request.get_json(silent=True) or {}
-    setor_codigo   = body.get("setor_codigo")
-    unidade_codigo = body.get("unidade_codigo")
-    apelido        = body.get("apelido")
+@terminais_bp.route("/terminais/<string:terminal_id>/rejeitar", methods=["POST"])
+def rejeitar_terminal(terminal_id):
     db = get_db()
-
-    db.execute("""
-        UPDATE terminais SET
-            status         = 'aprovado',
-            setor_codigo   = COALESCE(?, setor_codigo),
-            unidade_codigo = COALESCE(?, unidade_codigo),
-            apelido        = COALESCE(?, apelido)
-        WHERE terminal_id = ?
-    """, (setor_codigo, unidade_codigo, apelido, terminal_id))
+    row = db.execute("SELECT * FROM terminais WHERE terminal_id=?", (terminal_id,)).fetchone()
+    if not row:
+        return jsonify({"erro": "Terminal não encontrado"}), 404
+    db.execute("UPDATE terminais SET status='rejeitado' WHERE terminal_id=?", (terminal_id,))
     db.commit()
-    return jsonify({"status": "ok", "msg": f"Terminal {terminal_id} aprovado."})
+    return jsonify({"ok": True, "mensagem": "Terminal rejeitado"})
 
 
-# ── PUT rejeitar ──────────────────────────────────────────────────
+@terminais_bp.route("/terminais/<string:terminal_id>", methods=["PUT"])
+def editar_terminal(terminal_id):
+    data = request.get_json(silent=True) or {}
+    db   = get_db()
+    row  = db.execute("SELECT * FROM terminais WHERE terminal_id=?", (terminal_id,)).fetchone()
+    if not row:
+        return jsonify({"erro": "Terminal não encontrado"}), 404
 
-@terminais_bp.route("/terminal/<terminal_id>/rejeitar", methods=["PUT"])
-def rejeitar(terminal_id):
-    db = get_db()
-    db.execute(
-        "UPDATE terminais SET status='rejeitado' WHERE terminal_id=?", (terminal_id,)
-    )
+    campos, valores = [], []
+    if "apelido" in data:
+        campos.append("apelido=?");        valores.append(data["apelido"])
+    if "tipo" in data and data["tipo"] in ("normal", "manutencao"):
+        campos.append("tipo=?");           valores.append(data["tipo"])
+    if "setor" in data:
+        campos.append("setor_codigo=?");   valores.append(int(data["setor"]) if data["setor"] else None)
+    if "unidade" in data:
+        campos.append("unidade_codigo=?"); valores.append(int(data["unidade"]) if data["unidade"] else None)
+    if "status" in data and data["status"] in ("aprovado", "rejeitado", "pendente"):
+        campos.append("status=?");         valores.append(data["status"])
+
+    if not campos:
+        return jsonify({"erro": "Nada para atualizar"}), 400
+    valores.append(terminal_id)
+    db.execute(f"UPDATE terminais SET {', '.join(campos)} WHERE terminal_id=?", valores)
     db.commit()
-    return jsonify({"status": "ok", "msg": f"Terminal {terminal_id} rejeitado."})
+    return jsonify({"ok": True})
 
 
-# ── DELETE remove ─────────────────────────────────────────────────
-
-@terminais_bp.route("/terminal/<terminal_id>", methods=["DELETE"])
-def remover(terminal_id):
+@terminais_bp.route("/terminais/<string:terminal_id>", methods=["DELETE"])
+def deletar_terminal(terminal_id):
     db = get_db()
     db.execute("DELETE FROM terminais WHERE terminal_id=?", (terminal_id,))
     db.commit()
-    return jsonify({"status": "ok", "msg": f"Terminal {terminal_id} removido."})
+    return jsonify({"ok": True, "mensagem": "Terminal removido"})

@@ -77,12 +77,16 @@ nav.tabs{display:flex;padding:0 32px;border-bottom:1px solid var(--border);backg
 .page.active{display:block;animation:fadein .3s ease}
 @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-/* FILTERS / BUTTONS */
+/* FILTERS */
 .filter-bar{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
 .filter-bar label{font-family:var(--fm);font-size:11px;color:var(--muted)}
-.filter-bar select,.filter-bar input{background:var(--surface);border:1px solid var(--border);color:var(--text);
+.filter-bar select,.filter-bar input[type=text],.filter-bar input[type=date],.filter-bar input[type=search]{
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
   font-family:var(--fm);font-size:12px;padding:7px 12px;border-radius:4px;outline:none;transition:border-color .2s}
 .filter-bar select:focus,.filter-bar input:focus{border-color:var(--accent)}
+.filter-search{min-width:160px}
+
+/* BUTTONS */
 .btn{padding:8px 18px;border-radius:4px;border:none;cursor:pointer;font-family:var(--fm);font-size:12px;
   font-weight:600;letter-spacing:1px;transition:all .2s}
 .btn-primary{background:var(--accent);color:#fff}
@@ -91,7 +95,10 @@ nav.tabs{display:flex;padding:0 32px;border-bottom:1px solid var(--border);backg
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
 .btn-danger{background:rgba(255,61,87,.15);color:var(--danger);border:1px solid rgba(255,61,87,.3)}
 .btn-danger:hover{background:rgba(255,61,87,.25)}
+.btn-warn{background:rgba(255,184,0,.12);color:var(--warn);border:1px solid rgba(255,184,0,.3)}
+.btn-warn:hover{background:rgba(255,184,0,.25)}
 .btn-sm{padding:5px 12px;font-size:11px}
+.btn-xs{padding:3px 8px;font-size:10px}
 
 /* STATS */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
@@ -125,7 +132,7 @@ td{font-family:var(--fm);font-size:12px;padding:12px 16px;border-bottom:1px soli
 tr:last-child td{border-bottom:none}
 tr:hover td{background:rgba(168,85,247,.04)}
 
-/* BADGES */
+/* BADGES / TYPES */
 .bt{display:inline-block;padding:2px 10px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
 .bt-retirada{background:rgba(255,107,53,.15);color:var(--accent2)}
 .bt-devolucao{background:rgba(127,255,110,.15);color:var(--accent3)}
@@ -135,9 +142,12 @@ tr:hover td{background:rgba(168,85,247,.04)}
 .bt-admin{background:rgba(168,85,247,.2);color:#c084fc}
 .bt-operador{background:rgba(255,184,0,.1);color:var(--warn)}
 .bt-visualizador{background:rgba(90,90,120,.2);color:var(--muted)}
-.bt-sem-loc{background:rgba(90,90,120,.15);color:var(--muted)}
+.bt-manutencao{background:rgba(255,184,0,.15);color:var(--warn)}
+.bt-entrada{background:rgba(255,61,87,.15);color:var(--danger)}
+.bt-saida{background:rgba(127,255,110,.15);color:var(--accent3)}
+.bt-normal{background:var(--accent-dim);color:var(--accent)}
 
-/* UID / MISC */
+/* CHIPS */
 .uid-chip{font-family:var(--fm);font-size:10px;color:var(--accent);background:var(--accent-dim);
   padding:2px 8px;border-radius:3px;letter-spacing:1px}
 .byte-tip{font-size:10px;color:var(--muted);display:block;margin-top:2px}
@@ -161,17 +171,23 @@ tr:hover td{background:rgba(168,85,247,.04)}
 .alerta-meta{font-family:var(--fm);font-size:11px;color:var(--muted);line-height:1.9}
 .alerta-op{color:var(--accent);font-weight:600}
 
-/* TERMINAL */
+/* MANUTENCAO */
+.manut-card{background:var(--surface);border:1px solid rgba(255,184,0,.3);border-radius:8px;
+  padding:16px;border-left:3px solid var(--warn)}
+.manut-card .alerta-nome{color:var(--warn)}
+
+/* TERMINAL RFID */
 .rfid-terminal{background:var(--surface);border:1px solid var(--border);border-radius:8px;
   padding:28px;border-top:3px solid var(--accent)}
 .terminal-title{font-family:var(--fh);font-size:22px;letter-spacing:2px;color:var(--accent);margin-bottom:20px}
 .input-group{margin-bottom:16px}
 .input-group label{display:block;font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:1px;
   text-transform:uppercase;margin-bottom:6px}
-.input-group input,.input-group select{width:100%;background:var(--bg);border:1px solid var(--border);
+.input-group input,.input-group select,.input-group textarea{width:100%;background:var(--bg);border:1px solid var(--border);
   border-radius:4px;color:var(--text);font-family:var(--fm);font-size:13px;padding:10px 14px;
   outline:none;transition:border-color .2s}
-.input-group input:focus,.input-group select:focus{border-color:var(--accent)}
+.input-group input:focus,.input-group select:focus,.input-group textarea:focus{border-color:var(--accent)}
+.input-group textarea{resize:vertical;min-height:80px}
 .uid-preview{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;
   margin-top:16px;font-family:var(--fm);font-size:12px;line-height:1.8;display:none}
 .uid-preview.show{display:block}
@@ -201,7 +217,7 @@ tr:hover td{background:rgba(168,85,247,.04)}
   background:rgba(11,11,18,.85);backdrop-filter:blur(4px)}
 .modal-overlay.open{display:flex;animation:fadein .2s ease}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;
-  width:100%;max-width:520px;position:relative;max-height:90vh;overflow-y:auto}
+  width:100%;max-width:560px;position:relative;max-height:90vh;overflow-y:auto}
 .modal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
   background:linear-gradient(90deg,#6d28d9,#a855f7,#c084fc);border-radius:12px 12px 0 0}
 .modal-title{font-family:var(--fh);font-size:24px;letter-spacing:2px;color:var(--accent);margin-bottom:24px}
@@ -214,6 +230,7 @@ tr:hover td{background:rgba(168,85,247,.04)}
 .notice{font-family:var(--fm);font-size:11px;color:var(--muted);background:rgba(168,85,247,.08);
   border:1px solid rgba(168,85,247,.2);border-radius:6px;padding:10px 14px;margin-bottom:16px;line-height:1.6}
 .notice.warn{background:rgba(255,184,0,.08);border-color:rgba(255,184,0,.2);color:var(--warn)}
+.notice.danger{background:rgba(255,61,87,.08);border-color:rgba(255,61,87,.2);color:var(--danger)}
 
 /* ADMIN */
 .admin-section{margin-bottom:32px}
@@ -229,23 +246,11 @@ tr:hover td{background:rgba(168,85,247,.04)}
 .term-status-aprovado{background:rgba(127,255,110,.15);color:var(--accent3)}
 .term-status-pendente{background:rgba(255,184,0,.12);color:var(--warn);animation:pulse-warn 1.4s infinite}
 .term-status-rejeitado{background:rgba(255,61,87,.12);color:var(--danger)}
+.term-tipo-manutencao{background:rgba(255,184,0,.12);color:var(--warn)}
+.term-tipo-normal{background:var(--accent-dim);color:var(--accent)}
 @keyframes pulse-warn{0%,100%{opacity:1}50%{opacity:.5}}
 .term-badge-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;
   border-radius:50%;background:var(--warn);color:#000;font-size:10px;font-weight:700;margin-left:6px;line-height:1}
-.term-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;
-  margin-bottom:12px;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
-.term-card.pendente{border-color:rgba(255,184,0,.35);box-shadow:0 0 0 1px rgba(255,184,0,.1)}
-.term-card.rejeitado{border-color:rgba(255,61,87,.25);opacity:.7}
-.term-icon{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;
-  font-size:20px;background:var(--accent-dim);border:1px solid rgba(168,85,247,.2)}
-.term-icon.pendente{background:rgba(255,184,0,.1);border-color:rgba(255,184,0,.3)}
-.term-icon.rejeitado{background:rgba(255,61,87,.1);border-color:rgba(255,61,87,.2)}
-.term-meta{font-family:var(--fm);font-size:11px;color:var(--muted);margin-top:3px;line-height:1.7}
-.term-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.btn-aprovar{background:rgba(127,255,110,.15);color:var(--accent3);border:1px solid rgba(127,255,110,.3)}
-.btn-aprovar:hover{background:rgba(127,255,110,.3)}
-.btn-rejeitar{background:rgba(255,184,0,.1);color:var(--warn);border:1px solid rgba(255,184,0,.3)}
-.btn-rejeitar:hover{background:rgba(255,184,0,.25)}
 .notif-bar{position:fixed;top:60px;left:0;right:0;z-index:200;background:rgba(255,184,0,.95);
   color:#000;padding:10px 32px;font-family:var(--fm);font-size:12px;font-weight:600;letter-spacing:1px;
   display:none;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,.3)}
@@ -253,11 +258,27 @@ tr:hover td{background:rgba(168,85,247,.04)}
 .notif-bar button{background:rgba(0,0,0,.2);border:none;border-radius:4px;padding:4px 12px;
   font-family:var(--fm);font-size:11px;font-weight:700;cursor:pointer;color:#000}
 
+/* TOGGLE SWITCH */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;
+  border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-family:var(--fm);font-size:12px;color:var(--text)}
+.toggle-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:22px;cursor:pointer;transition:.3s}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;
+  background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-slider{background:var(--accent)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px)}
+
+/* EXPORT BAR */
+.export-bar{display:flex;gap:8px;align-items:center}
+
 @media(max-width:768px){
   .charts-grid,.charts-row,.form-row{grid-template-columns:1fr}
   header{padding:0 16px}.page{padding:16px}nav.tabs{padding:0 16px}
   .header-right{gap:10px}
-  .term-card{grid-template-columns:auto 1fr;}.term-actions{grid-column:1/-1}
 }
 </style>
 </head>
@@ -267,7 +288,7 @@ tr:hover td{background:rgba(168,85,247,.04)}
 <div id="login-overlay">
   <div class="login-box">
     <div class="login-logo">Void<span style="color:var(--text)">Log</span></div>
-    <div class="login-sub">Sistema de Controle de Peças</div>
+    <div class="login-sub">Sistema de Controle de Equipamentos</div>
     <div class="lf"><label>Email</label>
       <input type="email" id="l-email" placeholder="admin@voidlog.local" autocomplete="username"></div>
     <div class="lf"><label>Senha</label>
@@ -278,7 +299,7 @@ tr:hover td{background:rgba(168,85,247,.04)}
   </div>
 </div>
 
-<!-- NOTIF BAR — terminais pendentes -->
+<!-- NOTIF BAR -->
 <div class="notif-bar" id="notif-pendentes">
   <span id="notif-text">⚡ Há terminais RFID aguardando aprovação.</span>
   <button onclick="setTabByName('terminais')">Ver terminais →</button>
@@ -293,7 +314,6 @@ tr:hover td{background:rgba(168,85,247,.04)}
       <div><span class="live-dot"></span><span id="live-status">CONECTANDO...</span></div>
       <div id="clock">--:--:--</div>
     </div>
-    <span id="sse-indicator" title="Atualização automática" style="font-size:9px;cursor:default;color:var(--muted);user-select:none">○</span>
     <div class="user-chip" id="user-chip" style="display:none">
       <div class="user-avatar" id="user-av">?</div>
       <div><div class="user-name" id="user-name">--</div><div class="user-perfil" id="user-perfil">--</div></div>
@@ -304,15 +324,16 @@ tr:hover td{background:rgba(168,85,247,.04)}
 
 <!-- TABS -->
 <nav class="tabs">
-  <button class="tab-btn active"    onclick="setTab('dashboard',this)">Dashboard</button>
-  <button class="tab-btn"           onclick="setTab('localizacao',this)">Localização</button>
-  <button class="tab-btn"           onclick="setTab('movimentacoes',this)">Movimentações</button>
-  <button class="tab-btn"           onclick="setTab('pecas',this)">Peças</button>
-  <button class="tab-btn"           onclick="setTab('operadores',this)">Operadores</button>
-  <button class="tab-btn"           onclick="setTab('alertas',this)">Alertas <span id="alert-badge" style="color:var(--danger)"></span></button>
-  <button class="tab-btn"           onclick="setTab('terminal',this)">Terminal RFID</button>
-  <button class="tab-btn admin-tab" id="terminais-tab" style="display:none" onclick="setTab('terminais',this)">Terminais ESP32 <span id="term-badge" class="term-badge-count" style="display:none"></span></button>
-  <button class="tab-btn admin-tab" id="admin-tab" style="display:none" onclick="setTab('admin',this)">⚙ Admin</button>
+  <button class="tab-btn active"    data-tab="dashboard"     onclick="setTab('dashboard',this)">Dashboard</button>
+  <button class="tab-btn"           data-tab="localizacao"   onclick="setTab('localizacao',this)">Localização</button>
+  <button class="tab-btn"           data-tab="movimentacoes" onclick="setTab('movimentacoes',this)">Movimentações</button>
+  <button class="tab-btn"           data-tab="equipamentos"  onclick="setTab('equipamentos',this)">Equipamentos</button>
+  <button class="tab-btn"           data-tab="operadores"    onclick="setTab('operadores',this)">Operadores</button>
+  <button class="tab-btn"           data-tab="manutencao"    onclick="setTab('manutencao',this)">Manutenção <span id="manut-badge" style="color:var(--warn)"></span></button>
+  <button class="tab-btn"           data-tab="alertas"       onclick="setTab('alertas',this)">Alertas <span id="alert-badge" style="color:var(--danger)"></span></button>
+  <button class="tab-btn"           data-tab="terminal"      onclick="setTab('terminal',this)">Terminal RFID</button>
+  <button class="tab-btn admin-tab" id="terminais-tab" style="display:none" onclick="setTab('terminais',this)" data-tab="terminais">Terminais ESP32 <span id="term-badge" class="term-badge-count" style="display:none"></span></button>
+  <button class="tab-btn admin-tab" id="admin-tab" style="display:none" onclick="setTab('admin',this)" data-tab="admin">⚙ Admin</button>
 </nav>
 
 <!-- ══ DASHBOARD ══ -->
@@ -329,30 +350,33 @@ tr:hover td{background:rgba(168,85,247,.04)}
   </div>
   <div class="charts-row">
     <div class="chart-card"><div class="chart-title">Por Setor</div><canvas id="cSetor"></canvas></div>
-    <div class="chart-card"><div class="chart-title">Top Peças mais usadas</div><canvas id="cTop"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Top Equipamentos mais usados</div><canvas id="cTop"></canvas></div>
   </div>
 </div>
 
 <!-- ══ LOCALIZAÇÃO ══ -->
 <div id="page-localizacao" class="page">
   <div class="filter-bar">
+    <label>NOME</label><input type="search" id="loc-nome" class="filter-search" placeholder="Buscar nome..." oninput="loadLocalizacao()">
+    <label>CATEGORIA</label><input type="search" id="loc-cat" class="filter-search" placeholder="Categoria..." oninput="loadLocalizacao()">
+    <label>UID</label><input type="search" id="loc-uid" class="filter-search" placeholder="UID..." oninput="loadLocalizacao()" style="text-transform:uppercase">
     <label>STATUS</label>
     <select id="loc-disp" onchange="loadLocalizacao()"><option value="">Todos</option><option value="0">Em uso</option><option value="1">Disponível</option></select>
-    <label>SETOR ATUAL</label>
+    <label>SETOR</label>
     <select id="loc-setor" onchange="loadLocalizacao()"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select>
-    <label>UNIDADE ATUAL</label>
+    <label>UNIDADE</label>
     <select id="loc-unidade" onchange="loadLocalizacao()"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
-    <button class="btn btn-ghost" onclick="loadLocalizacao()">↻ Atualizar</button>
+    <button class="btn btn-ghost" onclick="loadLocalizacao()">↻</button>
   </div>
   <div class="table-card">
     <div class="table-header">
-      <span class="table-title">Localização Atual das Peças</span>
+      <span class="table-title">Localização Atual dos Equipamentos</span>
       <span id="loc-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span>
     </div>
     <div style="overflow-x:auto">
       <table>
         <thead><tr>
-          <th>Peça</th><th>Categoria</th><th>UID / Peça</th>
+          <th>Equipamento</th><th>Categoria</th><th>UID / Código</th>
           <th>Localização Atual</th><th>Status</th>
           <th>Último Responsável</th><th>Última Movimentação</th>
         </tr></thead>
@@ -365,6 +389,8 @@ tr:hover td{background:rgba(168,85,247,.04)}
 <!-- ══ MOVIMENTAÇÕES ══ -->
 <div id="page-movimentacoes" class="page">
   <div class="filter-bar">
+    <label>OPERADOR</label><input type="search" id="m-op-nome" class="filter-search" placeholder="Nome do operador...">
+    <label>EQUIP.</label><input type="search" id="m-equip-nome" class="filter-search" placeholder="Nome ou UID...">
     <label>SETOR</label><select id="m-setor"><option value="">Todos</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select>
     <label>UNIDADE</label><select id="m-unidade"><option value="">Todas</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select>
     <label>TIPO</label><select id="m-tipo"><option value="">Todos</option><option value="retirada">Retirada</option><option value="devolucao">Devolução</option></select>
@@ -373,41 +399,92 @@ tr:hover td{background:rgba(168,85,247,.04)}
     <button class="btn btn-primary" onclick="loadMovs()">Buscar</button>
   </div>
   <div class="table-card">
-    <div class="table-header"><span class="table-title">Histórico</span><span id="mov-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span></div>
+    <div class="table-header">
+      <span class="table-title">Histórico de Movimentações</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="mov-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span>
+        <div class="export-bar">
+          <button class="btn btn-ghost btn-sm" onclick="exportarMovs('csv')" title="Exportar CSV">⬇ CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportarMovs('pdf')" title="Exportar PDF">⬇ PDF</button>
+        </div>
+      </div>
+    </div>
     <div style="overflow-x:auto">
-      <table><thead><tr><th>Horário</th><th>Tipo</th><th>Peça</th><th>UID</th><th>Operador</th><th>Setor (leitura)</th><th>Unidade (leitura)</th><th>Terminal</th></tr></thead>
+      <table><thead><tr><th>Horário</th><th>Tipo</th><th>Equipamento</th><th>UID</th><th>Operador</th><th>Setor</th><th>Unidade</th><th>Terminal</th></tr></thead>
       <tbody id="mov-body"><tr><td colspan="8" class="loading">Carregando...</td></tr></tbody></table>
     </div>
   </div>
 </div>
 
-<!-- ══ FERRAMENTAS ══ -->
-<div id="page-pecas" class="page">
+<!-- ══ EQUIPAMENTOS ══ -->
+<div id="page-equipamentos" class="page">
   <div class="filter-bar">
-    <label>STATUS</label><select id="f-disp" onchange="loadFer()"><option value="">Todos</option><option value="1">Disponível</option><option value="0">Em uso</option></select>
-    <button class="btn btn-primary" id="btn-nova-peca" style="display:none;margin-left:auto" onclick="abrirModalPeça()">+ Nova Peça</button>
+    <label>NOME</label><input type="search" id="eq-nome" class="filter-search" placeholder="Buscar nome..." oninput="loadEquip()">
+    <label>CATEGORIA</label><input type="search" id="eq-cat" class="filter-search" placeholder="Categoria..." oninput="loadEquip()">
+    <label>UID</label><input type="search" id="eq-uid" class="filter-search" placeholder="UID..." oninput="loadEquip()" style="text-transform:uppercase">
+    <label>STATUS</label><select id="eq-disp" onchange="loadEquip()"><option value="">Todos</option><option value="1">Disponível</option><option value="0">Em uso</option></select>
+    <label>MANUTENÇÃO</label><select id="eq-manut" onchange="loadEquip()"><option value="">Todos</option><option value="0">Normal</option><option value="1">Em manutenção</option></select>
+    <button class="btn btn-primary" id="btn-novo-equip" style="display:none;margin-left:auto" onclick="abrirModalEquip()">+ Novo Equipamento</button>
   </div>
   <div class="table-card">
-    <div class="table-header"><span class="table-title">Peças cadastradas</span><span id="fer-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span></div>
+    <div class="table-header">
+      <span class="table-title">Equipamentos cadastrados</span>
+      <span id="eq-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span>
+    </div>
     <div style="overflow-x:auto">
-      <table><thead><tr><th>Peça</th><th>Categoria</th><th>UID</th><th>Peça</th><th>Qtd</th><th>Status</th><th>Localização Atual</th><th id="th-acoes" style="display:none">Ações</th></tr></thead>
-      <tbody id="fer-body"><tr><td colspan="8" class="loading">Carregando...</td></tr></tbody></table>
+      <table><thead><tr>
+        <th>Equipamento</th><th>Categoria</th><th>UID</th><th>Código</th><th>Qtd</th><th>Status</th><th>Localização</th>
+        <th id="th-eq-acoes" style="display:none">Ações</th>
+      </tr></thead>
+      <tbody id="eq-body"><tr><td colspan="8" class="loading">Carregando...</td></tr></tbody></table>
     </div>
   </div>
 </div>
 
 <!-- ══ OPERADORES ══ -->
 <div id="page-operadores" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Sessões ativas agora</div>
-    <button class="btn btn-primary" id="btn-novo-operador" style="display:none" onclick="abrirModalOperador()">+ Novo Operador</button>
+  <div class="filter-bar">
+    <label>NOME</label><input type="search" id="op-nome-f" class="filter-search" placeholder="Buscar nome..." oninput="loadOps()">
+    <label>MATRÍCULA</label><input type="search" id="op-mat-f" class="filter-search" placeholder="Matrícula..." oninput="loadOps()">
+    <label>UID</label><input type="search" id="op-uid-f" class="filter-search" placeholder="UID..." oninput="loadOps()" style="text-transform:uppercase">
+    <button class="btn btn-ghost" onclick="loadOps()">↻</button>
+    <button class="btn btn-primary" id="btn-novo-operador" style="display:none;margin-left:auto" onclick="abrirModalOperador()">+ Novo Operador</button>
   </div>
-  <div class="op-grid" id="op-ativos"><div class="loading">Carregando...</div></div>
+  <div style="margin-bottom:12px">
+    <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Sessões ativas agora</div>
+    <div class="op-grid" id="op-ativos"><div class="loading">Carregando...</div></div>
+  </div>
   <div class="table-card">
-    <div class="table-header"><span class="table-title">Todos os operadores</span></div>
+    <div class="table-header"><span class="table-title">Todos os operadores</span><span id="op-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span></div>
     <div style="overflow-x:auto">
-      <table><thead><tr><th>Nome</th><th>Matrícula</th><th>UID Crachá</th><th>Peça (B1+B2)</th><th id="th-op-acoes" style="display:none">Ações</th></tr></thead>
+      <table><thead><tr><th>Nome</th><th>Matrícula</th><th>UID Crachá</th><th>Cód. Equip.</th><th id="th-op-acoes" style="display:none">Ações</th></tr></thead>
       <tbody id="op-body"><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MANUTENÇÃO ══ -->
+<div id="page-manutencao" class="page">
+  <div class="filter-bar">
+    <label>EQUIPAMENTO</label><input type="search" id="mn-equip" class="filter-search" placeholder="Nome ou UID..." oninput="loadManutencao()">
+    <label>TIPO</label><select id="mn-tipo" onchange="loadManutencao()"><option value="">Todos</option><option value="entrada">Entrada</option><option value="saida">Saída</option></select>
+    <button class="btn btn-ghost" onclick="loadManutencao()">↻</button>
+    <button class="btn btn-warn btn-sm" id="btn-nova-manut" style="display:none;margin-left:auto" onclick="abrirModalManutencao('entrada')">⚙ Enviar para Manutenção</button>
+    <button class="btn btn-ghost btn-sm" id="btn-saida-manut" style="display:none" onclick="abrirModalManutencao('saida')">✓ Retirar de Manutenção</button>
+  </div>
+
+  <div style="margin-bottom:20px">
+    <div class="section-title" style="color:var(--warn)">Equipamentos em manutenção agora
+      <span id="manut-em-manut-count" style="font-family:var(--fm);font-size:11px;font-weight:400;color:var(--muted)"></span>
+    </div>
+    <div class="alertas-grid" id="manut-ativos-grid"><div class="loading">Carregando...</div></div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header"><span class="table-title">Histórico de Manutenções</span><span id="mn-count" style="font-family:var(--fm);font-size:11px;color:var(--muted)"></span></div>
+    <div style="overflow-x:auto">
+      <table><thead><tr><th>Horário</th><th>Equipamento</th><th>UID</th><th>Tipo</th><th>Técnico</th><th>Descrição</th><th>Terminal</th></tr></thead>
+      <tbody id="mn-body"><tr><td colspan="7" class="loading">Carregando...</td></tr></tbody></table>
     </div>
   </div>
 </div>
@@ -415,7 +492,7 @@ tr:hover td{background:rgba(168,85,247,.04)}
 <!-- ══ ALERTAS ══ -->
 <div id="page-alertas" class="page">
   <div style="margin-bottom:20px">
-    <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Peças em uso — não devolvidas</div>
+    <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Equipamentos em uso — não devolvidos</div>
     <div id="alerta-total" style="font-family:var(--fh);font-size:48px;color:var(--danger)">--</div>
   </div>
   <div class="alertas-grid" id="alertas-grid"><div class="loading">Carregando...</div></div>
@@ -424,24 +501,23 @@ tr:hover td{background:rgba(168,85,247,.04)}
 <!-- ══ TERMINAL RFID ══ -->
 <div id="page-terminal" class="page">
   <div class="notice warn" style="margin-bottom:24px">
-    ⚡ <strong>Novo payload v2:</strong> além do UID, o ESP32 deve enviar <code>setor_codigo</code> e <code>unidade_codigo</code> selecionados pelo operador no encoder do terminal. A tag RFID contém apenas o ID da peça (B1+B2).
+    ⚡ <strong>v3:</strong> O ESP32 identifica-se pelo MAC address. Setor e unidade são enviados no payload. Equipamentos em manutenção são bloqueados automaticamente.
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
     <div class="rfid-terminal">
       <div class="terminal-title">Simular Leitura RFID</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Simula o payload que o ESP32 envia após o operador selecionar o contexto no encoder.</p>
-      <div class="input-group"><label>UID da Tag (mín. 4 chars hex — apenas B1+B2 importam)</label>
+      <div class="input-group"><label>UID da Tag (hex — mín. 4 chars)</label>
         <input type="text" id="sim-uid" placeholder="Ex: 00640000" oninput="previewUID(this.value)" style="text-transform:uppercase;letter-spacing:3px"></div>
       <div class="form-row" style="margin-bottom:0">
-        <div class="input-group"><label>Setor (encoder do terminal)</label>
+        <div class="input-group"><label>Setor</label>
           <select id="sim-setor"><option value="">Selecione...</option><option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option><option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option><option value="7">Almoxarifado</option><option value="8">Qualidade</option></select></div>
-        <div class="input-group"><label>Unidade (encoder do terminal)</label>
+        <div class="input-group"><label>Unidade</label>
           <select id="sim-unidade"><option value="">Selecione...</option><option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option><option value="4">Betim</option><option value="5">Ibirité</option></select></div>
       </div>
-      <div class="input-group"><label>Terminal ID (opcional)</label>
-        <input type="text" id="sim-terminal" placeholder="Ex: ESP-A1B2C3" value="ESP-SIM-01"></div>
+      <div class="input-group"><label>Terminal ID (MAC ou apelido)</label>
+        <input type="text" id="sim-terminal" placeholder="Ex: AA:BB:CC:DD:EE:FF" value="ESP-SIM-01"></div>
       <div class="uid-preview show" id="uid-preview">
-        <span style="font-family:var(--fm);font-size:10px;color:var(--muted)">B1+B2 → peca_code:</span>
+        <span style="font-family:var(--fm);font-size:10px;color:var(--muted)">B1+B2 → equipamento_code:</span>
         <span class="uid-big" id="prev-peca" style="font-size:20px">--</span>
         <div class="byte-row" id="prev-bytes"></div>
       </div>
@@ -452,19 +528,19 @@ tr:hover td{background:rgba(168,85,247,.04)}
       <div class="log-box" id="rfid-log"></div>
     </div>
     <div class="rfid-terminal" style="border-top-color:var(--accent2)">
-      <div class="terminal-title" style="color:var(--accent2)">Payload JSON enviado</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Este é o JSON que o ESP32 deve enviar via HTTP POST para <code style="color:var(--accent)">/api/rfid</code>:</p>
+      <div class="terminal-title" style="color:var(--accent2)">Payload JSON</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">JSON enviado via POST para <code style="color:var(--accent)">/api/rfid</code>:</p>
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:16px;font-family:var(--fm);font-size:12px;color:var(--accent3);line-height:1.8" id="payload-preview">
 {<br>
-&nbsp;&nbsp;"uid":            "00640000",<br>
-&nbsp;&nbsp;"setor_codigo":   4,<br>
-&nbsp;&nbsp;"unidade_codigo": 2,<br>
-&nbsp;&nbsp;"terminal_id":    "ESP-A1B2C3"<br>
+&nbsp;&nbsp;"uid":&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"00640000",<br>
+&nbsp;&nbsp;"setor_codigo":&nbsp;&nbsp;&nbsp;4,<br>
+&nbsp;&nbsp;"unidade_codigo":&nbsp;2,<br>
+&nbsp;&nbsp;"terminal_id":&nbsp;&nbsp;&nbsp;&nbsp;"AA:BB:CC:DD:EE:FF"<br>
 }
       </div>
       <div style="margin-top:20px">
-        <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Montar peca_code a partir dos bytes</div>
-        <div class="input-group"><label>B1+B2 — Código da Peça (0–65535)</label>
+        <div style="font-family:var(--fm);font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Gerar UID a partir do código</div>
+        <div class="input-group"><label>Código do Equipamento (0–65535)</label>
           <input type="number" id="gp" min="0" max="65535" placeholder="Ex: 100" oninput="gerarUID()"></div>
         <div class="uid-preview show">
           <span style="font-family:var(--fm);font-size:11px;color:var(--muted)">UID mínimo (B1+B2):</span>
@@ -487,11 +563,15 @@ tr:hover td{background:rgba(168,85,247,.04)}
       <option value="aprovado">Aprovados</option>
       <option value="rejeitado">Rejeitados</option>
     </select>
+    <label>TIPO</label>
+    <select id="term-tipo-filtro" onchange="loadTerminais()">
+      <option value="">Todos</option>
+      <option value="normal">Normal</option>
+      <option value="manutencao">Manutenção</option>
+    </select>
     <button class="btn btn-ghost" onclick="loadTerminais()">↻ Atualizar</button>
     <span id="term-summary" style="font-family:var(--fm);font-size:11px;color:var(--muted);margin-left:8px"></span>
   </div>
-
-  <!-- Seção pendentes destacada -->
   <div id="term-pendentes-section" style="display:none;margin-bottom:28px">
     <div class="section-title" style="color:var(--warn);border-color:rgba(255,184,0,.2)">
       ⏳ Aguardando aprovação
@@ -499,8 +579,6 @@ tr:hover td{background:rgba(168,85,247,.04)}
     </div>
     <div id="term-pendentes-list"></div>
   </div>
-
-  <!-- Todos os terminais -->
   <div class="table-card">
     <div class="table-header">
       <span class="table-title">Todos os terminais</span>
@@ -509,11 +587,11 @@ tr:hover td{background:rgba(168,85,247,.04)}
     <div style="overflow-x:auto">
       <table>
         <thead><tr>
-          <th>Terminal ID</th><th>Apelido</th><th>Status</th>
+          <th>Terminal ID (MAC)</th><th>Apelido</th><th>Tipo</th><th>Status</th>
           <th>Setor padrão</th><th>Unidade padrão</th>
           <th>IP</th><th>Firmware</th><th>Último acesso</th><th>Ações</th>
         </tr></thead>
-        <tbody id="term-body"><tr><td colspan="9" class="loading">Carregando...</td></tr></tbody>
+        <tbody id="term-body"><tr><td colspan="10" class="loading">Carregando...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -522,9 +600,10 @@ tr:hover td{background:rgba(168,85,247,.04)}
 <!-- ══ ADMIN ══ -->
 <div id="page-admin" class="page">
   <div class="admin-section">
-    <div class="section-title">Visão Geral</div>
+    <div class="section-title">Visão Geral do Sistema</div>
     <div class="info-grid" id="admin-stats"><div class="loading">Carregando...</div></div>
   </div>
+
   <div class="admin-section">
     <div class="section-title">Usuários do Dashboard
       <button class="btn btn-primary btn-sm" onclick="abrirModalUsuario()">+ Novo Usuário</button>
@@ -534,37 +613,80 @@ tr:hover td{background:rgba(168,85,247,.04)}
       <tbody id="usuarios-body"><tr><td colspan="6" class="loading">Carregando...</td></tr></tbody></table></div>
     </div>
   </div>
+
   <div class="admin-section">
-    <div class="section-title">Cadastro Rápido — Peça</div>
+    <div class="section-title">Alertas por E-mail</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px">
-      <div class="notice">A peça não precisa de setor/unidade fixos. A localização é registrada automaticamente a cada leitura RFID no terminal.</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Alertas habilitados</div><div class="toggle-sub">Habilita o envio de e-mails de alerta</div></div>
+        <label class="toggle"><input type="checkbox" id="cfg-email-habilitado" onchange="salvarConfig()"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Alertas de login no dashboard</div><div class="toggle-sub">Envia e-mail quando alguém faz login no sistema web</div></div>
+        <label class="toggle"><input type="checkbox" id="cfg-email-login" onchange="salvarConfig()"><span class="toggle-slider"></span></label>
+      </div>
+      <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="input-group"><label>Servidor SMTP</label><input type="text" id="cfg-smtp-host" placeholder="smtp.gmail.com" onchange="salvarConfig()"></div>
+        <div class="input-group"><label>Porta SMTP</label><input type="number" id="cfg-smtp-port" placeholder="587" value="587" onchange="salvarConfig()"></div>
+        <div class="input-group"><label>Usuário SMTP</label><input type="email" id="cfg-smtp-user" placeholder="seu@email.com" onchange="salvarConfig()"></div>
+        <div class="input-group"><label>Senha SMTP</label><input type="password" id="cfg-smtp-pass" placeholder="••••••••" onchange="salvarConfig()"></div>
+        <div class="input-group" style="grid-column:1/-1"><label>E-mail de destino dos alertas</label><input type="email" id="cfg-email-destino" placeholder="alerta@empresa.com" onchange="salvarConfig()"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="testarEmail()">Enviar e-mail de teste</button>
+      <span id="cfg-msg" style="font-family:var(--fm);font-size:11px;margin-left:12px"></span>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <div class="section-title">Histórico de Exportações</div>
+    <div class="table-card">
+      <div style="overflow-x:auto"><table><thead><tr><th>Horário</th><th>Usuário</th><th>Formato</th><th>Registros</th><th>Filtros</th></tr></thead>
+      <tbody id="exportacoes-body"><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <div class="section-title">Logs de Login no Dashboard</div>
+    <div class="table-card">
+      <div style="overflow-x:auto"><table><thead><tr><th>Horário</th><th>Usuário</th><th>Email</th><th>Resultado</th><th>IP</th></tr></thead>
+      <tbody id="logs-login-body"><tr><td colspan="5" class="loading">Carregando...</td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <div class="section-title">Cadastro Rápido — Equipamento</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px">
+      <div class="notice">O equipamento não precisa de setor/unidade fixos. A localização é registrada automaticamente a cada leitura RFID.</div>
       <div class="form-row">
         <div class="input-group"><label>Nome</label><input type="text" id="fn-nome" placeholder="Ex: Furadeira de Bancada"></div>
         <div class="input-group"><label>Categoria</label><input type="text" id="fn-cat" placeholder="Ex: Furação"></div>
       </div>
       <div class="form-row">
-        <div class="input-group"><label>Código da Peça — B1+B2 (0–65535)</label><input type="number" id="fn-peca" min="0" max="65535" placeholder="Ex: 100" oninput="previewPeça()"></div>
+        <div class="input-group"><label>Código (0–65535)</label><input type="number" id="fn-peca" min="0" max="65535" placeholder="Ex: 100" oninput="previewEquipAdmin()"></div>
         <div class="input-group"><label>Quantidade</label><input type="number" id="fn-qtd" min="1" value="1"></div>
       </div>
       <div class="input-group">
-        <label>UID da Tag RFID <span style="color:var(--muted);font-weight:400">(cole aqui o UID completo lido do leitor — opcional)</span></label>
+        <label>UID da Tag RFID <span style="color:var(--muted);font-weight:400">(opcional — cole o UID completo)</span></label>
         <input type="text" id="fn-uid-raw" placeholder="Ex: 04A3F21B7C8D90" style="text-transform:uppercase;letter-spacing:2px;font-family:var(--fm)"
-          oninput="this.value=this.value.toUpperCase().replace(/[^0-9A-F]/g,'');previewPeça()">
+          oninput="this.value=this.value.toUpperCase().replace(/[^0-9A-F]/g,'');previewEquipAdmin()">
       </div>
+      <div class="input-group"><label>Descrição <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
+        <textarea id="fn-desc" placeholder="Descreva o equipamento, características, etc."></textarea></div>
       <div id="fn-preview" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:16px;font-family:var(--fm);font-size:12px">
         UID: <span id="fn-uid" style="color:var(--accent);font-size:15px;letter-spacing:3px"></span>
         <span id="fn-uid-src" style="color:var(--muted);margin-left:12px"></span>
       </div>
       <div style="display:flex;gap:10px;align-items:center">
-        <button class="btn btn-primary" onclick="cadastrarPeça()">Cadastrar</button>
+        <button class="btn btn-primary" onclick="cadastrarEquipAdmin()">Cadastrar</button>
         <span id="fn-msg" style="font-family:var(--fm);font-size:12px"></span>
       </div>
     </div>
   </div>
+
   <div class="admin-section">
     <div class="section-title">Cadastro Rápido — Operador</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px">
-      <div class="notice">O operador é identificado pelos bytes B1+B2 do UID do crachá. Setor e unidade são definidos no terminal no momento do login.</div>
+      <div class="notice">O operador é identificado pelos bytes B1+B2 do UID do crachá.</div>
       <div class="form-row">
         <div class="input-group"><label>Nome Completo</label><input type="text" id="on-nome" placeholder="Ex: João Silva"></div>
         <div class="input-group"><label>Matrícula</label><input type="text" id="on-mat" placeholder="Ex: TS-0042"></div>
@@ -572,70 +694,78 @@ tr:hover td{background:rgba(168,85,247,.04)}
       <div class="input-group"><label>UID do Crachá (mín. 4 chars hex)</label>
         <input type="text" id="on-uid" placeholder="Ex: 00420000" style="text-transform:uppercase;letter-spacing:3px"></div>
       <div style="display:flex;gap:10px;margin-top:8px;align-items:center">
-        <button class="btn btn-primary" onclick="cadastrarOperador()">Cadastrar</button>
+        <button class="btn btn-primary" onclick="cadastrarOperadorAdmin()">Cadastrar</button>
         <span id="on-msg" style="font-family:var(--fm);font-size:12px"></span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- MODALS -->
-<div class="modal-overlay" id="modal-peca">
+<!-- ══ MODAIS ══ -->
+<!-- Modal: Equipamento -->
+<div class="modal-overlay" id="modal-equip">
   <div class="modal">
-    <button class="modal-close" onclick="fecharModal('modal-peca')">✕</button>
-    <div class="modal-title">Nova Peça</div>
-    <div class="notice">Setor e unidade não são cadastrados na peça. A localização é atualizada automaticamente pelo terminal.</div>
+    <button class="modal-close" onclick="fecharModal('modal-equip')">✕</button>
+    <div class="modal-title" id="meq-title">Novo Equipamento</div>
+    <input type="hidden" id="meq-code" value="">
+    <div class="notice">A localização é atualizada automaticamente pelo terminal RFID a cada leitura.</div>
     <div class="form-row">
-      <div class="input-group"><label>Nome</label><input type="text" id="mf-nome" placeholder="Ex: Furadeira de Bancada"></div>
+      <div class="input-group"><label>Nome</label><input type="text" id="meq-nome" placeholder="Ex: Furadeira de Bancada"></div>
       <div class="input-group">
         <label>Categoria</label>
-        <select id="mf-cat" onchange="toggleCatCustom()">
-          <option value="" disabled selected>Selecione uma categoria</option>
+        <select id="meq-cat" onchange="toggleCatCustom()">
+          <option value="" disabled selected>Selecione...</option>
         </select>
-        <input type="text" id="mf-cat-custom" placeholder="Digite a categoria..." style="display:none;margin-top:6px">
+        <input type="text" id="meq-cat-custom" placeholder="Digite a categoria..." style="display:none;margin-top:6px">
       </div>
     </div>
     <div class="form-row">
-      <div class="input-group"><label>Código Peça B1+B2 (0–65535)</label><input type="number" id="mf-peca" min="0" max="65535" oninput="previewModalUID()"></div>
-      <div class="input-group"><label>Quantidade</label><input type="number" id="mf-qtd" value="1" min="1"></div>
+      <div class="input-group"><label>Código (0–65535)</label><input type="number" id="meq-peca" min="0" max="65535" oninput="previewModalUID()"></div>
+      <div class="input-group"><label>Quantidade</label><input type="number" id="meq-qtd" value="1" min="1"></div>
     </div>
     <div class="input-group">
-      <label>UID da Tag RFID <span style="color:var(--muted);font-weight:400">(cole o UID completo da tag — opcional, se omitido é gerado do código)</span></label>
-      <input type="text" id="mf-uid" placeholder="Ex: 04A3F21B7C8D90" style="text-transform:uppercase;letter-spacing:2px;font-family:var(--fm)"
+      <label>UID da Tag RFID <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
+      <input type="text" id="meq-uid" placeholder="Ex: 04A3F21B7C8D90"
+        style="text-transform:uppercase;letter-spacing:2px;font-family:var(--fm)"
         oninput="this.value=this.value.toUpperCase().replace(/[^0-9A-F]/g,'')">
     </div>
-    <div class="form-row">
-      <div class="input-group"><label>Peso (kg) <span style="color:var(--muted);font-weight:400;font-size:11px">opcional</span></label><input type="number" id="mf-peso" min="0" step="0.001" placeholder="Ex: 2.5"></div>
-    </div>
-    <div id="mf-uid-preview" style="display:none;font-family:var(--fm);font-size:12px;color:var(--muted);margin-bottom:8px">
-      UID: <span id="mf-uid-val" style="color:var(--accent);letter-spacing:2px"></span>
-      <span style="color:var(--muted)"> (B3+B4 zerados)</span>
+    <div class="input-group"><label>Peso (kg) <span style="color:var(--muted);font-weight:400;font-size:11px">opcional</span></label>
+      <input type="number" id="meq-peso" min="0" step="0.001" placeholder="Ex: 2.5"></div>
+    <div class="input-group"><label>Descrição <span style="color:var(--muted);font-weight:400">opcional</span></label>
+      <textarea id="meq-desc" placeholder="Descreva o equipamento..."></textarea></div>
+    <div id="meq-uid-preview" style="display:none;font-family:var(--fm);font-size:12px;color:var(--muted);margin-bottom:8px">
+      UID: <span id="meq-uid-val" style="color:var(--accent);letter-spacing:2px"></span>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="fecharModal('modal-peca')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarPeça()">Cadastrar</button>
+      <button class="btn btn-ghost" onclick="fecharModal('modal-equip')">Cancelar</button>
+      <button class="btn btn-primary" id="meq-btn" onclick="salvarEquip()">Cadastrar</button>
     </div>
   </div>
 </div>
 
+<!-- Modal: Operador -->
 <div class="modal-overlay" id="modal-operador">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-operador')">✕</button>
-    <div class="modal-title">Novo Operador</div>
-    <div class="notice">O operador é identificado pelos bytes B1+B2 do crachá RFID. Setor e unidade são selecionados no terminal no momento do login.</div>
+    <div class="modal-title" id="mo-title">Novo Operador</div>
+    <input type="hidden" id="mo-id" value="">
+    <div class="notice">O operador é identificado pelos bytes B1+B2 do crachá RFID.</div>
     <div class="form-row">
       <div class="input-group"><label>Nome Completo</label><input type="text" id="mo-nome" placeholder="Ex: João Silva"></div>
       <div class="input-group"><label>Matrícula</label><input type="text" id="mo-mat" placeholder="Ex: TS-0042"></div>
     </div>
     <div class="input-group"><label>UID do Crachá (mín. 4 chars hex)</label>
       <input type="text" id="mo-uid" placeholder="Ex: 00420000" style="text-transform:uppercase;letter-spacing:3px"></div>
+    <div class="input-group"><label>Código do Equipamento vinculado</label>
+      <input type="number" id="mo-equip-code" placeholder="Deixe 0 se não houver vínculo" value="0" min="0"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="fecharModal('modal-operador')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarOperador()">Cadastrar</button>
+      <button class="btn btn-primary" id="mo-btn" onclick="salvarOperador()">Cadastrar</button>
     </div>
   </div>
 </div>
 
+<!-- Modal: Usuário -->
 <div class="modal-overlay" id="modal-usuario">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-usuario')">✕</button>
@@ -647,7 +777,11 @@ tr:hover td{background:rgba(168,85,247,.04)}
     </div>
     <div class="form-row">
       <div class="input-group"><label>Perfil</label>
-        <select id="mu-perfil"><option value="visualizador">Visualizador — só leitura</option><option value="operador">Operador — cadastros</option><option value="admin">Admin — acesso total</option></select>
+        <select id="mu-perfil">
+          <option value="visualizador">Visualizador — só leitura</option>
+          <option value="operador">Operador — cadastros</option>
+          <option value="admin">Admin — acesso total</option>
+        </select>
       </div>
       <div class="input-group"><label>Senha <span id="mu-senha-hint" style="color:var(--muted)">(obrigatória)</span></label>
         <input type="password" id="mu-senha" placeholder="Mínimo 6 caracteres"></div>
@@ -659,56 +793,63 @@ tr:hover td{background:rgba(168,85,247,.04)}
   </div>
 </div>
 
-<!-- MODAL — Aprovar terminal -->
+<!-- Modal: Aprovar terminal -->
 <div class="modal-overlay" id="modal-aprovar-terminal">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-aprovar-terminal')">✕</button>
     <div class="modal-title">Aprovar Terminal</div>
     <input type="hidden" id="mat-id">
-    <div class="notice">Ao aprovar, o terminal poderá conectar-se ao sistema. Opcionalmente pré-configure o setor e unidade padrão (o operador poderá alterar pelo teclado).</div>
-    <div class="input-group">
-      <label>Apelido (opcional)</label>
-      <input type="text" id="mat-apelido" placeholder="Ex: Terminal Soldagem 01">
+    <div class="notice">Ao aprovar, o terminal poderá conectar-se ao sistema.</div>
+    <div class="input-group"><label>Apelido (opcional)</label>
+      <input type="text" id="mat-apelido" placeholder="Ex: Terminal Soldagem 01"></div>
+    <div class="input-group"><label>Tipo</label>
+      <select id="mat-tipo">
+        <option value="normal">Normal — leitura de equipamentos</option>
+        <option value="manutencao">Manutenção — terminal de manutenção</option>
+      </select>
     </div>
     <div class="form-row">
-      <div class="input-group">
-        <label>Setor padrão (opcional)</label>
-        <select id="mat-setor"><option value="">Nenhum — operador seleciona</option></select>
-      </div>
-      <div class="input-group">
-        <label>Unidade padrão (opcional)</label>
-        <select id="mat-unidade"><option value="">Nenhuma — operador seleciona</option></select>
-      </div>
+      <div class="input-group"><label>Setor padrão (opcional)</label>
+        <select id="mat-setor"><option value="">Nenhum — operador seleciona</option>
+          <option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option>
+          <option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option>
+          <option value="7">Almoxarifado</option><option value="8">Qualidade</option></select></div>
+      <div class="input-group"><label>Unidade padrão (opcional)</label>
+        <select id="mat-unidade"><option value="">Nenhuma — operador seleciona</option>
+          <option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option>
+          <option value="4">Betim</option><option value="5">Ibirité</option></select></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="fecharModal('modal-aprovar-terminal')">Cancelar</button>
-      <button class="btn btn-aprovar" onclick="confirmarAprovacao()">✓ Aprovar Terminal</button>
+      <button class="btn btn-warn" onclick="confirmarAprovacao()">✓ Aprovar Terminal</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL — Configurar terminal aprovado -->
+<!-- Modal: Config terminal -->
 <div class="modal-overlay" id="modal-config-terminal">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-config-terminal')">✕</button>
     <div class="modal-title">Configurar Terminal</div>
     <input type="hidden" id="mct-id">
-    <div class="input-group">
-      <label>Apelido</label>
-      <input type="text" id="mct-apelido" placeholder="Ex: Terminal Soldagem 01">
+    <div class="input-group"><label>Apelido</label>
+      <input type="text" id="mct-apelido" placeholder="Ex: Terminal Soldagem 01"></div>
+    <div class="input-group"><label>Tipo</label>
+      <select id="mct-tipo">
+        <option value="normal">Normal</option>
+        <option value="manutencao">Manutenção</option>
+      </select>
     </div>
     <div class="form-row">
-      <div class="input-group">
-        <label>Setor padrão</label>
-        <select id="mct-setor"><option value="">Nenhum — operador seleciona</option></select>
-      </div>
-      <div class="input-group">
-        <label>Unidade padrão</label>
-        <select id="mct-unidade"><option value="">Nenhuma — operador seleciona</option></select>
-      </div>
-    </div>
-    <div class="notice" style="margin-top:4px">
-      Se configurado, o terminal pula a tela de seleção no próximo sincronismo (≤1 min).
+      <div class="input-group"><label>Setor padrão</label>
+        <select id="mct-setor"><option value="">Nenhum — operador seleciona</option>
+          <option value="1">Soldagem</option><option value="2">Corte</option><option value="3">Usinagem</option>
+          <option value="4">Furação</option><option value="5">Montagem</option><option value="6">Manutenção</option>
+          <option value="7">Almoxarifado</option><option value="8">Qualidade</option></select></div>
+      <div class="input-group"><label>Unidade padrão</label>
+        <select id="mct-unidade"><option value="">Nenhuma</option>
+          <option value="1">Centro</option><option value="2">BH</option><option value="3">Contagem</option>
+          <option value="4">Betim</option><option value="5">Ibirité</option></select></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="fecharModal('modal-config-terminal')">Cancelar</button>
@@ -717,12 +858,70 @@ tr:hover td{background:rgba(168,85,247,.04)}
   </div>
 </div>
 
+<!-- Modal: Manutenção -->
+<div class="modal-overlay" id="modal-manutencao">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-manutencao')">✕</button>
+    <div class="modal-title" id="mm-title">Enviar para Manutenção</div>
+    <input type="hidden" id="mm-tipo" value="entrada">
+    <div class="input-group"><label>Equipamento</label>
+      <select id="mm-equip"><option value="">Selecione o equipamento...</option></select></div>
+    <div class="input-group"><label>Técnico responsável</label>
+      <input type="text" id="mm-tecnico" placeholder="Nome do técnico"></div>
+    <div class="input-group"><label>Descrição da manutenção</label>
+      <textarea id="mm-desc" placeholder="Descreva o problema, serviço realizado, peças trocadas, etc."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-manutencao')">Cancelar</button>
+      <button class="btn btn-warn" id="mm-btn" onclick="confirmarManutencao()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Detalhes equipamento -->
+<div class="modal-overlay" id="modal-equip-detalhe">
+  <div class="modal" style="max-width:600px">
+    <button class="modal-close" onclick="fecharModal('modal-equip-detalhe')">✕</button>
+    <div class="modal-title" id="med-titulo">Equipamento</div>
+    <div id="med-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-equip-detalhe')">Fechar</button>
+      <button class="btn btn-warn btn-sm" id="med-manut-btn" onclick="acaoManutencaoDetalhe()" style="display:none"></button>
+      <button class="btn btn-primary btn-sm" id="med-edit-btn" onclick="editarEquipDetalhe()" style="display:none">✎ Editar</button>
+    </div>
+  </div>
+</div>
 <script>
-// ══ ESTADO ══
-let charts = {};
-let usuario = null;
+// ══ CONSTANTES ══
 const SETORES  = {1:'Soldagem',2:'Corte',3:'Usinagem',4:'Furação',5:'Montagem',6:'Manutenção',7:'Almoxarifado',8:'Qualidade'};
 const UNIDADES = {1:'Centro',2:'BH',3:'Contagem',4:'Betim',5:'Ibirité'};
+let charts={}, usuario=null, sseSource=null;
+
+// ══ FETCH HELPERS ══
+const apiFetch = async (path, method='GET', body=null) => {
+  const opts = {method, credentials:'include', headers:{}};
+  if(body){opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body);}
+  const r = await fetch(path, opts);
+  const d = await r.json().catch(()=>({}));
+  return {ok:r.ok, status:r.status, data:d};
+};
+const api = path => apiFetch(path).then(r=>r.data);
+const qs = p => Object.entries(p).filter(([,v])=>v!==''&&v!=null).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
+
+// ══ UI ══
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-BR');},1000);
+const fmt = s => s ? new Date(s).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
+function abrirModal(id){document.getElementById(id).classList.add('open');}
+function fecharModal(id){document.getElementById(id).classList.remove('open');}
+function toast(msg, ok=true, dur=2800){
+  const t=document.createElement('div'); t.textContent=msg;
+  Object.assign(t.style,{position:'fixed',bottom:'24px',right:'24px',zIndex:'9000',
+    padding:'10px 18px',borderRadius:'6px',fontFamily:"'IBM Plex Mono',monospace",
+    fontSize:'12px',fontWeight:'600',letterSpacing:'1px',
+    background:ok?'rgba(168,85,247,.92)':'rgba(255,61,87,.92)',color:'#fff',
+    boxShadow:'0 4px 20px rgba(0,0,0,.4)',transition:'opacity .4s',maxWidth:'360px'});
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},dur);
+}
 
 // ══ AUTH ══
 async function doLogin(){
@@ -730,154 +929,153 @@ async function doLogin(){
   const senha=document.getElementById('l-senha').value;
   const err=document.getElementById('l-err'); err.style.display='none';
   try{
-    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
-    const d=await r.json();
-    if(!r.ok){err.textContent=d.erro||'Erro ao fazer login';err.style.display='block';return;}
-    usuario=d.usuario; localStorage.setItem('vl_token',d.token);
-    aplicarSessao(); document.getElementById('login-overlay').classList.add('hidden');
-    loadDashboard(); loadAlertas();
-    iniciarSSE();
-  }catch(e){err.textContent='Falha de conexão com o servidor';err.style.display='block';}
+    const r=await apiFetch('/api/auth/login','POST',{email,senha});
+    if(!r.ok){err.textContent=r.data.erro||'Credenciais inválidas';err.style.display='block';return;}
+    usuario=r.data;
+    document.getElementById('login-overlay').classList.add('hidden');
+    aplicarSessao(); iniciarSSE(); loadDashboard(); loadAlertas(); loadManutAtivos();
+  }catch(e){err.textContent='Falha de conexão';err.style.display='block';}
 }
 async function doLogout(){
-  pararSSE();
-  await apiFetch('/api/auth/logout','POST'); localStorage.removeItem('vl_token'); usuario=null;
+  pararSSE(); await apiFetch('/api/auth/logout','POST'); usuario=null;
   document.getElementById('login-overlay').classList.remove('hidden');
-  document.getElementById('user-chip').style.display='none';
-  document.getElementById('logout-btn').style.display='none';
+  ['user-chip','logout-btn'].forEach(id=>document.getElementById(id).style.display='none');
 }
 async function verificarSessao(){
-  const token=localStorage.getItem('vl_token'); if(!token)return;
   try{
-    const r=await fetch('/api/auth/me',{headers:{'X-Auth-Token':token}});
-    if(!r.ok){localStorage.removeItem('vl_token');return;}
-    usuario=await r.json(); aplicarSessao();
+    const r=await apiFetch('/api/auth/me');
+    if(!r.ok) return;
+    usuario=r.data;
     document.getElementById('login-overlay').classList.add('hidden');
-    loadDashboard(); loadAlertas();
-    iniciarSSE();
+    aplicarSessao(); iniciarSSE(); loadDashboard(); loadAlertas(); loadManutAtivos();
   }catch(e){}
 }
 function aplicarSessao(){
   const u=usuario;
-  document.getElementById('user-av').textContent=u.nome[0].toUpperCase();
-  document.getElementById('user-name').textContent=u.nome;
-  document.getElementById('user-perfil').textContent=u.perfil.toUpperCase();
+  document.getElementById('user-av').textContent=u.nome?.[0]?.toUpperCase()||'?';
+  document.getElementById('user-name').textContent=u.nome||'';
+  document.getElementById('user-perfil').textContent=(u.perfil||'').toUpperCase();
   document.getElementById('user-chip').style.display='flex';
   document.getElementById('logout-btn').style.display='block';
   const isAdmin=u.perfil==='admin', isOper=isAdmin||u.perfil==='operador';
-  document.getElementById('admin-tab').style.display=isAdmin?'block':'none';
-  document.getElementById('terminais-tab').style.display=isAdmin?'block':'none';
-  document.getElementById('btn-nova-peca').style.display=isOper?'':'none';
+  document.getElementById('admin-tab').style.display=isAdmin?'':'none';
+  document.getElementById('terminais-tab').style.display=isAdmin?'':'none';
+  document.getElementById('btn-novo-equip').style.display=isOper?'':'none';
   document.getElementById('btn-novo-operador').style.display=isOper?'':'none';
-  document.getElementById('th-acoes').style.display=isOper?'':'none';
+  document.getElementById('btn-nova-manut').style.display=isOper?'':'none';
+  document.getElementById('btn-saida-manut').style.display=isOper?'':'none';
+  document.getElementById('th-eq-acoes').style.display=isOper?'':'none';
   document.getElementById('th-op-acoes').style.display=isOper?'':'none';
-  if(isAdmin) verificarPendentes();
+  if(isAdmin){verificarPendentes();loadCfg();}
 }
-function getToken(){return localStorage.getItem('vl_token')||'';}
-const apiFetch=(path,method='GET',body=null)=>{
-  const opts={method,headers:{'X-Auth-Token':getToken()}};
-  if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body);}
-  return fetch(path,opts).then(r=>r.json().then(d=>({ok:r.ok,status:r.status,data:d})));
-};
-const api=path=>apiFetch(path).then(r=>r.data);
 
-// ══ UI HELPERS ══
-setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-BR');},1000);
-async function checkHealth(){
-  try{const d=await(await fetch('/api/ping')).json();document.getElementById('live-status').textContent='ONLINE — '+d.sistema;}
-  catch{document.getElementById('live-status').textContent='OFFLINE';}
-}
-checkHealth(); setInterval(checkHealth,10000);
-
+// ══ TABS ══
 function setTab(name,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  btn.classList.add('active'); document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('page-'+name).classList.add('active');
   const loaders={dashboard:loadDashboard,localizacao:loadLocalizacao,movimentacoes:loadMovs,
-    pecas:loadFer,operadores:loadOps,alertas:loadAlertas,admin:loadAdmin,terminais:loadTerminais};
+    equipamentos:loadEquip,operadores:loadOps,alertas:loadAlertas,admin:loadAdmin,
+    terminais:loadTerminais,manutencao:loadManutencao};
   loaders[name]?.();
 }
 function setTabByName(name){
-  const btn=document.querySelector(`.tab-btn[onclick*="'${name}'"]`);
-  if(btn) setTab(name,btn);
+  const btn=document.querySelector(`[data-tab="${name}"]`);
+  if(btn)setTab(name,btn);
 }
-function fmt(str){return str?new Date(str).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'--';}
+
+// ══ SSE ══
+function iniciarSSE(){
+  if(sseSource) sseSource.close();
+  sseSource=new EventSource('/events');
+  sseSource.onopen=()=>{
+    document.getElementById('live-status').textContent='ONLINE — VOIDLOG V3';
+  };
+  sseSource.onerror=()=>{document.getElementById('live-status').textContent='RECONECTANDO...';};
+  sseSource.addEventListener('movimentacao',e=>{
+    const d=JSON.parse(e.data);
+    toast(`${d.tipo==='retirada'?'↑ Retirada':'↓ Devolução'}: ${d.equipamento||''} · ${d.operador||''}`);
+    const at=document.querySelector('.tab-btn.active')?.dataset?.tab;
+    if(at==='dashboard')loadDashboard();
+    else if(at==='alertas')loadAlertas();
+    else if(at==='localizacao')loadLocalizacao();
+    else if(at==='movimentacoes')loadMovs();
+  });
+  sseSource.addEventListener('operador',e=>{
+    const d=JSON.parse(e.data);
+    toast(`${d.acao==='login'?'⬆ Login':'⬇ Logout'}: ${d.nome||''}`, true, 2000);
+    const at=document.querySelector('.tab-btn.active')?.dataset?.tab;
+    if(at==='operadores')loadOps();
+  });
+}
+function pararSSE(){if(sseSource){sseSource.close();sseSource=null;}}
+
+// ══ CHARTS ══
 function mkChart(id,type,data,extra={}){
   if(charts[id])charts[id].destroy();
-  charts[id]=new Chart(document.getElementById(id).getContext('2d'),{type,data,options:{
-    responsive:true,
+  const ctx=document.getElementById(id)?.getContext('2d'); if(!ctx) return;
+  charts[id]=new Chart(ctx,{type,data,options:{responsive:true,
     plugins:{legend:{display:false},tooltip:{backgroundColor:'#12121e',borderColor:'#1e1e35',borderWidth:1,
       titleColor:'#5a5878',bodyColor:'#e2e0f4',titleFont:{family:"'IBM Plex Mono'",size:10},bodyFont:{family:"'IBM Plex Mono'",size:11}}},
-    scales:type==='doughnut'?{}:{
+    scales:type==='doughnut'||type==='pie'?{}:{
       x:{grid:{color:'rgba(30,30,53,.8)'},ticks:{color:'#5a5878',font:{family:"'IBM Plex Mono'",size:10}}},
       y:{grid:{color:'rgba(30,30,53,.8)'},ticks:{color:'#5a5878',font:{family:"'IBM Plex Mono'",size:10}}},
     },...extra}});
 }
-function abrirModal(id){document.getElementById(id).classList.add('open');}
-function fecharModal(id){document.getElementById(id).classList.remove('open');}
-function toast(msg,ok=true,dur=2800){
-  const t=document.createElement('div'); t.textContent=msg;
-  Object.assign(t.style,{position:'fixed',bottom:'24px',right:'24px',zIndex:'9000',padding:'10px 18px',
-    borderRadius:'6px',fontFamily:"'IBM Plex Mono',monospace",fontSize:'12px',fontWeight:'600',letterSpacing:'1px',
-    background:ok?'rgba(168,85,247,.9)':'rgba(255,61,87,.9)',color:'#fff',
-    boxShadow:'0 4px 20px rgba(0,0,0,.4)',transition:'opacity .4s',maxWidth:'340px'});
-  document.body.appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},dur);
-}
 
 // ══ DASHBOARD ══
 async function loadDashboard(){
-  let qs='?x=1';
-  const s=document.getElementById('d-setor').value,u=document.getElementById('d-unidade').value;
-  if(s)qs+='&setor='+s; if(u)qs+='&unidade='+u;
-  const d=await api('/api/dashboard/dados'+qs);
+  const s=document.getElementById('d-setor').value, u=document.getElementById('d-unidade').value;
+  const d=await api('/api/dashboard/dados?'+qs({setor:s,unidade:u}));
+  if(!d||d.erro){return;}
   const emUso=(d.em_uso||[]).length;
+  const emManut=d.em_manutencao||0;
   document.getElementById('stats-grid').innerHTML=`
-    <div class="stat-card" style="--ca:var(--accent)"><div class="stat-label">Total movimentações</div><div class="stat-value">${d.totais.total_movimentacoes||0}</div></div>
-    <div class="stat-card" style="--ca:var(--accent2)"><div class="stat-label">Retiradas</div><div class="stat-value">${d.totais.total_retiradas||0}</div></div>
-    <div class="stat-card" style="--ca:var(--accent3)"><div class="stat-label">Devoluções</div><div class="stat-value">${d.totais.total_devolucoes||0}</div></div>
-    <div class="stat-card" style="--ca:var(--danger)"><div class="stat-label">Em uso agora</div><div class="stat-value">${emUso}</div><div class="stat-sub">não devolvidas</div></div>
+    <div class="stat-card" style="--ca:var(--accent)"><div class="stat-label">Total movimentações</div><div class="stat-value">${d.totais?.total_movimentacoes||0}</div></div>
+    <div class="stat-card" style="--ca:var(--accent2)"><div class="stat-label">Retiradas</div><div class="stat-value">${d.totais?.total_retiradas||0}</div></div>
+    <div class="stat-card" style="--ca:var(--accent3)"><div class="stat-label">Devoluções</div><div class="stat-value">${d.totais?.total_devolucoes||0}</div></div>
+    <div class="stat-card" style="--ca:var(--danger)"><div class="stat-label">Em uso agora</div><div class="stat-value">${emUso}</div></div>
+    <div class="stat-card" style="--ca:var(--warn)"><div class="stat-label">Em manutenção</div><div class="stat-value">${emManut}</div></div>
   `;
-  mkChart('cDias','line',{labels:d.por_dia.map(r=>r.dia),datasets:[{label:'Movs',data:d.por_dia.map(r=>r.total),
+  mkChart('cDias','line',{labels:(d.por_dia||[]).map(r=>r.dia),datasets:[{data:(d.por_dia||[]).map(r=>r.total),
     borderColor:'#a855f7',backgroundColor:'rgba(168,85,247,.08)',fill:true,tension:.4,pointBackgroundColor:'#a855f7',pointRadius:3}]});
-  mkChart('cUnidade','doughnut',{labels:d.por_unidade.map(r=>r.unidade),datasets:[{data:d.por_unidade.map(r=>r.movimentacoes),
+  mkChart('cUnidade','doughnut',{labels:(d.por_unidade||[]).map(r=>r.unidade),datasets:[{data:(d.por_unidade||[]).map(r=>r.movimentacoes),
     backgroundColor:['#a855f7','#ff6b35','#7fff6e','#ffb800','#ff3d57'],borderWidth:0}]},
     {plugins:{legend:{display:true,position:'bottom',labels:{color:'#5a5878',font:{family:"'IBM Plex Mono'",size:10},boxWidth:12}}}});
-  mkChart('cSetor','bar',{labels:d.por_setor.map(r=>r.setor),datasets:[{label:'Movs',data:d.por_setor.map(r=>r.movimentacoes),
+  mkChart('cSetor','bar',{labels:(d.por_setor||[]).map(r=>r.setor),datasets:[{data:(d.por_setor||[]).map(r=>r.movimentacoes),
     backgroundColor:'rgba(168,85,247,.15)',borderColor:'#a855f7',borderWidth:1,borderRadius:4}]});
-  mkChart('cTop','bar',{labels:d.top_pecas.map(r=>r.nome.substring(0,18)),datasets:[{label:'Usos',
-    data:d.top_pecas.map(r=>r.usos),backgroundColor:'rgba(255,107,53,.2)',borderColor:'#ff6b35',borderWidth:1,borderRadius:4}]},{indexAxis:'y'});
+  mkChart('cTop','bar',{labels:(d.top_pecas||[]).map(r=>(r.nome||'').substring(0,18)),datasets:[{
+    data:(d.top_pecas||[]).map(r=>r.usos),backgroundColor:'rgba(255,107,53,.2)',borderColor:'#ff6b35',borderWidth:1,borderRadius:4}]},{indexAxis:'y'});
 }
 
 // ══ LOCALIZAÇÃO ══
 async function loadLocalizacao(){
-  const d=await api('/api/dashboard/dados');
-  let rows=d.localizacoes||[];
+  const nome=document.getElementById('loc-nome').value.trim();
+  const cat=document.getElementById('loc-cat').value.trim();
+  const uid=document.getElementById('loc-uid').value.trim().toUpperCase();
   const disp=document.getElementById('loc-disp').value;
   const setor=document.getElementById('loc-setor').value;
   const unid=document.getElementById('loc-unidade').value;
-  if(disp!=='') rows=rows.filter(r=>String(r.disponivel)===disp);
-  if(setor) rows=rows.filter(r=>r.localizacao_setor==setor || (r.loc_setor&&SETORES[setor]===r.loc_setor));
-  if(unid)  rows=rows.filter(r=>r.localizacao_unidade==unid || (r.loc_unidade&&UNIDADES[unid]===r.loc_unidade));
 
-  document.getElementById('loc-count').textContent=rows.length+' pecas';
-  if(!rows.length){
-    document.getElementById('loc-body').innerHTML='<tr><td colspan="7" class="no-data">Nenhuma peca encontrada</td></tr>';return;
-  }
+  const params={nome,categoria:cat,uid,disponivel:disp,setor,unidade:unid};
+  document.getElementById('loc-body').innerHTML='<tr><td colspan="7" class="loading">Carregando...</td></tr>';
+  const rows=await api('/api/equipamentos?'+qs(params));
+  document.getElementById('loc-count').textContent=(rows?.length||0)+' equipamentos';
+  if(!rows?.length){document.getElementById('loc-body').innerHTML='<tr><td colspan="7" class="no-data">Nenhum resultado</td></tr>';return;}
   document.getElementById('loc-body').innerHTML=rows.map(r=>{
-    const semLoc=!r.loc_setor;
+    const semLoc=!r.loc_setor_nome;
     const locHtml=semLoc
       ? '<span class="loc-badge sem-loc"><span class="loc-dot" style="background:var(--muted)"></span>Sem localização</span>'
-      : `<span class="loc-badge"><span class="loc-dot ${r.disponivel?'livre':'uso'}"></span>${r.loc_setor} · ${r.loc_unidade}</span>`;
+      : `<span class="loc-badge"><span class="loc-dot ${r.disponivel?'livre':'uso'}"></span>${r.loc_setor_nome} · ${r.loc_unidade_nome}</span>`;
+    const manutBadge=r.em_manutencao?'<span class="bt bt-manutencao" style="margin-left:4px">MANUTENÇÃO</span>':'';
     return `<tr>
-      <td><strong>${r.nome}</strong></td>
+      <td><strong>${r.nome}</strong>${manutBadge}<span class="byte-tip">${r.descricao||''}</span></td>
       <td>${r.categoria}</td>
-      <td><span class="uid-chip">${r.uid_raw}</span><span class="byte-tip">peça: ${r.peca_code}</span></td>
+      <td><span class="uid-chip">${r.uid_raw}</span><span class="byte-tip">cód: ${r.equipamento_code}</span></td>
       <td>${locHtml}</td>
-      <td><span class="bt ${r.disponivel?'bt-livre':'bt-em-uso'}">${r.disponivel?'LIVRE':'EM USO'}</span></td>
-      <td>${r.ultimo_operador
-        ? `<strong>${r.ultimo_operador}</strong><span class="byte-tip">${r.ultimo_operador_mat||''}</span>`
-        : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><span class="bt ${r.em_manutencao?'bt-manutencao':r.disponivel?'bt-livre':'bt-em-uso'}">${r.em_manutencao?'MANUTENÇÃO':r.disponivel?'LIVRE':'EM USO'}</span></td>
+      <td>${r.ultimo_operador_nome?`<strong>${r.ultimo_operador_nome}</strong><span class="byte-tip">${r.ultimo_operador_mat||''}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
       <td>${fmt(r.ultima_mov)}</td>
     </tr>`;
   }).join('');
@@ -885,653 +1083,696 @@ async function loadLocalizacao(){
 
 // ══ MOVIMENTAÇÕES ══
 async function loadMovs(){
-  let qs='?limit=200';
-  const s=document.getElementById('m-setor').value,u=document.getElementById('m-unidade').value,
-        t=document.getElementById('m-tipo').value,i=document.getElementById('m-ini').value,f=document.getElementById('m-fim').value;
-  if(s)qs+='&setor='+s;if(u)qs+='&unidade='+u;if(t)qs+='&tipo='+t;if(i)qs+='&data_ini='+i;if(f)qs+='&data_fim='+f;
+  const params={
+    operador_nome: document.getElementById('m-op-nome').value.trim(),
+    equipamento_nome: document.getElementById('m-equip-nome').value.trim(),
+    setor:  document.getElementById('m-setor').value,
+    unidade:document.getElementById('m-unidade').value,
+    tipo:   document.getElementById('m-tipo').value,
+    data_inicio:document.getElementById('m-ini').value,
+    data_fim:   document.getElementById('m-fim').value,
+    limite: 300,
+  };
   document.getElementById('mov-body').innerHTML='<tr><td colspan="8" class="loading">Carregando...</td></tr>';
-  const rows=await api('/api/movimentacoes'+qs);
-  document.getElementById('mov-count').textContent=rows.length+' registros';
-  if(!rows.length){document.getElementById('mov-body').innerHTML='<tr><td colspan="8" class="no-data">Nenhum registro</td></tr>';return;}
+  const rows=await api('/api/movimentacoes?'+qs(params));
+  document.getElementById('mov-count').textContent=(rows?.length||0)+' registros';
+  if(!rows?.length){document.getElementById('mov-body').innerHTML='<tr><td colspan="8" class="no-data">Nenhum registro</td></tr>';return;}
   document.getElementById('mov-body').innerHTML=rows.map(r=>`
     <tr>
       <td>${fmt(r.horario)}</td>
       <td><span class="bt bt-${r.tipo}">${r.tipo}</span></td>
-      <td>${r.peca}<span class="byte-tip">${r.categoria}</span></td>
-      <td><span class="uid-chip">${r.uid_raw}</span><span class="byte-tip">peça: ${r.peca_code}</span></td>
-      <td>${r.operador}<span class="byte-tip">${r.matricula}</span></td>
-      <td>${r.setor}</td><td>${r.unidade}</td>
-      <td><span class="uid-chip" style="color:var(--muted)">${r.terminal_id||'—'}</span></td>
+      <td>${r.equipamento_nome||'—'}<span class="byte-tip">${r.equipamento_categoria||''}</span></td>
+      <td><span class="uid-chip">${r.equipamento_uid||'—'}</span></td>
+      <td><strong>${r.operador_nome||'—'}</strong><span class="byte-tip">${r.operador_matricula||''}</span></td>
+      <td>${r.setor_nome||'—'}</td>
+      <td>${r.unidade_nome||'—'}</td>
+      <td style="color:var(--muted)">${r.terminal_id||'—'}</td>
     </tr>`).join('');
 }
+async function exportarMovs(fmt){
+  const params={
+    operador_nome:document.getElementById('m-op-nome').value.trim(),
+    equipamento_nome:document.getElementById('m-equip-nome').value.trim(),
+    setor:document.getElementById('m-setor').value,
+    unidade:document.getElementById('m-unidade').value,
+    tipo:document.getElementById('m-tipo').value,
+    data_inicio:document.getElementById('m-ini').value,
+    data_fim:document.getElementById('m-fim').value,
+    formato:fmt,
+  };
+  const url='/api/movimentacoes/exportar?'+qs(params);
+  const link=document.createElement('a'); link.href=url; link.download=''; link.click();
+  toast(`Exportando ${fmt.toUpperCase()}...`);
+  setTimeout(()=>loadAdmin(),1500);
+}
 
-// ══ FERRAMENTAS ══
-async function loadFer(){
-  let qs='?x=1';
-  const d=document.getElementById('f-disp').value;
-  if(d!=='')qs+='&disponivel='+d;
-  document.getElementById('fer-body').innerHTML='<tr><td colspan="8" class="loading">Carregando...</td></tr>';
-  const rows=await api('/api/pecas'+qs);
-  document.getElementById('fer-count').textContent=rows.length+' pecas';
-  if(!rows.length){document.getElementById('fer-body').innerHTML='<tr><td colspan="8" class="no-data">Nenhuma peca</td></tr>';return;}
-  const isOper=usuario&&(usuario.perfil==='admin'||usuario.perfil==='operador');
-  document.getElementById('fer-body').innerHTML=rows.map(r=>{
-    const semLoc=!r.loc_setor_nome;
-    const locHtml=semLoc
-      ? '<span class="bt bt-sem-loc">Sem localização</span>'
-      : `<span class="loc-badge"><span class="loc-dot ${r.disponivel?'livre':'uso'}"></span>${r.loc_setor_nome} · ${r.loc_unidade_nome}</span>`;
+// ══ EQUIPAMENTOS ══
+async function loadEquip(){
+  const params={
+    nome:document.getElementById('eq-nome').value.trim(),
+    categoria:document.getElementById('eq-cat').value.trim(),
+    uid:document.getElementById('eq-uid').value.trim(),
+    disponivel:document.getElementById('eq-disp').value,
+    em_manutencao:document.getElementById('eq-manut').value,
+  };
+  document.getElementById('eq-body').innerHTML='<tr><td colspan="8" class="loading">Carregando...</td></tr>';
+  const rows=await api('/api/equipamentos?'+qs(params));
+  document.getElementById('eq-count').textContent=(rows?.length||0)+' equipamentos';
+  const canEdit=usuario?.perfil==='admin'||usuario?.perfil==='operador';
+  if(!rows?.length){document.getElementById('eq-body').innerHTML='<tr><td colspan="8" class="no-data">Nenhum resultado</td></tr>';return;}
+  document.getElementById('eq-body').innerHTML=rows.map(r=>{
+    const manutBadge=r.em_manutencao?'<span class="bt bt-manutencao" style="display:block;margin-top:3px">MANUTENÇÃO</span>':'';
+    const locHtml=r.loc_setor_nome?`${r.loc_setor_nome} · ${r.loc_unidade_nome}`:'<span style="color:var(--muted)">—</span>';
     return `<tr>
-      <td><strong>${r.nome}</strong></td>
+      <td><strong style="cursor:pointer;color:var(--accent)" onclick="verDetalheEquip(${r.equipamento_code})">${r.nome}</strong>${manutBadge}</td>
       <td>${r.categoria}</td>
       <td><span class="uid-chip">${r.uid_raw}</span></td>
-      <td><span style="color:var(--accent);font-family:var(--fm);font-size:11px">${r.peca_code}</span></td>
+      <td style="color:var(--muted)">${r.equipamento_code}</td>
       <td>${r.quantidade}</td>
-      <td><span class="bt ${r.disponivel?'bt-livre':'bt-em-uso'}">${r.disponivel?'LIVRE':'EM USO'}</span></td>
+      <td><span class="bt ${r.em_manutencao?'bt-manutencao':r.disponivel?'bt-livre':'bt-em-uso'}">${r.em_manutencao?'MANUTENÇÃO':r.disponivel?'LIVRE':'EM USO'}</span></td>
       <td>${locHtml}</td>
-      ${isOper?`<td><button class="btn btn-danger btn-sm" onclick="deletarPeça(${r.peca_code},'${r.nome}')">Remover</button></td>`:'<td style="display:none"></td>'}
+      ${canEdit?`<td>
+        <button class="btn btn-ghost btn-xs" onclick="editarEquip(${r.equipamento_code})">✎</button>
+        <button class="btn btn-danger btn-xs" onclick="deletarEquip(${r.equipamento_code},'${r.nome.replace(/'/g,"\\'")}')">✕</button>
+      </td>`:''}
     </tr>`;
   }).join('');
 }
-function abrirModalPeça(){abrirModal('modal-peca');carregarCategorias();}
-async function carregarCategorias(){
-  const cats=await api('/api/pecas/categorias').catch(()=>[]);
-  const sel=document.getElementById('mf-cat');
-  const current=sel.value;
-  sel.innerHTML='<option value="" disabled selected>Selecione uma categoria</option>';
-  cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
-  const outro=document.createElement('option');outro.value='__outro__';outro.textContent='+ Outra categoria…';sel.appendChild(outro);
-  if(current)sel.value=current;
+
+async function verDetalheEquip(code){
+  const r=await api(`/api/equipamentos/${code}`);
+  if(!r||r.erro){toast('Erro ao carregar equipamento',false);return;}
+  const canEdit=usuario?.perfil==='admin'||usuario?.perfil==='operador';
+  document.getElementById('med-titulo').textContent=r.nome;
+  document.getElementById('med-body').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-family:var(--fm);font-size:12px;margin-bottom:16px">
+      <div><span style="color:var(--muted)">CATEGORIA</span><div style="color:var(--text);margin-top:2px">${r.categoria}</div></div>
+      <div><span style="color:var(--muted)">UID</span><div style="color:var(--accent);letter-spacing:2px;margin-top:2px">${r.uid_raw}</div></div>
+      <div><span style="color:var(--muted)">CÓDIGO</span><div style="margin-top:2px">${r.equipamento_code}</div></div>
+      <div><span style="color:var(--muted)">QUANTIDADE</span><div style="margin-top:2px">${r.quantidade}</div></div>
+      <div><span style="color:var(--muted)">STATUS</span><div style="margin-top:4px"><span class="bt ${r.em_manutencao?'bt-manutencao':r.disponivel?'bt-livre':'bt-em-uso'}">${r.em_manutencao?'MANUTENÇÃO':r.disponivel?'LIVRE':'EM USO'}</span></div></div>
+      <div><span style="color:var(--muted)">LOCALIZAÇÃO</span><div style="margin-top:2px">${r.loc_setor_nome||'—'}${r.loc_unidade_nome?' · '+r.loc_unidade_nome:''}</div></div>
+      <div><span style="color:var(--muted)">ÚLTIMO RESPONSÁVEL</span><div style="margin-top:2px">${r.ultimo_operador_nome||'—'}</div></div>
+      <div><span style="color:var(--muted)">ÚLTIMA MOV.</span><div style="margin-top:2px">${fmt(r.ultima_mov)}</div></div>
+    </div>
+    ${r.descricao?`<div style="font-family:var(--fm);font-size:11px;color:var(--muted);margin-bottom:4px">DESCRIÇÃO</div><div style="background:var(--bg);padding:12px;border-radius:4px;font-size:13px;line-height:1.6">${r.descricao}</div>`:''}
+  `;
+  const manutBtn=document.getElementById('med-manut-btn');
+  manutBtn.style.display=canEdit?'':'none';
+  manutBtn.dataset.code=code;
+  manutBtn.dataset.manut=r.em_manutencao?'1':'0';
+  manutBtn.textContent=r.em_manutencao?'✓ Retirar de manutenção':'⚙ Enviar para manutenção';
+  manutBtn.className='btn btn-sm '+(r.em_manutencao?'btn-ghost':'btn-warn');
+  document.getElementById('med-edit-btn').style.display=canEdit?'':'none';
+  document.getElementById('med-edit-btn').dataset.code=code;
+  abrirModal('modal-equip-detalhe');
+}
+function acaoManutencaoDetalhe(){
+  const btn=document.getElementById('med-manut-btn');
+  const code=parseInt(btn.dataset.code);
+  const emManut=btn.dataset.manut==='1';
+  fecharModal('modal-equip-detalhe');
+  abrirModalManutencao(emManut?'saida':'entrada', code);
+}
+function editarEquipDetalhe(){
+  const code=parseInt(document.getElementById('med-edit-btn').dataset.code);
+  fecharModal('modal-equip-detalhe');
+  editarEquip(code);
+}
+
+let _equipEditCode=null;
+async function abrirModalEquip(){
+  _equipEditCode=null;
+  document.getElementById('meq-title').textContent='Novo Equipamento';
+  document.getElementById('meq-btn').textContent='Cadastrar';
+  ['meq-nome','meq-uid','meq-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('meq-peca').value='';
+  document.getElementById('meq-qtd').value='1';
+  document.getElementById('meq-peso').value='';
+  await carregarCategorias();
+  abrirModal('modal-equip');
+}
+async function editarEquip(code){
+  _equipEditCode=code;
+  const r=await api(`/api/equipamentos/${code}`);
+  if(!r||r.erro){toast('Equipamento não encontrado',false);return;}
+  document.getElementById('meq-title').textContent='Editar Equipamento';
+  document.getElementById('meq-btn').textContent='Salvar';
+  document.getElementById('meq-nome').value=r.nome||'';
+  document.getElementById('meq-peca').value=r.equipamento_code||'';
+  document.getElementById('meq-qtd').value=r.quantidade||1;
+  document.getElementById('meq-peso').value=r.peso||'';
+  document.getElementById('meq-uid').value=r.uid_raw||'';
+  document.getElementById('meq-desc').value=r.descricao||'';
+  await carregarCategorias(r.categoria);
+  abrirModal('modal-equip');
+}
+async function salvarEquip(){
+  const nome=document.getElementById('meq-nome').value.trim();
+  const catSel=document.getElementById('meq-cat').value;
+  const catCustom=document.getElementById('meq-cat-custom').value.trim();
+  const categoria=catSel==='__custom__'?catCustom:catSel;
+  const code=parseInt(document.getElementById('meq-peca').value);
+  const uid=document.getElementById('meq-uid').value.trim();
+  const qtd=parseInt(document.getElementById('meq-qtd').value)||1;
+  const peso=parseFloat(document.getElementById('meq-peso').value)||null;
+  const desc=document.getElementById('meq-desc').value.trim();
+  if(!nome||!categoria){toast('Nome e categoria são obrigatórios',false);return;}
+  const body={nome,categoria,descricao:desc,quantidade:qtd,peso,uid_raw:uid};
+  let r;
+  if(_equipEditCode){
+    r=await apiFetch(`/api/equipamentos/${_equipEditCode}`,'PUT',body);
+  } else {
+    if(!code&&code!==0){toast('Código obrigatório',false);return;}
+    r=await apiFetch('/api/equipamentos','POST',{...body,equipamento_code:code});
+  }
+  if(r.ok){toast(r.data.mensagem||'Salvo!');fecharModal('modal-equip');loadEquip();}
+  else toast(r.data.erro||'Erro ao salvar',false);
+}
+async function deletarEquip(code,nome){
+  if(!confirm(`Remover equipamento "${nome}"?`)) return;
+  const r=await apiFetch(`/api/equipamentos/${code}`,'DELETE');
+  if(r.ok){toast('Equipamento removido');loadEquip();}
+  else toast(r.data.erro||'Erro ao remover',false);
+}
+async function carregarCategorias(atual){
+  const cats=await api('/api/equipamentos/categorias');
+  const sel=document.getElementById('meq-cat');
+  sel.innerHTML='<option value="" disabled>Selecione...</option>';
+  (cats||[]).forEach(c=>{
+    const o=document.createElement('option'); o.value=c; o.textContent=c;
+    if(c===atual)o.selected=true;
+    sel.appendChild(o);
+  });
+  const custom=document.createElement('option'); custom.value='__custom__'; custom.textContent='+ Nova categoria...';
+  sel.appendChild(custom);
+  if(atual&&!(cats||[]).includes(atual)){
+    const o=document.createElement('option'); o.value=atual; o.textContent=atual; o.selected=true;
+    sel.insertBefore(o,custom);
+  }
 }
 function toggleCatCustom(){
-  const sel=document.getElementById('mf-cat');
-  document.getElementById('mf-cat-custom').style.display=sel.value==='__outro__'?'block':'none';
+  const v=document.getElementById('meq-cat').value;
+  document.getElementById('meq-cat-custom').style.display=v==='__custom__'?'block':'none';
 }
 function previewModalUID(){
-  const p=parseInt(document.getElementById('mf-peca').value)||0;
-  const uidManual=(document.getElementById('mf-uid')||{value:''}).value.trim();
-  if(!p && !uidManual){document.getElementById('mf-uid-preview').style.display='none';return;}
-  if(uidManual){
-    document.getElementById('mf-uid-val').textContent=uidManual;
-  } else {
-    const b1=((p>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
-    const b2=(p&0xFF).toString(16).toUpperCase().padStart(2,'0');
-    document.getElementById('mf-uid-val').textContent=b1+b2+'0000';
-  }
-  document.getElementById('mf-uid-preview').style.display='block';
-}
-async function salvarPeça(){
-  const sel=document.getElementById('mf-cat');
-  const cat=sel.value==='__outro__'?document.getElementById('mf-cat-custom').value.trim():sel.value;
-  const pesoVal=parseFloat(document.getElementById('mf-peso').value);
-  const uidRaw=(document.getElementById('mf-uid')||{value:''}).value.trim();
-  const payload={
-    nome:document.getElementById('mf-nome').value.trim(),
-    categoria:cat,
-    peca_code:parseInt(document.getElementById('mf-peca').value),
-    quantidade:parseInt(document.getElementById('mf-qtd').value)||1,
-    ...(isNaN(pesoVal)?{}:{peso:pesoVal}),
-    ...(uidRaw?{uid_raw:uidRaw}:{})
-  };
-  const r=await apiFetch('/api/pecas','POST',payload);
-  if(r.ok){
-    toast('Peça cadastrada! UID: '+(r.data.uid_raw||'?'));
-    fecharModal('modal-peca');
-    loadFer();
-  } else toast(r.data.erro||'Erro ao cadastrar',false);
-}
-async function deletarPeça(peca,nome){
-  if(!confirm(`Remover "${nome}"?`))return;
-  const r=await apiFetch('/api/pecas/'+peca,'DELETE');
-  if(r.ok){toast('Peça removida');loadFer();}else toast(r.data.erro||'Erro',false);
+  const v=parseInt(document.getElementById('meq-peca').value);
+  if(isNaN(v))return;
+  const uid=`${(v>>8&0xFF).toString(16).padStart(2,'0').toUpperCase()}${(v&0xFF).toString(16).padStart(2,'0').toUpperCase()}0000`;
+  document.getElementById('meq-uid-val').textContent=uid;
+  document.getElementById('meq-uid-preview').style.display='block';
 }
 
 // ══ OPERADORES ══
 async function loadOps(){
-  const[ativos,todos]=await Promise.all([api('/api/operadores/ativos'),api('/api/operadores')]);
-  const isOper=usuario&&(usuario.perfil==='admin'||usuario.perfil==='operador');
-  document.getElementById('op-ativos').innerHTML=!ativos.length
-    ?'<div style="font-family:var(--fm);font-size:12px;color:var(--muted)">Nenhum operador logado agora.</div>'
-    :ativos.map(o=>`<div class="op-card">
-      <div class="op-avatar">${o.nome[0]}</div>
-      <div><div class="op-name">${o.nome}</div>
-      <div class="op-meta">${o.setor} · ${o.unidade}<br>${o.terminal_id?'Terminal: '+o.terminal_id+'<br>':''} ${fmt(o.inicio)}</div></div>
-      <span class="bt bt-ativo" style="margin-left:auto">ATIVO</span></div>`).join('');
-  document.getElementById('op-body').innerHTML=todos.map(o=>`
-    <tr>
-      <td><strong>${o.nome}</strong></td>
-      <td><span class="uid-chip">${o.matricula}</span></td>
-      <td><span class="uid-chip">${o.uid_raw}</span></td>
-      <td><span style="color:var(--accent);font-family:var(--fm)">${o.peca_code}</span></td>
-      ${isOper?`<td><button class="btn btn-danger btn-sm" onclick="deletarOperador(${o.id},'${o.nome}')">Remover</button></td>`:'<td style="display:none"></td>'}
-    </tr>`).join('');
+  const nome=document.getElementById('op-nome-f').value.trim();
+  const mat=document.getElementById('op-mat-f').value.trim();
+  const uid=document.getElementById('op-uid-f').value.trim();
+  const rows=await api('/api/operadores?'+qs({nome,matricula:mat,uid}));
+  document.getElementById('op-count').textContent=(rows?.length||0)+' operadores';
+
+  const sessoes=await api('/api/sessoes/ativas');
+  const grid=document.getElementById('op-ativos');
+  if(!sessoes?.length){grid.innerHTML='<div style="color:var(--muted);font-family:var(--fm);font-size:12px">Nenhum operador logado</div>';}
+  else grid.innerHTML=sessoes.map(s=>`
+    <div class="op-card">
+      <div class="op-avatar">${(s.nome||'?')[0].toUpperCase()}</div>
+      <div><div class="op-name">${s.nome}</div>
+      <div class="op-meta">${s.matricula} · ${SETORES[s.setor_codigo]||'?'} · ${UNIDADES[s.unidade_codigo]||'?'}</div></div>
+    </div>`).join('');
+
+  const canEdit=usuario?.perfil==='admin'||usuario?.perfil==='operador';
+  if(!rows?.length){document.getElementById('op-body').innerHTML='<tr><td colspan="5" class="no-data">Nenhum operador</td></tr>';return;}
+  document.getElementById('op-body').innerHTML=rows.map(r=>`<tr>
+    <td><strong>${r.nome}</strong></td>
+    <td>${r.matricula}</td>
+    <td><span class="uid-chip">${r.uid_raw}</span></td>
+    <td style="color:var(--muted)">${r.equipamento_code||'—'}</td>
+    ${canEdit?`<td>
+      <button class="btn btn-ghost btn-xs" onclick="editarOp(${r.id})">✎</button>
+      <button class="btn btn-danger btn-xs" onclick="deletarOp(${r.id},'${r.nome.replace(/'/g,"\\'")}')">✕</button>
+    </td>`:''}
+  </tr>`).join('');
 }
-function abrirModalOperador(){abrirModal('modal-operador');}
+
+let _opEditId=null;
+async function abrirModalOperador(){
+  _opEditId=null;
+  document.getElementById('mo-title').textContent='Novo Operador';
+  document.getElementById('mo-btn').textContent='Cadastrar';
+  ['mo-nome','mo-mat','mo-uid'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mo-equip-code').value='0';
+  abrirModal('modal-operador');
+}
+async function editarOp(id){
+  _opEditId=id;
+  const rows=await api('/api/operadores');
+  const r=rows?.find(o=>o.id===id);
+  if(!r){toast('Operador não encontrado',false);return;}
+  document.getElementById('mo-title').textContent='Editar Operador';
+  document.getElementById('mo-btn').textContent='Salvar';
+  document.getElementById('mo-nome').value=r.nome||'';
+  document.getElementById('mo-mat').value=r.matricula||'';
+  document.getElementById('mo-uid').value=r.uid_raw||'';
+  document.getElementById('mo-equip-code').value=r.equipamento_code||0;
+  abrirModal('modal-operador');
+}
 async function salvarOperador(){
-  const payload={nome:document.getElementById('mo-nome').value.trim(),
-    matricula:document.getElementById('mo-mat').value.trim(),
-    uid_raw:document.getElementById('mo-uid').value.toUpperCase().trim()};
-  const r=await apiFetch('/api/operadores','POST',payload);
-  if(r.ok){toast('Operador cadastrado!');fecharModal('modal-operador');loadOps();}
-  else toast(r.data.erro||'Erro ao cadastrar',false);
+  const nome=document.getElementById('mo-nome').value.trim();
+  const mat=document.getElementById('mo-mat').value.trim();
+  const uid=document.getElementById('mo-uid').value.trim().toUpperCase();
+  const code=parseInt(document.getElementById('mo-equip-code').value)||0;
+  if(!nome||!mat||!uid){toast('Todos os campos são obrigatórios',false);return;}
+  const body={nome,matricula:mat,uid_raw:uid,equipamento_code:code};
+  const r=_opEditId
+    ? await apiFetch(`/api/operadores/${_opEditId}`,'PUT',body)
+    : await apiFetch('/api/operadores','POST',body);
+  if(r.ok){toast(r.data.mensagem||'Salvo!');fecharModal('modal-operador');loadOps();}
+  else toast(r.data.erro||'Erro',false);
 }
-async function deletarOperador(id,nome){
-  if(!confirm(`Remover operador "${nome}"?`))return;
-  const r=await apiFetch('/api/operadores/'+id,'DELETE');
-  if(r.ok){toast('Operador removido');loadOps();}else toast(r.data.erro||'Erro',false);
+async function deletarOp(id,nome){
+  if(!confirm(`Remover operador "${nome}"?`)) return;
+  const r=await apiFetch(`/api/operadores/${id}`,'DELETE');
+  if(r.ok){toast('Operador removido');loadOps();}
+  else toast(r.data.erro||'Erro',false);
+}
+
+// ══ MANUTENÇÃO ══
+async function loadManutAtivos(){
+  const rows=await api('/api/manutencao/status');
+  const grid=document.getElementById('manut-ativos-grid');
+  const badge=document.getElementById('manut-badge');
+  const count=document.getElementById('manut-em-manut-count');
+  const n=rows?.length||0;
+  badge.textContent=n>0?` (${n})`:'';
+  count.textContent=n+' equipamento(s)';
+  if(!n){grid.innerHTML='<div style="color:var(--muted);font-family:var(--fm);font-size:12px;padding:12px">Nenhum equipamento em manutenção</div>';return;}
+  grid.innerHTML=rows.map(r=>`
+    <div class="manut-card">
+      <div class="alerta-nome">⚙ ${r.nome}</div>
+      <div class="alerta-meta">
+        <span style="color:var(--muted)">UID:</span> <span class="uid-chip">${r.uid_raw}</span><br>
+        <span style="color:var(--muted)">Categoria:</span> ${r.categoria}<br>
+        <span style="color:var(--muted)">Local:</span> ${r.loc_setor_nome||'—'}${r.loc_unidade_nome?' · '+r.loc_unidade_nome:''}<br>
+        <span style="color:var(--muted)">Entrada:</span> ${fmt(r.entrada_em)}
+      </div>
+    </div>`).join('');
+}
+async function loadManutencao(){
+  const equip=document.getElementById('mn-equip').value.trim();
+  const tipo=document.getElementById('mn-tipo').value;
+  const rows=await api('/api/manutencao?'+qs({nome:equip,tipo}));
+  document.getElementById('mn-count').textContent=(rows?.length||0)+' registros';
+  await loadManutAtivos();
+  if(!rows?.length){document.getElementById('mn-body').innerHTML='<tr><td colspan="7" class="no-data">Nenhum registro</td></tr>';return;}
+  document.getElementById('mn-body').innerHTML=rows.map(r=>`<tr>
+    <td>${fmt(r.horario)}</td>
+    <td><strong>${r.equipamento_nome||'—'}</strong></td>
+    <td><span class="uid-chip">${r.uid_raw||'—'}</span></td>
+    <td><span class="bt bt-${r.tipo}">${r.tipo==='entrada'?'⬇ Entrada':'⬆ Saída'}</span></td>
+    <td>${r.tecnico||'—'}</td>
+    <td style="max-width:200px;white-space:pre-wrap">${r.descricao||'—'}</td>
+    <td style="color:var(--muted)">${r.terminal_id||'—'}</td>
+  </tr>`).join('');
+}
+async function abrirModalManutencao(tipo, preCode=null){
+  document.getElementById('mm-tipo').value=tipo;
+  document.getElementById('mm-title').textContent=tipo==='entrada'?'Enviar para Manutenção':'Retirar de Manutenção';
+  document.getElementById('mm-btn').textContent=tipo==='entrada'?'⚙ Enviar para Manutenção':'✓ Retirar de Manutenção';
+  document.getElementById('mm-btn').className='btn '+(tipo==='entrada'?'btn-warn':'btn-ghost');
+  document.getElementById('mm-tecnico').value='';
+  document.getElementById('mm-desc').value='';
+  const sel=document.getElementById('mm-equip');
+  const rows=await api('/api/equipamentos?'+qs({em_manutencao:tipo==='saida'?'1':'0'}));
+  sel.innerHTML='<option value="">Selecione o equipamento...</option>';
+  (rows||[]).forEach(r=>{
+    const o=document.createElement('option'); o.value=r.equipamento_code; o.textContent=`${r.nome} (${r.uid_raw})`;
+    if(preCode&&r.equipamento_code===preCode)o.selected=true;
+    sel.appendChild(o);
+  });
+  abrirModal('modal-manutencao');
+}
+async function confirmarManutencao(){
+  const tipo=document.getElementById('mm-tipo').value;
+  const code=parseInt(document.getElementById('mm-equip').value);
+  const desc=document.getElementById('mm-desc').value.trim();
+  const tec=document.getElementById('mm-tecnico').value.trim();
+  if(!code){toast('Selecione um equipamento',false);return;}
+  const endpoint=tipo==='entrada'?'/api/manutencao/entrada':'/api/manutencao/saida';
+  const r=await apiFetch(endpoint,'POST',{equipamento_code:code,descricao:desc,tecnico:tec,terminal_id:'web'});
+  if(r.ok){toast(r.data.mensagem||'OK');fecharModal('modal-manutencao');loadManutencao();}
+  else toast(r.data.erro||'Erro',false);
 }
 
 // ══ ALERTAS ══
 async function loadAlertas(){
-  const data=await api('/api/alertas');
-  document.getElementById('alerta-total').textContent=data.total_alertas;
-  document.getElementById('alert-badge').textContent=data.total_alertas>0?'('+data.total_alertas+')':'';
-  document.getElementById('alertas-grid').innerHTML=!data.pecas.length
-    ?'<div style="font-family:var(--fm);font-size:12px;color:var(--accent3)">✓ Nenhuma peca em uso sem devolução.</div>'
-    :data.pecas.map(f=>`<div class="alerta-card">
-      <div class="alerta-nome">${f.nome} <span style="font-family:var(--fm);font-size:11px;color:var(--muted)">${f.categoria}</span></div>
+  const d=await api('/api/dashboard/dados');
+  const emUso=d?.em_uso||[];
+  document.getElementById('alerta-total').textContent=emUso.length;
+  document.getElementById('alert-badge').textContent=emUso.length>0?` (${emUso.length})`:'';
+  if(!emUso.length){document.getElementById('alertas-grid').innerHTML='<div style="color:var(--accent3);font-family:var(--fm);font-size:12px">✓ Todos os equipamentos devolvidos</div>';return;}
+  document.getElementById('alertas-grid').innerHTML=emUso.map(r=>`
+    <div class="alerta-card">
+      <div class="alerta-nome">⚠ ${r.nome}</div>
       <div class="alerta-meta">
-        UID: <span class="uid-chip">${f.uid_raw}</span> · peça ${f.peca_code}<br>
-        ${f.loc_setor?`Última localização: <strong>${f.loc_setor}</strong> · <strong>${f.loc_unidade}</strong><br>`:'Localização: <em>desconhecida</em><br>'}
-        Responsável: <span class="alerta-op">${f.ultimo_operador||'—'}</span>${f.ultimo_operador_mat?' ('+f.ultimo_operador_mat+')':''}<br>
-        Desde: ${fmt(f.ultima_mov)}
+        <span class="uid-chip">${r.uid_raw}</span><br>
+        Categoria: ${r.categoria}<br>
+        Operador: <span class="alerta-op">${r.ultimo_operador||'—'}</span><br>
+        Local: ${r.loc_setor||'—'} · ${r.loc_unidade||'—'}<br>
+        Desde: ${fmt(r.ultima_mov)}
       </div>
     </div>`).join('');
 }
 
-// ══ TERMINAL RFID ══
-function previewUID(uid){
-  uid=uid.toUpperCase();
-  if(uid.length<4){document.getElementById('prev-peca').textContent='--';document.getElementById('prev-bytes').innerHTML='';return;}
-  const b1=parseInt(uid.slice(0,2),16)||0, b2=parseInt(uid.slice(2,4),16)||0;
-  const peca=(b1<<8)|b2;
-  document.getElementById('prev-peca').textContent=peca;
-  document.getElementById('prev-bytes').innerHTML=
-    `<div class="byte-block"><span>B1:</span> 0x${uid.slice(0,2)}</div>`+
-    `<div class="byte-block"><span>B2:</span> 0x${uid.slice(2,4)}</div>`+
-    `<div class="byte-block"><span>peca_code:</span> ${peca}</div>`;
-  // Atualiza payload preview
-  const s=document.getElementById('sim-setor').value||'?';
-  const u=document.getElementById('sim-unidade').value||'?';
-  const tid=document.getElementById('sim-terminal').value||'ESP-SIM-01';
-  document.getElementById('payload-preview').innerHTML=
-    `{\n  "uid":            "${uid}",\n  "setor_codigo":   ${s},\n  "unidade_codigo": ${u},\n  "terminal_id":    "${tid}"\n}`;
+// ══ TERMINAL RFID SIMULADO ══
+function previewUID(v){
+  v=(v||'').toUpperCase().replace(/[^0-9A-F]/g,'');
+  if(v.length<4){document.getElementById('uid-preview').classList.remove('show');return;}
+  const b=[];
+  for(let i=0;i<v.length;i+=2)b.push(parseInt(v.substr(i,2)||'0',16));
+  const code=(b[0]||0)*256+(b[1]||0);
+  document.getElementById('prev-peca').textContent=code+' (0x'+code.toString(16).toUpperCase()+')';
+  document.getElementById('prev-bytes').innerHTML=b.map((bv,i)=>`<span class="byte-block">B${i+1}<span>: ${bv.toString(16).padStart(2,'0').toUpperCase()}</span></span>`).join('');
+  document.getElementById('uid-preview').classList.add('show');
 }
-
-document.addEventListener('DOMContentLoaded',()=>{
-  ['sim-setor','sim-unidade','sim-terminal'].forEach(id=>{
-    document.getElementById(id).addEventListener('change',()=>previewUID(document.getElementById('sim-uid').value));
-    document.getElementById(id).addEventListener('input',()=>previewUID(document.getElementById('sim-uid').value));
-  });
-});
-
 async function simularRFID(){
-  const uid=document.getElementById('sim-uid').value.toUpperCase();
+  const uid=document.getElementById('sim-uid').value.trim();
   const setor=document.getElementById('sim-setor').value;
   const unidade=document.getElementById('sim-unidade').value;
-  const terminal=document.getElementById('sim-terminal').value||'ESP-SIM-01';
-  if(uid.length<4){alert('UID deve ter no mínimo 4 caracteres hex');return;}
-  if(!setor||!unidade){alert('Selecione setor e unidade do terminal');return;}
+  const terminal=document.getElementById('sim-terminal').value.trim()||'ESP-SIM-01';
   const log=document.getElementById('rfid-log');
-  log.className='log-box show';
-  const payload={uid,setor_codigo:parseInt(setor),unidade_codigo:parseInt(unidade),terminal_id:terminal};
-  log.textContent='► POST /api/rfid\n'+JSON.stringify(payload,null,2)+'\n\n';
-  try{
-    const res=await fetch('/api/rfid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    const data=await res.json();
-    log.textContent+='◀ HTTP '+res.status+'\n\n'+JSON.stringify(data,null,2);
-    log.className='log-box show'+(data.status==='erro'?' error':'');
-    if(data.status==='ok') loadLocalizacao();
-  }catch(e){log.className='log-box show error';log.textContent+='✗ Erro: '+e.message;}
+  if(!uid||!setor||!unidade){toast('Preencha UID, setor e unidade',false);return;}
+  log.className='log-box show'; log.textContent='Enviando...\n';
+  const body={uid,setor_codigo:parseInt(setor),unidade_codigo:parseInt(unidade),terminal_id:terminal};
+  document.getElementById('payload-preview').innerHTML=`{<br>&nbsp;&nbsp;"uid": "${uid}",<br>&nbsp;&nbsp;"setor_codigo": ${setor},<br>&nbsp;&nbsp;"unidade_codigo": ${unidade},<br>&nbsp;&nbsp;"terminal_id": "${terminal}"<br>}`;
+  const r=await apiFetch('/api/rfid','POST',body);
+  const ts=new Date().toLocaleTimeString('pt-BR');
+  if(r.ok){
+    log.className='log-box show'; log.textContent=`[${ts}] HTTP ${r.status}\n${JSON.stringify(r.data,null,2)}`;
+    toast(r.data.msg||'Leitura OK');
+  }else{
+    log.className='log-box show error'; log.textContent=`[${ts}] ERRO HTTP ${r.status}\n${JSON.stringify(r.data,null,2)}`;
+    toast(r.data.msg||'Erro',false);
+  }
 }
 function uidAleatorio(){
-  const c='0123456789ABCDEF';
-  document.getElementById('sim-uid').value=[...Array(4)].map(()=>c[Math.floor(Math.random()*16)]).join('');
-  previewUID(document.getElementById('sim-uid').value);
+  const hex='0123456789ABCDEF';
+  const uid=Array.from({length:8},()=>hex[Math.floor(Math.random()*16)]).join('');
+  document.getElementById('sim-uid').value=uid;
+  previewUID(uid);
 }
 function gerarUID(){
-  const peca=parseInt(document.getElementById('gp').value)||0;
-  const b1=((peca>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
-  const b2=(peca&0xFF).toString(16).toUpperCase().padStart(2,'0');
-  const uid=b1+b2;
-  document.getElementById('gen-uid').textContent=uid+'0000';
-  document.getElementById('gen-bytes').innerHTML=
-    `<div class="byte-block"><span>B1:</span> 0x${b1}</div>`+
-    `<div class="byte-block"><span>B2:</span> 0x${b2}</div>`+
-    `<div class="byte-block"><span>peca_code:</span> ${peca}</div>`;
+  const v=parseInt(document.getElementById('gp').value);
+  if(isNaN(v)||v<0||v>65535)return;
+  const uid=`${(v>>8&0xFF).toString(16).padStart(2,'0').toUpperCase()}${(v&0xFF).toString(16).padStart(2,'0').toUpperCase()}0000`;
+  document.getElementById('gen-uid').textContent=uid;
+  document.getElementById('gen-bytes').innerHTML=`<span class="byte-block">B1<span>: ${(v>>8&0xFF).toString(16).padStart(2,'0').toUpperCase()}</span></span><span class="byte-block">B2<span>: ${(v&0xFF).toString(16).padStart(2,'0').toUpperCase()}</span></span>`;
 }
 function copiarUID(){
   const uid=document.getElementById('gen-uid').textContent;
-  if(uid==='----')return;
-  navigator.clipboard.writeText(uid); toast('UID '+uid+' copiado!');
+  navigator.clipboard?.writeText(uid).then(()=>toast('UID copiado!'));
+  document.getElementById('sim-uid').value=uid; previewUID(uid);
+}
+
+// ══ TERMINAIS ══
+async function loadTerminais(){
+  const filtro=document.getElementById('term-filtro').value;
+  const tipo=document.getElementById('term-tipo-filtro').value;
+  let rows=await api('/api/terminais');
+  if(filtro) rows=rows?.filter(r=>r.status===filtro)||[];
+  if(tipo) rows=rows?.filter(r=>r.tipo===tipo)||[];
+  const pendentes=(rows||[]).filter(r=>r.status==='pendente');
+  document.getElementById('term-total').textContent=(rows?.length||0)+' terminais';
+  document.getElementById('term-summary').textContent=`${pendentes.length} pendente(s)`;
+  const pSec=document.getElementById('term-pendentes-section');
+  pSec.style.display=pendentes.length?'block':'none';
+  document.getElementById('term-pend-count').textContent=pendentes.length+' terminal(is)';
+  document.getElementById('term-pendentes-list').innerHTML=pendentes.map(t=>_termCard(t,true)).join('');
+  if(!rows?.length){document.getElementById('term-body').innerHTML='<tr><td colspan="10" class="no-data">Nenhum terminal</td></tr>';return;}
+  document.getElementById('term-body').innerHTML=rows.map(t=>`<tr>
+    <td style="font-family:var(--fm);font-size:11px">${t.terminal_id}</td>
+    <td>${t.apelido||'<span style="color:var(--muted)">—</span>'}</td>
+    <td><span class="bt term-tipo-${t.tipo||'normal'}">${t.tipo||'normal'}</span></td>
+    <td><span class="bt term-status-${t.status}">${t.status}</span></td>
+    <td>${SETORES[t.setor_codigo]||'<span style="color:var(--muted)">—</span>'}</td>
+    <td>${UNIDADES[t.unidade_codigo]||'<span style="color:var(--muted)">—</span>'}</td>
+    <td style="color:var(--muted);font-size:11px">${t.ip_address||'—'}</td>
+    <td style="color:var(--muted)">${t.firmware_ver||'—'}</td>
+    <td>${fmt(t.ultimo_acesso)}</td>
+    <td>
+      ${t.status==='pendente'?`<button class="btn btn-warn btn-xs" onclick="abrirAprovar('${t.terminal_id}')">Aprovar</button>
+        <button class="btn btn-danger btn-xs" onclick="rejeitarTerminal('${t.terminal_id}')">Rejeitar</button>`
+      :`<button class="btn btn-ghost btn-xs" onclick="abrirConfigTerminal('${t.terminal_id}')">✎ Config</button>
+        <button class="btn btn-danger btn-xs" onclick="removerTerminal('${t.terminal_id}')">✕</button>`}
+    </td>
+  </tr>`).join('');
+}
+function _termCard(t,compact){
+  return `<div class="term-card ${t.status}">
+    <div class="term-icon ${t.status}">📡</div>
+    <div>
+      <div style="font-weight:600">${t.apelido||t.terminal_id}</div>
+      <div class="term-meta">
+        MAC: ${t.terminal_id} · IP: ${t.ip_address||'?'}<br>
+        Tipo: <span class="bt term-tipo-${t.tipo||'normal'}">${t.tipo||'normal'}</span> · Firmware: ${t.firmware_ver||'?'}<br>
+        Último acesso: ${fmt(t.ultimo_acesso)}
+      </div>
+    </div>
+    <div class="term-actions">
+      <button class="btn btn-warn btn-sm" onclick="abrirAprovar('${t.terminal_id}')">✓ Aprovar</button>
+      <button class="btn btn-danger btn-sm" onclick="rejeitarTerminal('${t.terminal_id}')">✕ Rejeitar</button>
+    </div>
+  </div>`;
+}
+async function verificarPendentes(){
+  const rows=await api('/api/terminais/pendentes');
+  const n=rows?.length||0;
+  const badge=document.getElementById('term-badge');
+  badge.style.display=n>0?'inline-flex':'none'; badge.textContent=n;
+  const bar=document.getElementById('notif-pendentes');
+  if(n>0) bar.classList.add('show');
+}
+function abrirAprovar(id){
+  document.getElementById('mat-id').value=id;
+  document.getElementById('mat-apelido').value='';
+  document.getElementById('mat-tipo').value='normal';
+  document.getElementById('mat-setor').value='';
+  document.getElementById('mat-unidade').value='';
+  abrirModal('modal-aprovar-terminal');
+}
+async function confirmarAprovacao(){
+  const id=document.getElementById('mat-id').value;
+  const r=await apiFetch(`/api/terminais/${id}/aprovar`,'POST',{
+    apelido:document.getElementById('mat-apelido').value,
+    tipo:document.getElementById('mat-tipo').value,
+    setor:document.getElementById('mat-setor').value,
+    unidade:document.getElementById('mat-unidade').value,
+  });
+  if(r.ok){toast('Terminal aprovado');fecharModal('modal-aprovar-terminal');loadTerminais();verificarPendentes();}
+  else toast(r.data.erro||'Erro',false);
+}
+async function rejeitarTerminal(id){
+  if(!confirm(`Rejeitar terminal ${id}?`)) return;
+  const r=await apiFetch(`/api/terminais/${id}/rejeitar`,'POST');
+  if(r.ok){toast('Terminal rejeitado');loadTerminais();}
+  else toast(r.data.erro||'Erro',false);
+}
+async function abrirConfigTerminal(id){
+  const rows=await api('/api/terminais');
+  const t=rows?.find(r=>r.terminal_id===id);
+  if(!t) return;
+  document.getElementById('mct-id').value=id;
+  document.getElementById('mct-apelido').value=t.apelido||'';
+  document.getElementById('mct-tipo').value=t.tipo||'normal';
+  document.getElementById('mct-setor').value=t.setor_codigo||'';
+  document.getElementById('mct-unidade').value=t.unidade_codigo||'';
+  abrirModal('modal-config-terminal');
+}
+async function salvarConfigTerminal(){
+  const id=document.getElementById('mct-id').value;
+  const r=await apiFetch(`/api/terminais/${id}`,'PUT',{
+    apelido:document.getElementById('mct-apelido').value,
+    tipo:document.getElementById('mct-tipo').value,
+    setor:document.getElementById('mct-setor').value,
+    unidade:document.getElementById('mct-unidade').value,
+  });
+  if(r.ok){toast('Terminal configurado');fecharModal('modal-config-terminal');loadTerminais();}
+  else toast(r.data.erro||'Erro',false);
+}
+async function removerTerminal(id){
+  if(!confirm(`Remover terminal ${id}?`)) return;
+  const r=await apiFetch(`/api/terminais/${id}`,'DELETE');
+  if(r.ok){toast('Terminal removido');loadTerminais();}
+  else toast(r.data.erro||'Erro',false);
 }
 
 // ══ ADMIN ══
 async function loadAdmin(){
-  const[pecas,operadores,usuarios,dd]=await Promise.all([
-    api('/api/pecas'),api('/api/operadores'),api('/api/usuarios'),api('/api/dashboard/dados')]);
+  const equips=await api('/api/equipamentos');
+  const ops=await api('/api/operadores');
+  const movs=await api('/api/movimentacoes?limite=1000');
+  const term=await api('/api/terminais');
+  const manuts=await api('/api/manutencao');
   document.getElementById('admin-stats').innerHTML=`
-    <div class="info-card"><div class="info-label">Peças</div><div class="info-value">${pecas.length}</div></div>
-    <div class="info-card"><div class="info-label">Operadores</div><div class="info-value">${operadores.length}</div></div>
-    <div class="info-card"><div class="info-label">Usuários</div><div class="info-value">${usuarios.length}</div></div>
-    <div class="info-card"><div class="info-label">Movimentações</div><div class="info-value">${dd.totais.total_movimentacoes||0}</div></div>
+    <div class="info-card"><div class="info-label">Equipamentos</div><div class="info-value">${equips?.length||0}</div></div>
+    <div class="info-card"><div class="info-label">Operadores</div><div class="info-value">${ops?.length||0}</div></div>
+    <div class="info-card"><div class="info-label">Movimentações</div><div class="info-value">${movs?.length||0}</div></div>
+    <div class="info-card"><div class="info-label">Terminais</div><div class="info-value">${term?.length||0}</div></div>
+    <div class="info-card"><div class="info-label">Em manutenção</div><div class="info-value" style="color:var(--warn)">${equips?.filter(e=>e.em_manutencao).length||0}</div></div>
+    <div class="info-card"><div class="info-label">Histórico manutenção</div><div class="info-value">${manuts?.length||0}</div></div>
   `;
-  document.getElementById('usuarios-body').innerHTML=usuarios.map(u=>`
-    <tr>
-      <td><strong>${u.nome}</strong></td>
-      <td style="color:var(--muted)">${u.email}</td>
-      <td><span class="bt bt-${u.perfil}">${u.perfil}</span></td>
-      <td><span class="bt ${u.ativo?'bt-livre':'bt-em-uso'}">${u.ativo?'ATIVO':'INATIVO'}</span></td>
-      <td>${fmt(u.ultimo_login)}</td>
-      <td style="display:flex;gap:6px">
-        <button class="btn btn-ghost btn-sm" onclick="editarUsuario(${u.id},'${u.nome}','${u.email}','${u.perfil}')">Editar</button>
-        ${u.id!==usuario.id?`<button class="btn btn-danger btn-sm" onclick="toggleUsuario(${u.id},${u.ativo},'${u.nome}')">${u.ativo?'Desativar':'Ativar'}</button>`:''}
-      </td>
-    </tr>`).join('');
+  const users=await api('/api/usuarios');
+  document.getElementById('usuarios-body').innerHTML=users?.map(u=>`<tr>
+    <td><strong>${u.nome}</strong></td>
+    <td>${u.email}</td>
+    <td><span class="bt bt-${u.perfil}">${u.perfil}</span></td>
+    <td><span class="bt ${u.ativo?'bt-livre':'bt-em-uso'}">${u.ativo?'ATIVO':'INATIVO'}</span></td>
+    <td>${fmt(u.ultimo_login)}</td>
+    <td>
+      <button class="btn btn-ghost btn-xs" onclick="editarUsuario(${u.id})">✎</button>
+    </td>
+  </tr>`).join('')||'';
+
+  // Logs de login
+  const logsLogin=await api('/api/auth/logs');
+  document.getElementById('logs-login-body').innerHTML=(logsLogin||[]).map(l=>`<tr>
+    <td>${fmt(l.horario)}</td>
+    <td>${l.usuario_nome||'—'}</td>
+    <td>${l.email}</td>
+    <td><span class="bt ${l.sucesso?'bt-livre':'bt-em-uso'}">${l.sucesso?'✓ SUCESSO':'✗ FALHA'}</span></td>
+    <td style="color:var(--muted)">${l.ip_address||'—'}</td>
+  </tr>`).join('')||'<tr><td colspan="5" class="no-data">Nenhum log</td></tr>';
+
+  // Exportações
+  const exps=await api('/api/auth/exportacoes');
+  document.getElementById('exportacoes-body').innerHTML=(exps||[]).map(e=>`<tr>
+    <td>${fmt(e.horario)}</td>
+    <td>${e.usuario_nome||'—'}</td>
+    <td><span class="bt">${e.formato?.toUpperCase()||'—'}</span></td>
+    <td>${e.total_linhas||0}</td>
+    <td style="font-size:10px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis">${e.filtros||'—'}</td>
+  </tr>`).join('')||'<tr><td colspan="5" class="no-data">Nenhuma exportação</td></tr>';
 }
+
+// ── Config e-mail ──
+async function loadCfg(){
+  const r=await api('/api/configuracoes');
+  if(!r) return;
+  document.getElementById('cfg-email-habilitado').checked=r.email_alertas_habilitado==='1';
+  document.getElementById('cfg-email-login').checked=r.email_alertas_login==='1';
+  document.getElementById('cfg-smtp-host').value=r.email_smtp_host||'';
+  document.getElementById('cfg-smtp-port').value=r.email_smtp_port||587;
+  document.getElementById('cfg-smtp-user').value=r.email_smtp_user||'';
+  document.getElementById('cfg-email-destino').value=r.email_destino||'';
+}
+async function salvarConfig(){
+  const r=await apiFetch('/api/configuracoes','PUT',{
+    email_alertas_habilitado:document.getElementById('cfg-email-habilitado').checked?'1':'0',
+    email_alertas_login:document.getElementById('cfg-email-login').checked?'1':'0',
+    email_smtp_host:document.getElementById('cfg-smtp-host').value,
+    email_smtp_port:document.getElementById('cfg-smtp-port').value,
+    email_smtp_user:document.getElementById('cfg-smtp-user').value,
+    email_smtp_pass:document.getElementById('cfg-smtp-pass').value||undefined,
+    email_destino:document.getElementById('cfg-email-destino').value,
+  });
+  const msg=document.getElementById('cfg-msg');
+  msg.textContent=r.ok?'✓ Salvo!':'✗ Erro';
+  msg.style.color=r.ok?'var(--accent3)':'var(--danger)';
+  setTimeout(()=>{msg.textContent='';},2000);
+}
+async function testarEmail(){
+  const r=await apiFetch('/api/configuracoes','PUT',{
+    email_smtp_host:document.getElementById('cfg-smtp-host').value,
+    email_smtp_port:document.getElementById('cfg-smtp-port').value,
+    email_smtp_user:document.getElementById('cfg-smtp-user').value,
+    email_smtp_pass:document.getElementById('cfg-smtp-pass').value||undefined,
+    email_destino:document.getElementById('cfg-email-destino').value,
+  });
+  toast('Configuração salva. Verificar se o SMTP está correto.');
+}
+
+// ── Usuários ──
+let _userEditId=null;
 function abrirModalUsuario(){
-  document.getElementById('mu-id').value='';
+  _userEditId=null;
   document.getElementById('mu-title').textContent='Novo Usuário';
+  document.getElementById('mu-senha-hint').textContent='(obrigatória)';
   ['mu-nome','mu-email','mu-senha'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('mu-perfil').value='visualizador';
-  document.getElementById('mu-senha-hint').textContent='(obrigatória)';
   abrirModal('modal-usuario');
 }
-function editarUsuario(id,nome,email,perfil){
-  document.getElementById('mu-id').value=id;
+async function editarUsuario(id){
+  _userEditId=id;
+  const rows=await api('/api/usuarios');
+  const u=rows?.find(x=>x.id===id);
+  if(!u) return;
   document.getElementById('mu-title').textContent='Editar Usuário';
-  document.getElementById('mu-nome').value=nome;
-  document.getElementById('mu-email').value=email;
-  document.getElementById('mu-perfil').value=perfil;
+  document.getElementById('mu-senha-hint').textContent='(deixe em branco para não alterar)';
+  document.getElementById('mu-nome').value=u.nome||'';
+  document.getElementById('mu-email').value=u.email||'';
+  document.getElementById('mu-perfil').value=u.perfil||'visualizador';
   document.getElementById('mu-senha').value='';
-  document.getElementById('mu-senha-hint').textContent='(deixe vazio para manter)';
   abrirModal('modal-usuario');
 }
 async function salvarUsuario(){
-  const id=document.getElementById('mu-id').value;
-  const payload={nome:document.getElementById('mu-nome').value.trim(),
-    email:document.getElementById('mu-email').value.trim(),
-    perfil:document.getElementById('mu-perfil').value};
+  const nome=document.getElementById('mu-nome').value.trim();
+  const email=document.getElementById('mu-email').value.trim();
+  const perfil=document.getElementById('mu-perfil').value;
   const senha=document.getElementById('mu-senha').value;
-  if(senha)payload.senha=senha;
-  let r;
-  if(id){r=await apiFetch('/api/usuarios/'+id,'PUT',payload);}
-  else{if(!senha){toast('Senha obrigatória',false);return;}r=await apiFetch('/api/usuarios','POST',payload);}
-  if(r.ok){toast('Usuário salvo!');fecharModal('modal-usuario');loadAdmin();}
-  else toast(r.data.erro||'Erro ao salvar',false);
+  const body={nome,email,perfil};
+  if(senha) body.senha=senha;
+  const r=_userEditId
+    ? await apiFetch(`/api/usuarios/${_userEditId}`,'PUT',body)
+    : await apiFetch('/api/usuarios','POST',{...body,senha});
+  if(r.ok){toast('Usuário salvo');fecharModal('modal-usuario');loadAdmin();}
+  else toast(r.data.erro||'Erro',false);
 }
-async function toggleUsuario(id,ativo,nome){
-  if(!confirm(`${ativo?'Desativar':'Ativar'} usuário "${nome}"?`))return;
-  const r=await apiFetch('/api/usuarios/'+id,'PUT',{ativo:!ativo});
-  if(r.ok){toast(`Usuário ${ativo?'desativado':'ativado'}`);loadAdmin();}else toast(r.data.erro||'Erro',false);
-}
-function previewPeça(){
-  const p=parseInt(document.getElementById('fn-peca').value)||0;
-  const uidManual=document.getElementById('fn-uid-raw').value.trim();
-  if(!p && !uidManual){document.getElementById('fn-preview').style.display='none';return;}
-  if(uidManual){
-    document.getElementById('fn-uid').textContent=uidManual;
-    document.getElementById('fn-uid-src').textContent='(UID inserido manualmente)';
-  } else {
-    const b1=((p>>8)&0xFF).toString(16).toUpperCase().padStart(2,'0');
-    const b2=(p&0xFF).toString(16).toUpperCase().padStart(2,'0');
-    document.getElementById('fn-uid').textContent=b1+b2+'0000';
-    document.getElementById('fn-uid-src').textContent='(gerado do código — B3+B4=0000)';
+
+// ── Admin quick cadastro ──
+function previewEquipAdmin(){
+  const v=parseInt(document.getElementById('fn-peca').value);
+  const uid=document.getElementById('fn-uid-raw').value;
+  if(uid){
+    document.getElementById('fn-uid').textContent=uid.toUpperCase();
+    document.getElementById('fn-uid-src').textContent='(UID fornecido)';
+    document.getElementById('fn-preview').style.display='block';
+  } else if(!isNaN(v)){
+    const gen=`${(v>>8&0xFF).toString(16).padStart(2,'0').toUpperCase()}${(v&0xFF).toString(16).padStart(2,'0').toUpperCase()}0000`;
+    document.getElementById('fn-uid').textContent=gen;
+    document.getElementById('fn-uid-src').textContent='(gerado do código)';
+    document.getElementById('fn-preview').style.display='block';
   }
-  document.getElementById('fn-preview').style.display='block';
 }
-async function cadastrarPeça(){
-  const uidRaw=document.getElementById('fn-uid-raw').value.trim();
-  const payload={
-    nome:document.getElementById('fn-nome').value.trim(),
-    categoria:document.getElementById('fn-cat').value.trim(),
-    peca_code:parseInt(document.getElementById('fn-peca').value),
-    quantidade:parseInt(document.getElementById('fn-qtd').value)||1
-  };
-  if(uidRaw) payload.uid_raw=uidRaw;
+async function cadastrarEquipAdmin(){
+  const nome=document.getElementById('fn-nome').value.trim();
+  const cat=document.getElementById('fn-cat').value.trim();
+  const code=parseInt(document.getElementById('fn-peca').value);
+  const uid=document.getElementById('fn-uid-raw').value.trim();
+  const qtd=parseInt(document.getElementById('fn-qtd').value)||1;
+  const desc=document.getElementById('fn-desc').value.trim();
   const msg=document.getElementById('fn-msg');
-  const r=await apiFetch('/api/pecas','POST',payload);
-  if(r.ok){
-    msg.style.color='var(--accent3)';
-    msg.textContent='✓ Cadastrada — UID: '+(r.data.uid_raw||r.data.uid_gerado||'?');
-    document.getElementById('fn-nome').value='';
-    document.getElementById('fn-cat').value='';
-    document.getElementById('fn-peca').value='';
-    document.getElementById('fn-qtd').value='1';
-    document.getElementById('fn-uid-raw').value='';
-    document.getElementById('fn-preview').style.display='none';
-    loadFer();
-  } else {
-    msg.style.color='var(--danger)';msg.textContent='✗ '+(r.data.erro||'Erro');
-  }
+  if(!nome||!cat||isNaN(code)){msg.textContent='Campos obrigatórios ausentes';msg.style.color='var(--danger)';return;}
+  const r=await apiFetch('/api/equipamentos','POST',{nome,categoria:cat,equipamento_code:code,uid_raw:uid,quantidade:qtd,descricao:desc});
+  msg.textContent=r.ok?'✓ Cadastrado!':'✗ '+r.data.erro;
+  msg.style.color=r.ok?'var(--accent3)':'var(--danger)';
 }
-async function cadastrarOperador(){
-  const payload={nome:document.getElementById('on-nome').value.trim(),
-    matricula:document.getElementById('on-mat').value.trim(),
-    uid_raw:document.getElementById('on-uid').value.toUpperCase().trim()};
+async function cadastrarOperadorAdmin(){
+  const nome=document.getElementById('on-nome').value.trim();
+  const mat=document.getElementById('on-mat').value.trim();
+  const uid=document.getElementById('on-uid').value.trim().toUpperCase();
   const msg=document.getElementById('on-msg');
-  const r=await apiFetch('/api/operadores','POST',payload);
-  if(r.ok){msg.style.color='var(--accent3)';msg.textContent='✓ Operador cadastrado';}
-  else{msg.style.color='var(--danger)';msg.textContent='✗ '+(r.data.erro||'Erro');}
-}
-
-// ══ TERMINAIS ESP32 ══
-let _setoresList=[], _unidadesList=[];
-
-async function carregarSetoresUnidades(){
-  if(_setoresList.length) return;
-  const[s,u]=await Promise.all([api('/api/terminais').catch(()=>[]),api('/api/dashboard/dados').catch(()=>({}))]);
-  // Usa listas fixas conhecidas se API de terminais não tiver
-  _setoresList=Object.entries(SETORES).map(([k,v])=>({codigo:parseInt(k),nome:v}));
-  _unidadesList=Object.entries(UNIDADES).map(([k,v])=>({codigo:parseInt(k),nome:v}));
-}
-
-function popularSelectSetor(selId, valorAtual){
-  const sel=document.getElementById(selId);
-  sel.innerHTML='<option value="">Nenhum — operador seleciona</option>';
-  _setoresList.forEach(s=>{
-    const o=document.createElement('option');
-    o.value=s.codigo; o.textContent=s.nome;
-    if(s.codigo==valorAtual) o.selected=true;
-    sel.appendChild(o);
-  });
-}
-function popularSelectUnidade(selId, valorAtual){
-  const sel=document.getElementById(selId);
-  sel.innerHTML='<option value="">Nenhuma — operador seleciona</option>';
-  _unidadesList.forEach(u=>{
-    const o=document.createElement('option');
-    o.value=u.codigo; o.textContent=u.nome;
-    if(u.codigo==valorAtual) o.selected=true;
-    sel.appendChild(o);
-  });
-}
-
-async function verificarPendentes(){
-  try{
-    const d=await api('/api/terminais/pendentes');
-    const n=d.total||0;
-    const badge=document.getElementById('term-badge');
-    const notif=document.getElementById('notif-pendentes');
-    if(n>0){
-      badge.textContent=n; badge.style.display='inline-flex';
-      document.getElementById('notif-text').textContent=
-        `⏳ ${n} terminal${n>1?'is':''} RFID aguardando aprovação do administrador.`;
-      notif.classList.add('show');
-    } else {
-      badge.style.display='none';
-      notif.classList.remove('show');
-    }
-  }catch(e){}
-}
-
-async function loadTerminais(){
-  await carregarSetoresUnidades();
-  const filtro=document.getElementById('term-filtro').value;
-  let rows=await api('/api/terminais');
-  if(filtro) rows=rows.filter(r=>r.status===filtro);
-
-  // Resumo
-  const total=rows.length;
-  const pend=rows.filter(r=>r.status==='pendente').length;
-  const aprov=rows.filter(r=>r.status==='aprovado').length;
-  const rejeit=rows.filter(r=>r.status==='rejeitado').length;
-  document.getElementById('term-total').textContent=`${total} terminais`;
-  document.getElementById('term-summary').textContent=
-    `${aprov} aprovados · ${pend} pendentes · ${rejeit} rejeitados`;
-
-  // Seção pendentes destacada
-  const pendSection=document.getElementById('term-pendentes-section');
-  const pendentes=rows.filter(r=>r.status==='pendente');
-  if(pendentes.length && (!filtro || filtro==='pendente')){
-    pendSection.style.display='block';
-    document.getElementById('term-pend-count').textContent=`— ${pendentes.length} aguardando`;
-    document.getElementById('term-pendentes-list').innerHTML=pendentes.map(t=>termCardHtml(t,true)).join('');
-  } else {
-    pendSection.style.display='none';
-  }
-
-  // Tabela
-  if(!rows.length){
-    document.getElementById('term-body').innerHTML=
-      '<tr><td colspan="9" class="no-data">Nenhum terminal encontrado.</td></tr>';
-    return;
-  }
-  document.getElementById('term-body').innerHTML=rows.map(t=>{
-    const st=t.status;
-    const stHtml=`<span class="bt term-status-${st}">${st.toUpperCase()}</span>`;
-    const setor=t.setor_nome||'<span style="color:var(--muted)">—</span>';
-    const unid=t.unidade_nome||'<span style="color:var(--muted)">—</span>';
-    const ip=t.ip_address||'—';
-    const fw=t.firmware_ver||'—';
-    const acesso=fmt(t.ultimo_acesso);
-    const acoes=termAcoesHtml(t);
-    return `<tr>
-      <td><span class="uid-chip">${t.terminal_id}</span></td>
-      <td><strong>${t.apelido||t.terminal_id}</strong></td>
-      <td>${stHtml}</td>
-      <td>${setor}</td><td>${unid}</td>
-      <td style="color:var(--muted)">${ip}</td>
-      <td style="color:var(--muted)">${fw}</td>
-      <td>${acesso}</td>
-      <td><div style="display:flex;gap:6px;flex-wrap:wrap">${acoes}</div></td>
-    </tr>`;
-  }).join('');
-
-  // Atualiza badge
-  verificarPendentes();
-}
-
-function termCardHtml(t, isPendCard){
-  return `<div class="term-card ${t.status}">
-    <div class="term-icon ${t.status}">📡</div>
-    <div>
-      <div style="font-weight:600;font-size:14px">${t.apelido||t.terminal_id}
-        <span class="uid-chip" style="margin-left:8px;font-size:10px">${t.terminal_id}</span>
-      </div>
-      <div class="term-meta">
-        IP: ${t.ip_address||'desconhecido'} · Firmware v${t.firmware_ver||'?'}<br>
-        Primeiro contato: ${fmt(t.ultimo_acesso)}
-      </div>
-    </div>
-    <div class="term-actions">${termAcoesHtml(t)}</div>
-  </div>`;
-}
-
-function termAcoesHtml(t){
-  const id=t.terminal_id;
-  if(t.status==='pendente') return `
-    <button class="btn btn-sm btn-aprovar" onclick="abrirAprovar('${id}')">✓ Aprovar</button>
-    <button class="btn btn-sm btn-rejeitar" onclick="rejeitarTerminal('${id}')">✕ Rejeitar</button>`;
-  if(t.status==='aprovado') return `
-    <button class="btn btn-sm btn-ghost" onclick="abrirConfig('${id}','${(t.apelido||'').replace(/'/g,"\\'")}',${t.setor_codigo||'null'},${t.unidade_codigo||'null'})">⚙ Configurar</button>
-    <button class="btn btn-sm btn-rejeitar" onclick="rejeitarTerminal('${id}')">Revogar</button>
-    <button class="btn btn-sm btn-danger" onclick="removerTerminal('${id}')">Remover</button>`;
-  if(t.status==='rejeitado') return `
-    <button class="btn btn-sm btn-aprovar" onclick="abrirAprovar('${id}')">↺ Reativar</button>
-    <button class="btn btn-sm btn-danger" onclick="removerTerminal('${id}')">Remover</button>`;
-  return '';
-}
-
-async function abrirAprovar(id){
-  await carregarSetoresUnidades();
-  document.getElementById('mat-id').value=id;
-  document.getElementById('mat-apelido').value='';
-  popularSelectSetor('mat-setor', null);
-  popularSelectUnidade('mat-unidade', null);
-  abrirModal('modal-aprovar-terminal');
-}
-
-async function confirmarAprovacao(){
-  const id=document.getElementById('mat-id').value;
-  const apelido=document.getElementById('mat-apelido').value.trim()||null;
-  const setor=document.getElementById('mat-setor').value||null;
-  const unidade=document.getElementById('mat-unidade').value||null;
-  const body={};
-  if(apelido) body.apelido=apelido;
-  if(setor)   body.setor_codigo=parseInt(setor);
-  if(unidade) body.unidade_codigo=parseInt(unidade);
-  const r=await apiFetch(`/api/terminal/${id}/aprovar`,'PUT',body);
-  if(r.ok){toast('Terminal aprovado!');fecharModal('modal-aprovar-terminal');loadTerminais();}
-  else toast(r.data.msg||'Erro ao aprovar',false);
-}
-
-async function abrirConfig(id,apelido,setorAtual,unidadeAtual){
-  await carregarSetoresUnidades();
-  document.getElementById('mct-id').value=id;
-  document.getElementById('mct-apelido').value=apelido;
-  popularSelectSetor('mct-setor', setorAtual);
-  popularSelectUnidade('mct-unidade', unidadeAtual);
-  abrirModal('modal-config-terminal');
-}
-
-async function salvarConfigTerminal(){
-  const id=document.getElementById('mct-id').value;
-  const apelido=document.getElementById('mct-apelido').value.trim()||null;
-  const setor=document.getElementById('mct-setor').value||null;
-  const unidade=document.getElementById('mct-unidade').value||null;
-  const body={};
-  if(apelido) body.apelido=apelido;
-  if(setor)   body.setor_codigo=parseInt(setor);
-  if(unidade) body.unidade_codigo=parseInt(unidade);
-  const r=await apiFetch(`/api/terminal/${id}/config`,'PUT',body);
-  if(r.ok){toast('Configuração salva! Terminal sincronizará em até 1 min.');fecharModal('modal-config-terminal');loadTerminais();}
-  else toast(r.data.msg||'Erro',false);
-}
-
-async function rejeitarTerminal(id){
-  if(!confirm(`Rejeitar/revogar terminal "${id}"?\nEle ficará bloqueado até ser reaprovado.`))return;
-  const r=await apiFetch(`/api/terminal/${id}/rejeitar`,'PUT',{});
-  if(r.ok){toast('Terminal rejeitado.');loadTerminais();}
-  else toast(r.data.msg||'Erro',false);
-}
-
-async function removerTerminal(id){
-  if(!confirm(`Remover completamente o terminal "${id}"?\nEle precisará ser reaprovado se conectar novamente.`))return;
-  const r=await apiFetch(`/api/terminal/${id}`,'DELETE');
-  if(r.ok){toast('Terminal removido.');loadTerminais();}
-  else toast(r.data.msg||'Erro',false);
-}
-
-// Polling de pendentes a cada 30s para admins
-setInterval(()=>{if(usuario&&usuario.perfil==='admin')verificarPendentes();},30000);
-
-// ══ AUTO-REFRESH SSE ══
-// Ouve /api/events (Server-Sent Events).
-// Quando o ESP32 passa uma tag, o backend dispara um evento que
-// chega aqui em <1 segundo — sem precisar recarregar a página.
-
-let _sseSource = null;
-let _sseAtiva  = false;
-let _sseReconectando = false;
-
-// Quais abas precisam atualizar para cada evento
-const SSE_MAP = {
-  movimentacao: ['dashboard','localizacao','movimentacoes','pecas','alertas'],
-  operador:     ['dashboard','localizacao','operadores'],
-  terminal:     ['terminais'],
-};
-
-// Fila de abas pendentes: atualiza só as visíveis agora;
-// as demais são marcadas para atualizar quando o usuário navegar
-const _pendentes = new Set();
-
-function _recarregarAba(nome){
-  const loaders={
-    dashboard:    loadDashboard,
-    localizacao:  loadLocalizacao,
-    movimentacoes:loadMovs,
-    pecas:        loadFer,
-    operadores:   loadOps,
-    alertas:      loadAlertas,
-    terminais:    loadTerminais,
-  };
-  loaders[nome]?.();
-}
-
-function _abaAtiva(){
-  const p = document.querySelector('.page.active');
-  return p ? p.id.replace('page-','') : 'dashboard';
-}
-
-function _handleSSEEvento(tipo, dados){
-  const abas = SSE_MAP[tipo] || [];
-  const ativa = _abaAtiva();
-
-  // Mostra toast discreto
-  const msgs = {
-    movimentacao: `↻ ${dados.tipo==='retirada'?'Retirada':'Devolução'}: ${dados.peca||'peça'} (${dados.operador||'?'})`,
-    operador:     `↻ Operador ${dados.acao==='login'?'entrou':'saiu'}: ${dados.nome||'?'}`,
-    terminal:     `↻ Terminal atualizado`,
-  };
-  toast(msgs[tipo]||'↻ Atualizado', true, 2500);
-
-  abas.forEach(aba => {
-    if(aba === ativa){
-      _recarregarAba(aba);
-    } else {
-      _pendentes.add(aba);
-    }
-  });
-}
-
-// Intercepta setTab para descarregar pendentes ao navegar
-const _setTabOriginal = setTab;
-window.setTab = function(name, btn){
-  _setTabOriginal(name, btn);
-  if(_pendentes.has(name)){
-    _pendentes.delete(name);
-    // já foi chamado por setTab via loaders — não recarrega duplo
-  }
-};
-
-function _atualizarIndicadorSSE(ok){
-  const el = document.getElementById('sse-indicator');
-  if(!el) return;
-  el.title       = ok ? 'Atualização automática ativa' : 'Reconectando...';
-  el.style.color = ok ? 'var(--accent3)' : 'var(--muted)';
-  el.textContent = ok ? '⬤' : '○';
-}
-
-function iniciarSSE(){
-  if(_sseSource) _sseSource.close();
-  _sseSource = new EventSource('/api/events');
-  _sseAtiva  = true;
-
-  _sseSource.addEventListener('movimentacao', e => {
-    try{ _handleSSEEvento('movimentacao', JSON.parse(e.data)); }catch(_){}
-  });
-  _sseSource.addEventListener('operador', e => {
-    try{ _handleSSEEvento('operador', JSON.parse(e.data)); }catch(_){}
-  });
-  _sseSource.addEventListener('terminal', e => {
-    try{ _handleSSEEvento('terminal', JSON.parse(e.data)); }catch(_){}
-  });
-
-  _sseSource.onopen = () => {
-    _sseReconectando = false;
-    _atualizarIndicadorSSE(true);
-    console.log('[SSE] Conectado ao servidor VoidLog');
-  };
-
-  _sseSource.onerror = () => {
-    _atualizarIndicadorSSE(false);
-    if(_sseReconectando) return;
-    _sseReconectando = true;
-    console.warn('[SSE] Conexão perdida — reconectando em 5s...');
-    _sseSource.close();
-    setTimeout(()=>{ if(_sseAtiva) iniciarSSE(); }, 5000);
-  };
-}
-
-function pararSSE(){
-  _sseAtiva = false;
-  _atualizarIndicadorSSE(false);
-  _sseSource?.close();
-  _sseSource = null;
+  if(!nome||!mat||!uid){msg.textContent='Campos obrigatórios';msg.style.color='var(--danger)';return;}
+  const r=await apiFetch('/api/operadores','POST',{nome,matricula:mat,uid_raw:uid,equipamento_code:0});
+  msg.textContent=r.ok?'✓ Cadastrado!':'✗ '+r.data.erro;
+  msg.style.color=r.ok?'var(--accent3)':'var(--danger)';
 }
 
 // ══ INIT ══
 verificarSessao();
+setInterval(loadAlertas, 30000);
+setInterval(()=>{
+  if(usuario?.perfil==='admin') verificarPendentes();
+}, 20000);
 </script>
 </body>
 </html>
