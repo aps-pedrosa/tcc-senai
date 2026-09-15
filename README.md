@@ -1,6 +1,6 @@
-# Warehouse Management System
+# VoidLog
 
-A full-stack warehouse and equipment management system developed as a **Final Course Project for the SENAI Technical Program in Systems Development**.
+A full-stack warehouse and equipment management system developed as a **Final Course Project for the SENAI Technical Course in Systems Development**.
 
 The project was designed to provide a centralized platform for managing equipment, operators, inventory movements, maintenance operations, and warehouse infrastructure. It also integrates with **ESP32-based terminals and RFID identification**, connecting physical warehouse operations with the software system.
 
